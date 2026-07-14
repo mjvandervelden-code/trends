@@ -67,8 +67,7 @@
   .view.active{display:block;}
 
   .panel{
-    background:var(--panel);border:1px solid var(--line);border-radius:10px;
-    padding:16px;margin-bottom:16px;
+    margin-bottom:22px;
   }
   .panel h2{margin:0 0 12px;font-size:24px;letter-spacing:.02em;color:var(--text);}
   .accent-title{color:var(--accent);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;font-size:18px;}
@@ -103,7 +102,7 @@
     display:flex;justify-content:space-between;align-items:center;gap:10px;
     background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;
   }
-  .source-row .title{font-weight:650;font-size:21px;}
+  .source-row .title{font-weight:400;font-size:21px;}
   .source-row .btns{display:flex;gap:6px;}
   .source-row button{
     background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;
@@ -121,6 +120,7 @@
      letter-spacing:.04em;padding:6px 8px;border-bottom:1px solid var(--line);}
   td{padding:6px 8px;border-bottom:1px solid #1d2529;}
   tr:hover td{background:#1a2226;}
+  tr.selected td{background:rgba(79,209,197,0.30);}
   td.val{text-align:right;}
   td.actions-cell{text-align:right;white-space:nowrap;}
   td.actions-cell button{
@@ -132,14 +132,15 @@
   td.actions-cell button:hover{color:var(--accent);}
   .empty{color:var(--muted);font-size:19px;padding:20px 0;text-align:center;}
 
-  .stats-row{display:flex;flex-wrap:nowrap;gap:10px;margin:12px 0 4px;}
-  .stats-row .stat{flex:1;min-width:0;}
+  .stats-row{display:flex;flex-wrap:wrap;justify-content:center;gap:18px;margin:12px 0 4px;}
+  .stats-row .stat{flex:0 0 auto;}
   .stat{font-family:var(--mono);text-align:center;}
-  .stat .num{font-size:26px;font-weight:650;}
+  .stat .num{font-size:17px;font-weight:650;}
   .stat .lbl{font-size:17px;color:var(--text);text-transform:uppercase;letter-spacing:.05em;}
   .stat.warn .num{color:var(--warn);}
   .stat.danger .num{color:var(--danger);}
   .stat.accent .num{color:var(--accent);}
+  .stats-row .stat.accent{border-color:var(--accent);}
 
   .legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:17px;color:var(--muted);margin-top:8px;font-family:var(--mono);}
   .legend span{display:inline-flex;align-items:center;gap:5px;}
@@ -164,7 +165,7 @@
   .status-dot.linked{background:var(--good);}
   .status-dot.error{background:var(--danger);}
   .file-link-row{display:flex;align-items:center;gap:12px;}
-  .file-link-row .filename{font-family:var(--mono);font-size:18px;color:var(--text);
+  .file-link-row .filename{font-family:var(--mono);font-size:21px;color:var(--text);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .file-link-row .time{font-size:15px;color:var(--muted);margin-top:2px;}
   .icon-btn-sm{
@@ -176,6 +177,18 @@
     stroke-linecap:round;stroke-linejoin:round;}
   .icon-btn-sm:hover{color:var(--text);border-color:var(--accent);}
   .icon-btn-sm:disabled{opacity:.4;cursor:not-allowed;}
+
+  .segmented{display:flex;flex-wrap:nowrap;gap:4px;margin-bottom:12px;}
+  .segmented button{
+    flex:1 1 0;padding:8px 2px;font-size:13px;border-radius:7px;min-width:0;
+    border:1px solid var(--line);background:var(--panel-2);color:var(--muted);
+    cursor:pointer;font-family:var(--sans);font-weight:600;
+  }
+  .segmented button.active{background:var(--accent);color:#08221f;border-color:var(--accent);}
+  .segmented button:disabled{opacity:.35;cursor:not-allowed;}
+  .custom-range{display:none;gap:10px;margin-bottom:12px;}
+  .custom-range.active{display:flex;}
+  .custom-range .field{flex:1;}
 
   .auth-banner{display:flex;flex-direction:column;gap:10px;
     background:#2a2410;border:1px solid #55481a;border-radius:8px;padding:12px;}
@@ -208,44 +221,36 @@
   <!-- METADATA VIEW -->
   <section id="view-meta" class="view active">
     <div class="panel">
-      <h2 class="accent-title">Bronspecificaties</h2>
+      <h2 class="accent-title">Werkmap</h2>
       <div class="file-link">
-        <div class="file-link-empty" id="meta-file-empty">
-          <div class="status" id="meta-file-status-empty">Geen bestand gekoppeld.</div>
+        <div class="file-link-empty" id="dir-file-empty">
           <div class="actions">
-            <button class="btn secondary icon-btn" id="btn-open-meta" title="Bestand openen" aria-label="Bestand openen">
-              <svg viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-              <span class="icon-label">Openen</span>
-            </button>
-            <button class="btn secondary icon-btn" id="btn-new-meta" title="Nieuw bestand aanmaken" aria-label="Nieuw bestand aanmaken">
-              <svg viewBox="0 0 24 24"><path d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-              <span class="icon-label">Nieuw</span>
+            <button class="btn secondary icon-btn" id="btn-open-dir" title="Map kiezen" aria-label="Map kiezen" style="width:100%;">
+              <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span class="icon-label">Map kiezen</span>
             </button>
           </div>
         </div>
 
-        <div class="auth-banner" id="meta-file-authneeded" style="display:none;">
-          <div class="auth-banner-text" id="meta-file-status-auth"></div>
-          <button class="btn warn" id="btn-authorize-meta">Toegang autoriseren</button>
+        <div class="auth-banner" id="dir-file-authneeded" style="display:none;">
+          <div class="auth-banner-text" id="dir-file-status-auth"></div>
+          <button class="btn warn" id="btn-authorize-dir">Toegang autoriseren</button>
         </div>
 
-        <div class="file-link-row" id="meta-file-linked-row" style="display:none;">
-          <span class="status-dot" id="meta-status-dot"></span>
-          <div style="flex:1;min-width:0;">
-            <div class="filename" id="meta-file-name"></div>
-            <div class="time" id="meta-file-time"></div>
-          </div>
-          <button class="icon-btn-sm" id="btn-refresh-meta" title="Vernieuwen" aria-label="Vernieuwen">
+        <div class="file-link-row" id="dir-file-linked-row" style="display:none;">
+          <span class="status-dot" id="dir-status-dot"></span>
+          <div class="filename" id="dir-file-name" style="flex:1;min-width:0;"></div>
+          <button class="icon-btn-sm" id="btn-refresh-dir" title="Vernieuwen" aria-label="Vernieuwen">
             <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
           </button>
-          <button class="icon-btn-sm" id="btn-unlink-meta" title="Ontkoppelen" aria-label="Ontkoppelen">
+          <button class="icon-btn-sm" id="btn-unlink-dir" title="Ontkoppelen" aria-label="Ontkoppelen">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
           </button>
         </div>
       </div>
     </div>
 
-    <div class="panel">
+    <div class="panel" style="margin-top:-20px;">
       <div class="panel-header">
         <h2><span class="accent-title">Bronnen</span> <span class="sub" id="source-count"></span></h2>
         <button class="icon-btn-sm" id="btn-open-new-source" title="Nieuwe bron" aria-label="Nieuwe bron toevoegen">
@@ -266,7 +271,7 @@
           <div class="field"><label>Decimalen</label><input type="number" id="f-decimalen" value="1" min="0" max="6" step="1"></div>
           <div class="field"><label>Min</label><input type="number" id="f-min" placeholder="0"></div>
           <div class="field"><label>Max</label><input type="number" id="f-max" placeholder="250"></div>
-          <div class="field"><label>Doelwaarde (streefgemiddelde)</label><input type="number" id="f-doelx" placeholder="optioneel" step="any"></div>
+          <div class="field"><label>Doelwaarde</label><input type="number" id="f-doelx" placeholder="optioneel" step="any"></div>
           <div class="field"><label>Doel-spreiding (optioneel)</label><input type="number" id="f-doelr" placeholder="optioneel" step="any"></div>
         </div>
         <div class="hint" id="meta-form-hint"></div>
@@ -287,58 +292,36 @@
       <div class="toolbar" style="margin-bottom:2px;">
         <div class="field"><label class="accent-title">Bron</label><select id="data-source-select"></select></div>
       </div>
-
-      <div class="file-link">
-        <div class="file-link-empty" id="data-file-empty">
-          <div class="status" id="data-file-status-empty">Kies eerst een bron.</div>
-          <div class="actions">
-            <button class="btn secondary icon-btn" id="btn-open-data" title="Bestand openen" aria-label="Bestand openen">
-              <svg viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-              <span class="icon-label">Openen</span>
-            </button>
-            <button class="btn secondary icon-btn" id="btn-new-data" title="Nieuw bestand aanmaken" aria-label="Nieuw bestand aanmaken">
-              <svg viewBox="0 0 24 24"><path d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-              <span class="icon-label">Nieuw</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="auth-banner" id="data-file-authneeded" style="display:none;">
-          <div class="auth-banner-text" id="data-file-status-auth"></div>
-          <button class="btn warn" id="btn-authorize-data">Toegang autoriseren</button>
-        </div>
-
-        <div class="file-link-row" id="data-file-linked-row" style="display:none;">
-          <span class="status-dot" id="data-status-dot"></span>
-          <div style="flex:1;min-width:0;">
-            <div class="filename" id="data-file-name"></div>
-            <div class="time" id="data-file-time"></div>
-          </div>
-          <button class="icon-btn-sm" id="btn-refresh-data" title="Vernieuwen" aria-label="Vernieuwen">
-            <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
-          </button>
-          <button class="icon-btn-sm" id="btn-unlink-data" title="Ontkoppelen" aria-label="Ontkoppelen">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
-          </button>
-        </div>
-      </div>
     </div>
 
-    <div class="panel">
+    <div class="panel" style="margin-top:-20px;">
       <div class="panel-header">
         <h2 class="accent-title">Meetwaarden <span class="sub" id="data-count"></span></h2>
-        <button class="icon-btn-sm" id="btn-open-new-datapoint" title="Meetpunt toevoegen" aria-label="Meetpunt toevoegen">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
+        <div style="display:flex;gap:8px;">
+          <button class="icon-btn-sm" id="btn-edit-selected-datapoint" title="Wijzig geselecteerd meetpunt" aria-label="Wijzig geselecteerd meetpunt" disabled>
+            <svg viewBox="0 0 24 24"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+          </button>
+          <button class="icon-btn-sm" id="btn-open-new-datapoint" title="Meetpunt toevoegen" aria-label="Meetpunt toevoegen">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
       </div>
-      <div style="margin-bottom:10px;">
-        <label style="display:inline;text-transform:none;font-family:var(--sans);font-size:20px;color:var(--text);">
-          <input type="checkbox" id="data-show-all" style="width:20px;height:20px;margin:0 8px 0 0;vertical-align:middle;">alles tonen (i.p.v. laatste 60)
-        </label>
+      <div class="segmented" id="data-period-filter" style="margin-top:-6px;">
+        <button data-period="1w">1 w</button>
+        <button data-period="1m" class="active">1 m</button>
+        <button data-period="3m">3 m</button>
+        <button data-period="6m">6 m</button>
+        <button data-period="1y">1 j</button>
+        <button data-period="5y">5 j</button>
+        <button data-period="custom">eigen</button>
+      </div>
+      <div class="custom-range" id="data-custom-range">
+        <div class="field"><label>Van</label><input type="date" id="data-range-from"></div>
+        <div class="field"><label>Tot</label><input type="date" id="data-range-to"></div>
       </div>
       <div style="max-height:480px;overflow:auto;">
         <table>
-          <thead><tr><th>Datum</th><th style="text-align:right;">Waarde</th><th></th></tr></thead>
+
           <tbody id="data-table-body"></tbody>
         </table>
       </div>
@@ -366,21 +349,10 @@
   <!-- CHART VIEW -->
   <section id="view-chart" class="view">
     <div class="panel">
-      <div class="toolbar">
-        <div class="field"><label class="accent-title">Bron</label><select id="chart-source-select"></select></div>
-        <div class="field">
-          <label class="accent-title">Periode</label>
-          <select id="chart-period-select">
-            <option value="1w">1 week</option>
-            <option value="1m" selected>1 maand</option>
-            <option value="3m">3 maanden</option>
-            <option value="6m">6 maanden</option>
-            <option value="1y">1 jaar</option>
-            <option value="5y">5 jaar</option>
-            <option value="all">alles</option>
-          </select>
-        </div>
-      </div>
+      <h2 class="accent-title" id="chart-source-name" style="text-align:center;margin-bottom:20px;"></h2>
+
+      <h2 class="accent-title" style="font-size:16px;margin-bottom:14px;">Controlekaart</h2>
+      <div class="stats-row" id="chart-stats"></div>
 
       <canvas id="chart-canvas" width="880" height="220"></canvas>
 
@@ -391,8 +363,29 @@
         <span><span class="swatch" style="background:var(--muted);"></span>doel</span>
       </div>
 
-      <div class="stats-row" id="chart-stats"></div>
+      <div class="segmented" id="chart-agg-filter" style="margin-top:18px;">
+        <button data-agg="d" class="active">dag</button>
+        <button data-agg="w">week</button>
+        <button data-agg="m">1 mnd</button>
+        <button data-agg="q">3 mnd</button>
+        <button data-agg="y">jaar</button>
+      </div>
+
       <div class="hint" id="chart-note"></div>
+
+      <div class="segmented" id="chart-period-filter" style="margin-top:18px;">
+        <button data-period="1w">1 w</button>
+        <button data-period="1m" class="active">1 m</button>
+        <button data-period="3m">3 m</button>
+        <button data-period="6m">6 m</button>
+        <button data-period="1y">1 j</button>
+        <button data-period="5y">5 j</button>
+        <button data-period="custom">eigen</button>
+      </div>
+      <div class="custom-range" id="chart-custom-range">
+        <div class="field"><label>Van</label><input type="date" id="chart-range-from"></div>
+        <div class="field"><label>Tot</label><input type="date" id="chart-range-to"></div>
+      </div>
     </div>
   </section>
 
@@ -473,14 +466,32 @@ async function readHandleJson(handle){
   return text.trim() ? JSON.parse(text) : {};
 }
 
+/* Bestanden binnen de gekoppelde werkmap opzoeken/lezen/schrijven.
+   Eenmaal readwrite-toegang tot de map verleend, is geen aparte
+   autorisatie per bestand nodig. */
+async function readJsonFromDir(name){
+  try{
+    const handle = await dirHandle.getFileHandle(name);
+    return await readHandleJson(handle);
+  }catch(e){
+    if(e.name === 'NotFoundError') return null;
+    throw e;
+  }
+}
+async function writeJsonToDir(name, obj){
+  const handle = await dirHandle.getFileHandle(name, {create:true});
+  await writeHandleJson(handle, obj);
+}
+
 /* ================= state ================= */
 let bronnen = [];        // [{id,titel,bestand,eenheid,decimalen,min,max,doel_x,doel_r}]
 let dataCache = {};      // id -> {YYYYMMDD: value}
-let metaFileHandle = null;
-let dataFileHandles = {}; // id -> FileSystemFileHandle
+let dataFileExists = {}; // id -> bool (bestaat het gegevensbestand al in de werkmap?)
+let dirHandle = null;    // FileSystemDirectoryHandle van de gekoppelde werkmap
 let editingId = null;
+const META_FILENAME = 'mvtrends.json';
 
-const supportsFSA = 'showOpenFilePicker' in window && 'showSaveFilePicker' in window;
+const supportsFSA = 'showDirectoryPicker' in window;
 
 /* ================= utils ================= */
 function slugify(s){
@@ -516,10 +527,10 @@ document.querySelectorAll('nav.tabs button').forEach(btn=>{
   });
 });
 
-/* ================= METADATA: bestandskoppeling ================= */
-async function loadMetaFromHandle(){
-  const json = await readHandleJson(metaFileHandle);
-  const list = Array.isArray(json) ? json : (json.bronnen || []);
+/* ================= WERKMAP: koppeling ================= */
+async function loadMetaFromDir(){
+  const json = await readJsonFromDir(META_FILENAME);
+  const list = json ? (Array.isArray(json) ? json : (json.bronnen || [])) : [];
   bronnen = list.map(item=>{
     const id = slugify(item.bestand || item.titel);
     return {
@@ -538,13 +549,13 @@ async function loadMetaFromHandle(){
   renderSourceSelects();
 }
 async function syncMetaFile(){
-  if(!metaFileHandle) return;
+  if(!dirHandle) return;
   try{
-    await writeHandleJson(metaFileHandle, metaFileObj());
-    setFileLinkUI('meta', 'linked', {name: metaFileHandle.name, timeText: 'bijgewerkt om '+nowTime()});
+    await writeJsonToDir(META_FILENAME, metaFileObj());
+    setFileLinkUI('dir', 'linked', {name: dirHandle.name});
   }catch(e){
     console.error('meta schrijven mislukt', e);
-    setFileLinkUI('meta', 'error', {name: metaFileHandle.name, timeText: 'schrijven mislukt: '+e.message});
+    setFileLinkUI('dir', 'error', {name: dirHandle.name});
   }
 }
 function nowTime(){ return new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
@@ -555,91 +566,80 @@ function setFileLinkUI(prefix, state, opts){
   document.getElementById(prefix+'-file-empty').style.display = state==='empty' ? 'block' : 'none';
   document.getElementById(prefix+'-file-authneeded').style.display = state==='auth' ? 'flex' : 'none';
   document.getElementById(prefix+'-file-linked-row').style.display = (state==='linked'||state==='error') ? 'flex' : 'none';
-  if(state==='empty'){
-    document.getElementById(prefix+'-file-status-empty').textContent = opts.text || 'Geen bestand gekoppeld.';
-  }
   if(state==='auth'){
-    document.getElementById(prefix+'-file-status-auth').textContent = opts.text || 'Toegang opnieuw autoriseren nodig.';
+    document.getElementById(prefix+'-file-status-auth').textContent = opts.name || '';
   }
   if(state==='linked' || state==='error'){
     document.getElementById(prefix+'-status-dot').className = 'status-dot' + (state==='error' ? ' error' : ' linked');
     document.getElementById(prefix+'-file-name').textContent = opts.name || '';
-    document.getElementById(prefix+'-file-time').textContent = opts.timeText || '';
   }
 }
 
-document.getElementById('btn-open-meta').addEventListener('click', async ()=>{
+document.getElementById('btn-open-dir').addEventListener('click', async ()=>{
   try{
-    const [handle] = await window.showOpenFilePicker({types:[{description:'JSON', accept:{'application/json':['.json']}}]});
-    metaFileHandle = handle;
-    await idbSet('meta', handle);
-    await loadMetaFromHandle();
-    setFileLinkUI('meta', 'linked', {name: handle.name, timeText: 'zojuist gekoppeld'});
-  }catch(e){ if(e.name!=='AbortError') setFileLinkUI('meta', 'empty', {text:'Openen mislukt: '+e.message}); }
+    const handle = await window.showDirectoryPicker({mode:'readwrite'});
+    dirHandle = handle;
+    await idbSet('dir', handle);
+    dataCache = {}; dataFileExists = {};
+    await loadMetaFromDir();
+    setFileLinkUI('dir', 'linked', {name: handle.name});
+  }catch(e){ if(e.name!=='AbortError') setFileLinkUI('dir', 'empty'); }
 });
 
-document.getElementById('btn-new-meta').addEventListener('click', async ()=>{
+document.getElementById('btn-authorize-dir').addEventListener('click', async ()=>{
   try{
-    const handle = await window.showSaveFilePicker({suggestedName:'mvtrends.json', types:[{description:'JSON', accept:{'application/json':['.json']}}]});
-    metaFileHandle = handle;
-    await idbSet('meta', handle);
-    bronnen = [];
-    await writeHandleJson(handle, metaFileObj());
-    renderSourceList(); renderSourceSelects();
-    setFileLinkUI('meta', 'linked', {name: handle.name, timeText: 'zojuist aangemaakt'});
-  }catch(e){ if(e.name!=='AbortError') setFileLinkUI('meta', 'empty', {text:'Aanmaken mislukt: '+e.message}); }
-});
-
-document.getElementById('btn-authorize-meta').addEventListener('click', async ()=>{
-  try{
-    const perm = await metaFileHandle.requestPermission({mode:'readwrite'});
+    const perm = await dirHandle.requestPermission({mode:'readwrite'});
     if(perm==='granted'){
-      await loadMetaFromHandle();
-      setFileLinkUI('meta', 'linked', {name: metaFileHandle.name, timeText: 'geautoriseerd om '+nowTime()});
+      await loadMetaFromDir();
+      setFileLinkUI('dir', 'linked', {name: dirHandle.name});
     } else {
-      setFileLinkUI('meta', 'auth', {text: 'Toegang geweigerd. Probeer opnieuw of ontkoppel dit bestand.'});
+      setFileLinkUI('dir', 'auth', {name: dirHandle.name});
     }
-  }catch(e){ setFileLinkUI('meta', 'auth', {text: 'Autoriseren mislukt: '+e.message}); }
+  }catch(e){ setFileLinkUI('dir', 'auth', {name: dirHandle.name}); }
 });
 
-document.getElementById('btn-refresh-meta').addEventListener('click', async ()=>{
-  if(!metaFileHandle) return;
-  try{ await loadMetaFromHandle(); setFileLinkUI('meta', 'linked', {name: metaFileHandle.name, timeText: 'vernieuwd om '+nowTime()}); }
-  catch(e){ setFileLinkUI('meta', 'error', {name: metaFileHandle.name, timeText: 'vernieuwen mislukt: '+e.message}); }
+document.getElementById('btn-refresh-dir').addEventListener('click', async ()=>{
+  if(!dirHandle) return;
+  try{
+    await loadMetaFromDir();
+    dataCache = {}; dataFileExists = {};
+    setFileLinkUI('dir', 'linked', {name: dirHandle.name});
+    renderDataView(); renderChartView();
+  }catch(e){ setFileLinkUI('dir', 'error', {name: dirHandle.name}); }
 });
 
-document.getElementById('btn-unlink-meta').addEventListener('click', async ()=>{
-  const ok = await showConfirm('Metadatabestand ontkoppelen? De bronnenlijst in de app wordt geleegd (het bestand zelf blijft ongewijzigd op je toestel staan).', 'Ontkoppelen');
+document.getElementById('btn-unlink-dir').addEventListener('click', async ()=>{
+  const ok = await showConfirm('Werkmap ontkoppelen? De bronnenlijst wordt uit de app verwijderd (de bestanden zelf blijven ongewijzigd op je toestel staan).', 'Ontkoppelen');
   if(!ok) return;
-  metaFileHandle = null;
-  await idbDelete('meta');
-  bronnen = [];
+  dirHandle = null;
+  await idbDelete('dir');
+  bronnen = []; dataCache = {}; dataFileExists = {};
   renderSourceList(); renderSourceSelects();
-  setFileLinkUI('meta', 'empty');
+  setFileLinkUI('dir', 'empty');
 });
 
-async function bootMeta(){
-  const handle = await idbGet('meta').catch(()=>null);
-  if(!handle){ setFileLinkUI('meta', 'empty'); return; }
-  metaFileHandle = handle;
+async function bootDir(){
+  const handle = await idbGet('dir').catch(()=>null);
+  if(!handle){ setFileLinkUI('dir', 'empty'); return; }
+  dirHandle = handle;
   try{
     const perm = await handle.queryPermission({mode:'readwrite'});
     if(perm==='granted'){
-      await loadMetaFromHandle();
-      setFileLinkUI('meta', 'linked', {name: handle.name});
+      await loadMetaFromDir();
+      setFileLinkUI('dir', 'linked', {name: handle.name});
     } else {
-      setFileLinkUI('meta', 'auth', {text: `Gekoppeld aan "${handle.name}" — toegang opnieuw autoriseren nodig.`});
+      setFileLinkUI('dir', 'auth', {name: handle.name});
     }
-  }catch(e){ setFileLinkUI('meta', 'empty', {text: 'Kon eerder gekoppeld bestand niet laden: '+e.message}); }
+  }catch(e){ setFileLinkUI('dir', 'empty'); }
 }
 
 /* ================= METADATA: bronnen CRUD ================= */
 function renderMetaView(){
   document.getElementById('source-count').textContent = bronnen.length ? '('+bronnen.length+')' : '';
   document.getElementById('source-empty').style.display = bronnen.length ? 'none' : 'block';
-  document.getElementById('meta-form-hint').textContent = metaFileHandle ? '' : 'Koppel eerst een metadatabestand voordat je een bron opslaat.';
-  document.getElementById('btn-save-source').disabled = !metaFileHandle;
-  document.getElementById('btn-open-new-source').disabled = !metaFileHandle;
+  document.getElementById('meta-form-hint').textContent = dirHandle ? '' : 'Koppel eerst een werkmap voordat je een bron opslaat.';
+  document.getElementById('btn-save-source').disabled = !dirHandle;
+  document.getElementById('btn-open-new-source').disabled = !dirHandle;
 }
 
 function renderSourceList(){
@@ -709,7 +709,7 @@ document.getElementById('btn-delete-source').addEventListener('click', async ()=
 });
 
 document.getElementById('btn-save-source').addEventListener('click', async ()=>{
-  if(!metaFileHandle){ alert('Koppel eerst een metadatabestand.'); return; }
+  if(!dirHandle){ alert('Koppel eerst een werkmap.'); return; }
   const titel = document.getElementById('f-titel').value.trim();
   if(!titel){ alert('Titel is verplicht.'); return; }
   const bestandRaw = document.getElementById('f-bestand').value.trim() || titel + '.json';
@@ -758,50 +758,79 @@ function showConfirm(message, okLabel){
 async function deleteSource(id){
   const b = getSource(id);
   if(!b) return;
-  const ok = await showConfirm(`Bron "${b.titel}" verwijderen uit de metadata? De bijbehorende koppeling met het gegevensbestand wordt losgemaakt (het bestand zelf blijft bestaan).`);
+  const ok = await showConfirm(`Bron "${b.titel}" verwijderen uit de metadata? Het gegevensbestand (${b.bestand}) blijft ongewijzigd in de werkmap staan.`);
   if(!ok) return;
   bronnen = bronnen.filter(x=>x.id!==id);
   await syncMetaFile();
   delete dataCache[id];
-  delete dataFileHandles[id];
-  await idbDelete('data:'+id);
+  delete dataFileExists[id];
   renderSourceList();
   renderSourceSelects();
 }
 
-/* ================= DATA VIEW: bestandskoppeling per bron ================= */
+/* ================= DATA VIEW: gegevensbestand per bron (automatisch via werkmap) ================= */
 function renderSourceSelects(){
-  ['data-source-select','chart-source-select'].forEach(selId=>{
+  ['data-source-select'].forEach(selId=>{
     const sel = document.getElementById(selId);
     const prev = sel.value;
     sel.innerHTML = bronnen.map(b=>`<option value="${b.id}">${escapeHtml(b.titel)}</option>`).join('');
     if(bronnen.some(b=>b.id===prev)) sel.value = prev;
   });
+  updateChartSourceName();
+}
+function updateChartSourceName(){
+  const id = document.getElementById('data-source-select').value;
+  const src = getSource(id);
+  document.getElementById('chart-source-name').textContent = src ? src.titel : '';
 }
 
-let dataNeedsAuth = {}; // id -> true als toegang opnieuw geautoriseerd moet worden
-
-async function ensureDataHandleHydrated(id){
-  if(dataFileHandles[id] !== undefined) return; // al eerder deze sessie geprobeerd
-  const handle = await idbGet('data:'+id).catch(()=>null);
-  dataFileHandles[id] = handle || null;
-  if(!handle) return;
+async function ensureDataLoaded(id){
+  if(dataCache[id] !== undefined) return; // al eerder deze sessie geladen
+  const src = getSource(id);
+  if(!src || !dirHandle){ return; }
   try{
-    const perm = await handle.queryPermission({mode:'readwrite'});
-    if(perm==='granted'){
-      dataCache[id] = dataFileObj(await readHandleJson(handle));
-    } else {
-      dataNeedsAuth[id] = true;
-    }
-  }catch(e){ /* handle mogelijk niet meer geldig */ }
+    const json = await readJsonFromDir(src.bestand);
+    dataCache[id] = json ? dataFileObj(json) : {};
+    dataFileExists[id] = !!json;
+  }catch(e){ console.error('data lezen mislukt', e); dataCache[id] = {}; }
 }
 
 document.getElementById('data-source-select').addEventListener('change', async ()=>{
-  await ensureDataHandleHydrated(document.getElementById('data-source-select').value);
+  updateChartSourceName();
+  await ensureDataLoaded(document.getElementById('data-source-select').value);
   renderDataView();
 });
 
-document.getElementById('data-show-all').addEventListener('change', renderDataView);
+let dataPeriodFilter = '3m';
+const DATA_PERIOD_DAYS = {'1w':7,'1m':30,'3m':91,'6m':182,'1y':365,'5y':1826};
+let dataPreviousPeriod = '3m';
+function setDataPeriod(period){
+  const group = document.getElementById('data-period-filter');
+  if(period === 'custom' && dataPeriodFilter === 'custom'){
+    period = dataPreviousPeriod;
+  } else if(period === 'custom'){
+    dataPreviousPeriod = dataPeriodFilter;
+  }
+  dataPeriodFilter = period;
+  group.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.period===period));
+  document.getElementById('data-custom-range').classList.toggle('active', period==='custom');
+  if(period==='custom'){
+    const id = document.getElementById('data-source-select').value;
+    const range = getDateRange(dataCache[id] || {});
+    const fromEl = document.getElementById('data-range-from');
+    const toEl = document.getElementById('data-range-to');
+    if(range){
+      if(!fromEl.value) fromEl.value = keyToIsoDate(range.first);
+      if(!toEl.value) toEl.value = keyToIsoDate(range.last);
+    }
+  }
+  renderDataView();
+}
+document.getElementById('data-period-filter').querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click', ()=>setDataPeriod(btn.dataset.period));
+});
+document.getElementById('data-range-from').addEventListener('change', renderDataView);
+document.getElementById('data-range-to').addEventListener('change', renderDataView);
 
 async function renderDataView(){
   const id = document.getElementById('data-source-select').value;
@@ -811,72 +840,100 @@ async function renderDataView(){
   if(!id){
     emptyEl.style.display='block';
     document.getElementById('data-count').textContent='';
-    setFileLinkUI('data', 'empty', {text:'Kies eerst een bron.'});
     return;
   }
-  await ensureDataHandleHydrated(id);
+  await ensureDataLoaded(id);
   const src = getSource(id);
-  const handle = dataFileHandles[id];
-  if(handle && dataNeedsAuth[id]){
-    setFileLinkUI('data', 'auth', {text: `Gekoppeld aan "${handle.name}" — toegang opnieuw autoriseren nodig.`});
-  } else if(handle){
-    setFileLinkUI('data', 'linked', {name: handle.name});
-  } else {
-    setFileLinkUI('data', 'empty', {text:'Geen bestand gekoppeld voor deze bron.'});
-  }
 
   const data = dataCache[id] || {};
   let keys = Object.keys(data).sort().reverse();
   const keysAsc = keys.slice().reverse();
   document.getElementById('data-count').textContent = '('+keys.length+')';
-  const showAll = document.getElementById('data-show-all').checked;
-  const shown = showAll ? keys : keys.slice(0,60);
+  let shown;
+  if(dataPeriodFilter === 'custom'){
+    const fromIso = document.getElementById('data-range-from').value;
+    const toIso = document.getElementById('data-range-to').value;
+    const fromKey = fromIso ? isoToKey(fromIso) : null;
+    const toKey = toIso ? isoToKey(toIso) : null;
+    shown = keys.filter(k => (!fromKey || k >= fromKey) && (!toKey || k <= toKey));
+  } else {
+    const days = DATA_PERIOD_DAYS[dataPeriodFilter];
+    if(days === null){
+      shown = keys;
+    } else {
+      const today = new Date();
+      const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+      const cutoff = new Date(todayUTC); cutoff.setUTCDate(cutoff.getUTCDate() - days);
+      shown = keys.filter(k => keyToDate(k) >= cutoff);
+    }
+  }
   emptyEl.style.display = keys.length ? 'none' : 'block';
+  selectedDataKey = null;
+  updateEditSelectedButton();
   shown.forEach(k=>{
     const tr = document.createElement('tr');
+    tr.dataset.k = k;
     const idx = keysAsc.indexOf(k);
     const prevVal = idx > 0 ? data[keysAsc[idx-1]] : null;
-    let arrow = '';
+    let diffCell = '';
     if(prevVal !== null){
-      if(data[k] > prevVal){
-        arrow = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--danger);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:4px;"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>`;
-      } else if(data[k] < prevVal){
-        arrow = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--good);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="6 13 12 19 18 13"/></svg>`;
+      const diff = data[k] - prevVal;
+      if(diff > 0){
+        diffCell = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--danger);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:3px;"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>${fmtVal(Math.abs(diff), src?.decimalen)}`;
+      } else if(diff < 0){
+        diffCell = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--good);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:3px;"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="6 13 12 19 18 13"/></svg>${fmtVal(Math.abs(diff), src?.decimalen)}`;
+      } else {
+        diffCell = '–';
       }
     }
-    tr.innerHTML = `<td>${fmtDateNL(k)}</td><td class="val">${arrow}${fmtVal(data[k], src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
-      <td class="actions-cell">
-        <button data-act="edit" data-k="${k}" aria-label="Bewerken" title="Bewerken">
-          <svg viewBox="0 0 24 24"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
-        </button>
-      </td>`;
-    tbody.appendChild(tr);
-  });
-  tbody.querySelectorAll('button[data-act=edit]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      editingDataKey = btn.dataset.k;
-      document.getElementById('datapoint-modal-title').textContent = 'Meetpunt bewerken';
-      document.getElementById('f-data-date').value = keyToIsoDate(btn.dataset.k);
-      document.getElementById('f-data-value').value = data[btn.dataset.k];
-      document.getElementById('btn-delete-datapoint').style.display = 'flex';
-      openDatapointModal();
+    tr.innerHTML = `<td>${fmtDateNL(k)}</td><td class="val">${fmtVal(data[k], src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
+      <td class="actions-cell">${diffCell}</td>`;
+    tr.addEventListener('click', ()=>{
+      const wasSelected = tr.classList.contains('selected');
+      tbody.querySelectorAll('tr.selected').forEach(r=>r.classList.remove('selected'));
+      if(wasSelected){
+        selectedDataKey = null;
+      } else {
+        tr.classList.add('selected');
+        selectedDataKey = k;
+      }
+      updateEditSelectedButton();
     });
+    tbody.appendChild(tr);
   });
 }
 
+function updateEditSelectedButton(){
+  document.getElementById('btn-edit-selected-datapoint').disabled = !selectedDataKey;
+}
+
+document.getElementById('btn-edit-selected-datapoint').addEventListener('click', ()=>{
+  const id = document.getElementById('data-source-select').value;
+  if(!id || !selectedDataKey) return;
+  const data = dataCache[id] || {};
+  editingDataKey = selectedDataKey;
+  document.getElementById('datapoint-modal-title').textContent = 'Meetpunt bewerken';
+  document.getElementById('f-data-date').value = keyToIsoDate(selectedDataKey);
+  document.getElementById('f-data-value').value = data[selectedDataKey];
+  document.getElementById('btn-delete-datapoint').style.display = 'flex';
+  openDatapointModal();
+});
+
 async function syncDataFile(id){
-  const handle = dataFileHandles[id];
-  if(!handle) return;
+  if(!dirHandle) return;
+  const src = getSource(id);
+  if(!src) return;
   try{
-    await writeHandleJson(handle, dataFileObj(dataCache[id] || {}));
-    setFileLinkUI('data', 'linked', {name: handle.name, timeText: 'bijgewerkt om '+nowTime()});
+    await writeJsonToDir(src.bestand, dataFileObj(dataCache[id] || {}));
+    dataFileExists[id] = true;
   }catch(e){
     console.error('data schrijven mislukt', e);
-    setFileLinkUI('data', 'error', {name: handle.name, timeText: 'schrijven mislukt: '+e.message});
+    alert('Schrijven naar '+src.bestand+' is mislukt: '+e.message);
   }
 }
 
 let editingDataKey = null;
+let selectedDataKey = null;
 
 function openDatapointModal(){
   document.getElementById('datapoint-modal-overlay').style.display = 'flex';
@@ -893,7 +950,7 @@ function closeDatapointModal(){
 document.getElementById('btn-open-new-datapoint').addEventListener('click', ()=>{
   const id = document.getElementById('data-source-select').value;
   if(!id){ alert('Kies eerst een bron.'); return; }
-  if(!dataFileHandles[id]){ alert('Koppel eerst een gegevensbestand voor deze bron.'); return; }
+  if(!dirHandle){ alert('Koppel eerst een werkmap (zie tabblad Bronnen).'); return; }
   editingDataKey = null;
   document.getElementById('datapoint-modal-title').textContent = 'Meetpunt toevoegen';
   document.getElementById('f-data-date').value = keyToIsoDate(dateToKey(new Date()));
@@ -919,7 +976,7 @@ document.getElementById('btn-delete-datapoint').addEventListener('click', async 
 document.getElementById('btn-add-datapoint').addEventListener('click', async ()=>{
   const id = document.getElementById('data-source-select').value;
   if(!id){ alert('Kies eerst een bron.'); return; }
-  if(!dataFileHandles[id]){ alert('Koppel eerst een gegevensbestand voor deze bron.'); return; }
+  if(!dirHandle){ alert('Koppel eerst een werkmap (zie tabblad Bronnen).'); return; }
   const iso = document.getElementById('f-data-date').value;
   const val = document.getElementById('f-data-value').value;
   if(!iso || val===''){ alert('Vul datum en waarde in.'); return; }
@@ -932,75 +989,147 @@ document.getElementById('btn-add-datapoint').addEventListener('click', async ()=
   renderDataView();
 });
 
-document.getElementById('btn-open-data').addEventListener('click', async ()=>{
-  const id = document.getElementById('data-source-select').value;
-  if(!id){ alert('Kies eerst een bron.'); return; }
-  try{
-    const [handle] = await window.showOpenFilePicker({types:[{description:'JSON', accept:{'application/json':['.json']}}]});
-    dataFileHandles[id] = handle;
-    delete dataNeedsAuth[id];
-    await idbSet('data:'+id, handle);
-    dataCache[id] = dataFileObj(await readHandleJson(handle));
-    renderDataView();
-  }catch(e){ if(e.name!=='AbortError') setFileLinkUI('data', 'empty', {text:'Openen mislukt: '+e.message}); }
-});
-
-document.getElementById('btn-new-data').addEventListener('click', async ()=>{
-  const id = document.getElementById('data-source-select').value;
-  if(!id){ alert('Kies eerst een bron.'); return; }
-  const src = getSource(id);
-  try{
-    const handle = await window.showSaveFilePicker({suggestedName: src?.bestand || (id+'.json'), types:[{description:'JSON', accept:{'application/json':['.json']}}]});
-    dataFileHandles[id] = handle;
-    delete dataNeedsAuth[id];
-    await idbSet('data:'+id, handle);
-    dataCache[id] = {};
-    await writeHandleJson(handle, {});
-    renderDataView();
-  }catch(e){ if(e.name!=='AbortError') setFileLinkUI('data', 'empty', {text:'Aanmaken mislukt: '+e.message}); }
-});
-
-document.getElementById('btn-authorize-data').addEventListener('click', async ()=>{
-  const id = document.getElementById('data-source-select').value;
-  const handle = dataFileHandles[id];
-  if(!handle) return;
-  try{
-    const perm = await handle.requestPermission({mode:'readwrite'});
-    if(perm==='granted'){
-      delete dataNeedsAuth[id];
-      dataCache[id] = dataFileObj(await readHandleJson(handle));
-      renderDataView();
-    } else { setFileLinkUI('data', 'auth', {text:'Toegang geweigerd. Probeer opnieuw of ontkoppel dit bestand.'}); }
-  }catch(e){ setFileLinkUI('data', 'auth', {text:'Autoriseren mislukt: '+e.message}); }
-});
-
-document.getElementById('btn-refresh-data').addEventListener('click', async ()=>{
-  const id = document.getElementById('data-source-select').value;
-  const handle = dataFileHandles[id];
-  if(!handle) return;
-  try{ dataCache[id] = dataFileObj(await readHandleJson(handle)); renderDataView(); }
-  catch(e){ setFileLinkUI('data', 'error', {name: handle.name, timeText: 'vernieuwen mislukt: '+e.message}); }
-});
-
-document.getElementById('btn-unlink-data').addEventListener('click', async ()=>{
-  const id = document.getElementById('data-source-select').value;
-  const src = getSource(id);
-  const ok = await showConfirm(`Gegevensbestand van "${src?.titel || id}" ontkoppelen? Het bestand zelf blijft ongewijzigd op je toestel staan.`, 'Ontkoppelen');
-  if(!ok) return;
-  delete dataFileHandles[id];
-  delete dataNeedsAuth[id];
-  await idbDelete('data:'+id);
-  renderDataView();
-});
-
 /* ================= CHART VIEW ================= */
 const PERIOD_DAYS = {'1w':7,'1m':30,'3m':91,'6m':182,'1y':365,'5y':1826,'all':null};
+let chartPeriodFilter = '1m';
 
-document.getElementById('chart-source-select').addEventListener('change', renderChartView);
-document.getElementById('chart-period-select').addEventListener('change', renderChartView);
+function getDateRange(data){
+  const keys = Object.keys(data).sort();
+  if(!keys.length) return null;
+  return {first: keys[0], last: keys[keys.length-1]};
+}
+
+document.getElementById('data-source-select').addEventListener('change', renderChartView);
+let chartPreviousPeriod = '1m';
+function setChartPeriod(period){
+  const group = document.getElementById('chart-period-filter');
+  if(period === 'custom' && chartPeriodFilter === 'custom'){
+    period = chartPreviousPeriod;
+  } else if(period === 'custom'){
+    chartPreviousPeriod = chartPeriodFilter;
+  }
+  chartPeriodFilter = period;
+  group.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.period===period));
+  document.getElementById('chart-custom-range').classList.toggle('active', period==='custom');
+  if(period==='custom'){
+    const id = document.getElementById('data-source-select').value;
+    const range = getDateRange(dataCache[id] || {});
+    const fromEl = document.getElementById('chart-range-from');
+    const toEl = document.getElementById('chart-range-to');
+    if(range){
+      if(!fromEl.value) fromEl.value = keyToIsoDate(range.first);
+      if(!toEl.value) toEl.value = keyToIsoDate(range.last);
+    }
+  }
+  updateAggButtonStates();
+  renderChartView();
+}
+document.getElementById('chart-period-filter').querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click', ()=>setChartPeriod(btn.dataset.period));
+});
+document.getElementById('chart-range-from').addEventListener('change', ()=>{ updateAggButtonStates(); renderChartView(); });
+document.getElementById('chart-range-to').addEventListener('change', ()=>{ updateAggButtonStates(); renderChartView(); });
+
+let chartAggMode = 'd';
+const AGG_DAYS = {d:1, w:7, m:30, q:91, y:365};
+function getPeriodDaysForFilter(){
+  if(chartPeriodFilter==='custom'){
+    const fromIso = document.getElementById('chart-range-from').value;
+    const toIso = document.getElementById('chart-range-to').value;
+    if(!fromIso || !toIso) return null;
+    const oneDayMs = 24*60*60*1000;
+    return (keyToDate(isoToKey(toIso)) - keyToDate(isoToKey(fromIso))) / oneDayMs;
+  }
+  return PERIOD_DAYS[chartPeriodFilter];
+}
+function updateAggButtonStates(){
+  const periodDays = getPeriodDaysForFilter();
+  const buttons = document.getElementById('chart-agg-filter').querySelectorAll('button');
+  buttons.forEach(btn=>{
+    const agg = btn.dataset.agg;
+    const disable = agg!=='d' && periodDays!=null && periodDays < 2*AGG_DAYS[agg];
+    btn.disabled = disable;
+  });
+  const activeBtn = document.getElementById('chart-agg-filter').querySelector('button.active');
+  if(activeBtn && activeBtn.disabled){
+    chartAggMode = 'd';
+    buttons.forEach(b=>b.classList.toggle('active', b.dataset.agg==='d'));
+  }
+}
+document.getElementById('chart-agg-filter').querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    chartAggMode = btn.dataset.agg;
+    document.getElementById('chart-agg-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b===btn));
+    renderChartView();
+  });
+});
+updateAggButtonStates();
+
+const AGG_MAX_GAP_DAYS = {d:1, w:10, m:40, q:100, y:400};
+function getWeekStart(date){
+  const d = new Date(date);
+  const day = d.getUTCDay();
+  const diff = (day===0 ? -6 : 1-day);
+  d.setUTCDate(d.getUTCDate()+diff);
+  return d;
+}
+function getMonthStart(date){ return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)); }
+function getQuarterStart(date){ const q = Math.floor(date.getUTCMonth()/3); return new Date(Date.UTC(date.getUTCFullYear(), q*3, 1)); }
+function getYearStart(date){ return new Date(Date.UTC(date.getUTCFullYear(), 0, 1)); }
+
+function aggregatePoints(points, mode){
+  if(mode==='d' || !points.length) return points;
+  const groupFn = mode==='w' ? getWeekStart : mode==='m' ? getMonthStart : mode==='q' ? getQuarterStart : getYearStart;
+  const groups = new Map();
+  points.forEach(p=>{
+    const key = groupFn(p.date).getTime();
+    if(!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(p.value);
+  });
+  return Array.from(groups.entries())
+    .sort((a,b)=>a[0]-b[0])
+    .map(([t,vals])=>({ date: new Date(t), value: vals.reduce((s,v)=>s+v,0)/vals.length }));
+}
+
+/* Berekent voor de huidige bron+periode de punten en het bereik van de x-as.
+   Wordt gedeeld door de Grafiek-tab en de XmR-tab. */
+async function getChartPointsForCurrentSelection(){
+  const id = document.getElementById('data-source-select').value;
+  if(!id) return null;
+  await ensureDataLoaded(id);
+  const src = getSource(id);
+  const data = dataCache[id] || {};
+  if(!dirHandle) return {id, src, points: [], chartXMin: null, rangeEnd: null, noDir: true};
+
+  const periodKey = chartPeriodFilter;
+  const today = new Date();
+  const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+
+  let cutoff, rangeEnd, isAll;
+  if(periodKey === 'custom'){
+    const fromIso = document.getElementById('chart-range-from').value;
+    const toIso = document.getElementById('chart-range-to').value;
+    cutoff = fromIso ? keyToDate(isoToKey(fromIso)) : new Date(Date.UTC(1970,0,1));
+    rangeEnd = toIso ? keyToDate(isoToKey(toIso)) : todayUTC;
+    isAll = !fromIso;
+  } else {
+    const days = PERIOD_DAYS[periodKey];
+    cutoff = days===null ? new Date(Date.UTC(1970,0,1)) : (()=>{ const c = new Date(todayUTC); c.setUTCDate(c.getUTCDate()-days); return c; })();
+    rangeEnd = todayUTC;
+    isAll = days===null;
+  }
+
+  const points = Object.entries(data)
+    .map(([k,v])=>({key:k, date:keyToDate(k), value:Number(v)}))
+    .filter(p => p.date >= cutoff && p.date <= rangeEnd)
+    .sort((a,b)=>a.date-b.date);
+
+  const chartXMin = (isAll && points.length) ? points[0].date : cutoff;
+  return {id, src, points, chartXMin, rangeEnd};
+}
 
 async function renderChartView(){
-  const id = document.getElementById('chart-source-select').value;
+  const id = document.getElementById('data-source-select').value;
   const statsEl = document.getElementById('chart-stats');
   const noteEl = document.getElementById('chart-note');
   const canvas = document.getElementById('chart-canvas');
@@ -1010,25 +1139,16 @@ async function renderChartView(){
   noteEl.textContent = '';
   if(!id){ noteEl.textContent = 'Geen bron geselecteerd.'; return; }
 
-  await ensureDataHandleHydrated(id);
-  const src = getSource(id);
-  const data = dataCache[id] || {};
-  if(!dataFileHandles[id]){
-    noteEl.textContent = 'Geen gegevensbestand gekoppeld voor deze bron (koppel dit op het tabblad Data).';
-    return;
-  }
-
-  const periodKey = document.getElementById('chart-period-select').value;
-  const days = PERIOD_DAYS[periodKey];
-
-  const today = new Date();
-  const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
-  const cutoff = days===null ? new Date(Date.UTC(1970,0,1)) : (()=>{ const c = new Date(todayUTC); c.setUTCDate(c.getUTCDate()-days); return c; })();
-
-  const points = Object.entries(data)
-    .map(([k,v])=>({key:k, date:keyToDate(k), value:Number(v)}))
-    .filter(p => p.date >= cutoff && p.date <= todayUTC)
-    .sort((a,b)=>a.date-b.date);
+  const sel = await getChartPointsForCurrentSelection();
+  if(sel.noDir){ noteEl.textContent = 'Geen werkmap gekoppeld (zie tabblad Bronnen).'; return; }
+  const {src, rangeEnd} = sel;
+  const points = aggregatePoints(sel.points, chartAggMode);
+  const chartXMin = points.length
+    ? new Date(Math.min(sel.chartXMin.getTime(), points[0].date.getTime()))
+    : sel.chartXMin;
+  const chartXMax = points.length
+    ? new Date(Math.max(rangeEnd.getTime(), points[points.length-1].date.getTime()))
+    : rangeEnd;
 
   const n = points.length;
   let mean=null, sigma=null;
@@ -1041,26 +1161,30 @@ async function renderChartView(){
   }
 
   const dec = src?.decimalen ?? 1;
-  const unit = src?.eenheid || '';
   if(n===0){
-    statsEl.innerHTML = `<div class="stat"><div class="num">0</div><div class="lbl"><span style="text-transform:none;">n</span></div></div>`;
+    statsEl.innerHTML = `<div class="stat"><span style="text-transform:none;">n</span> = 0</div>`;
     noteEl.textContent = 'Geen meetwaarden in de geselecteerde periode.';
     return;
   }
+  let rBar = null;
+  if(n>=2){
+    let sum = 0;
+    for(let i=1;i<points.length;i++) sum += Math.abs(points[i].value - points[i-1].value);
+    rBar = sum / (n-1);
+  }
   statsEl.innerHTML = `
-    <div class="stat"><div class="num">${n}</div><div class="lbl"><span style="text-transform:none;">n</span></div></div>
-    <div class="stat accent"><div class="num">${fmtVal(mean,dec)}</div><div class="lbl"><span style="position:relative;display:inline-block;vertical-align:baseline;text-transform:none;">x<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span> <span style="vertical-align:baseline;color:var(--muted);text-transform:none;">${unit}</span></div></div>
-    <div class="stat"><div class="num">${sigma>0?fmtVal(sigma,dec):'–'}</div><div class="lbl"><span style="text-transform:none;">σₙ₋₁</span></div></div>`;
+    <div class="stat"><span style="text-transform:none;">n</span>=${n}</div>
+    <div class="stat accent"><span style="position:relative;display:inline-block;vertical-align:baseline;text-transform:none;">x<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>=${fmtVal(mean,dec)}</div>
+    <div class="stat"><span style="text-transform:none;">σₙ₋₁</span>=${sigma>0?fmtVal(sigma,dec):'–'}</div>
+    <div class="stat"><span style="position:relative;display:inline-block;vertical-align:baseline;text-transform:none;">r<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>=${rBar!=null?fmtVal(rBar,dec):'–'}</div>`;
 
-  const chartXMin = (days===null && points.length) ? points[0].date : cutoff;
-  noteEl.textContent = n<2
-    ? 'Minder dan 2 metingen in deze periode: regelgrenzen kunnen niet betrouwbaar berekend worden.'
-    : '';
+  noteEl.textContent = '';
 
-  drawChart(ctx, canvas, points, mean, sigma, src, chartXMin, todayUTC);
+  drawChart(ctx, canvas, points, mean, sigma, src, chartXMin, chartXMax, AGG_MAX_GAP_DAYS[chartAggMode]);
 }
 
-function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax){
+function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays){
+  maxGapDays = maxGapDays ?? 1;
   const dpr = window.devicePixelRatio || 1;
   const cssW = canvas.clientWidth || 880, cssH = 220;
   canvas.width = cssW*dpr; canvas.height = cssH*dpr;
@@ -1142,7 +1266,7 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax){
         ctx.moveTo(x,y);
       } else {
         const gapDays = (p.date - points[i-1].date) / oneDayMs;
-        if(gapDays > 1) ctx.moveTo(x,y);
+        if(gapDays > maxGapDays) ctx.moveTo(x,y);
         else ctx.lineTo(x,y);
       }
     });
@@ -1164,9 +1288,9 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax){
 /* ================= boot ================= */
 if(!supportsFSA){
   document.getElementById('unsupported-banner').style.display = 'block';
-  ['btn-open-meta','btn-new-meta','btn-open-data','btn-new-data'].forEach(id=>document.getElementById(id).disabled = true);
+  document.getElementById('btn-open-dir').disabled = true;
 } else {
-  bootMeta();
+  bootDir();
 }
 
 if('serviceWorker' in navigator){
