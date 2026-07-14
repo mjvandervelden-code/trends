@@ -101,9 +101,10 @@
   .source-row{
     display:flex;justify-content:space-between;align-items:center;gap:10px;
     background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;
+    cursor:pointer;
   }
+  .source-row.selected{background:rgba(79,209,197,0.30);border-color:var(--accent);}
   .source-row .title{font-weight:400;font-size:21px;}
-  .source-row .btns{display:flex;gap:6px;}
   .source-row button{
     background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;
     width:42px;height:42px;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;
@@ -177,6 +178,13 @@
     stroke-linecap:round;stroke-linejoin:round;}
   .icon-btn-sm:hover{color:var(--text);border-color:var(--accent);}
   .icon-btn-sm:disabled{opacity:.4;cursor:not-allowed;}
+  .icon-btn-prominent{
+    background:var(--accent);border-color:var(--accent);color:#08221f;
+    width:46px;height:46px;
+  }
+  .icon-btn-prominent svg{width:22px;height:22px;}
+  .icon-btn-prominent:hover{color:#08221f;border-color:var(--accent);opacity:.85;}
+  .icon-btn-prominent:disabled{opacity:.35;}
 
   .segmented{display:flex;flex-wrap:nowrap;gap:4px;margin-bottom:12px;}
   .segmented button{
@@ -200,9 +208,11 @@
 
   .modal-overlay{
     position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;
-    display:flex;align-items:center;justify-content:center;padding:24px;
+    display:flex;justify-content:center;overflow-y:auto;padding:24px;
+    -webkit-overflow-scrolling:touch;
   }
   .modal-box{
+    margin:auto;
     background:var(--panel);border:1px solid var(--line);border-radius:12px;
     padding:20px;max-width:360px;width:100%;
   }
@@ -253,9 +263,14 @@
     <div class="panel" style="margin-top:-20px;">
       <div class="panel-header">
         <h2><span class="accent-title">Bronnen</span> <span class="sub" id="source-count"></span></h2>
-        <button class="icon-btn-sm" id="btn-open-new-source" title="Nieuwe bron" aria-label="Nieuwe bron toevoegen">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
+        <div style="display:flex;gap:8px;">
+          <button class="icon-btn-sm icon-btn-prominent" id="btn-edit-selected-source" title="Wijzig geselecteerde bron" aria-label="Wijzig geselecteerde bron" disabled>
+            <svg viewBox="0 0 24 24"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+          </button>
+          <button class="icon-btn-sm icon-btn-prominent" id="btn-open-new-source" title="Nieuwe bron" aria-label="Nieuwe bron toevoegen">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
       </div>
       <div class="source-list" id="source-list"></div>
       <div class="empty" id="source-empty" style="display:none;">Nog geen bronnen. Koppel eerst een metadatabestand hierboven.</div>
@@ -272,7 +287,7 @@
           <div class="field"><label>Min</label><input type="number" id="f-min" placeholder="0"></div>
           <div class="field"><label>Max</label><input type="number" id="f-max" placeholder="250"></div>
           <div class="field"><label>Doelwaarde</label><input type="number" id="f-doelx" placeholder="optioneel" step="any"></div>
-          <div class="field"><label>Doel-spreiding (optioneel)</label><input type="number" id="f-doelr" placeholder="optioneel" step="any"></div>
+          <div class="field"><label>Doel-spreiding</label><input type="number" id="f-doelr" placeholder="optioneel" step="any"></div>
         </div>
         <div class="hint" id="meta-form-hint"></div>
         <div class="actions" style="flex-wrap:nowrap;margin-top:8px;">
@@ -298,10 +313,10 @@
       <div class="panel-header">
         <h2 class="accent-title">Meetwaarden <span class="sub" id="data-count"></span></h2>
         <div style="display:flex;gap:8px;">
-          <button class="icon-btn-sm" id="btn-edit-selected-datapoint" title="Wijzig geselecteerd meetpunt" aria-label="Wijzig geselecteerd meetpunt" disabled>
+          <button class="icon-btn-sm icon-btn-prominent" id="btn-edit-selected-datapoint" title="Wijzig geselecteerd meetpunt" aria-label="Wijzig geselecteerd meetpunt" disabled>
             <svg viewBox="0 0 24 24"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
           </button>
-          <button class="icon-btn-sm" id="btn-open-new-datapoint" title="Meetpunt toevoegen" aria-label="Meetpunt toevoegen">
+          <button class="icon-btn-sm icon-btn-prominent" id="btn-open-new-datapoint" title="Meetpunt toevoegen" aria-label="Meetpunt toevoegen">
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
         </div>
@@ -333,7 +348,7 @@
         <h2 id="datapoint-modal-title">Meetpunt toevoegen</h2>
         <div class="grid2">
           <div class="field"><label>Datum</label><input type="date" id="f-data-date"></div>
-          <div class="field"><label>Waarde</label><input type="number" id="f-data-value" step="any"></div>
+          <div class="field"><label>Waarde</label><input type="text" inputmode="decimal" id="f-data-value"></div>
         </div>
         <div class="actions" style="flex-wrap:nowrap;margin-top:8px;">
           <button class="icon-btn-sm" id="btn-delete-datapoint" aria-label="Verwijderen" title="Verwijderen" style="display:none;">
@@ -349,7 +364,7 @@
   <!-- CHART VIEW -->
   <section id="view-chart" class="view">
     <div class="panel">
-      <h2 class="accent-title" id="chart-source-name" style="text-align:center;margin-bottom:20px;"></h2>
+      <h2 class="accent-title" id="chart-source-name" style="text-align:center;margin-bottom:20px;color:var(--text);"></h2>
 
       <h2 class="accent-title" style="font-size:16px;margin-bottom:14px;">Controlekaart</h2>
       <div class="stats-row" id="chart-stats"></div>
@@ -409,9 +424,9 @@
 <div id="confirm-overlay" class="modal-overlay" style="display:none;">
   <div class="modal-box">
     <p id="confirm-text"></p>
-    <div class="actions" style="justify-content:flex-end;">
-      <button class="btn secondary" id="confirm-cancel">Annuleren</button>
-      <button class="btn danger" id="confirm-ok">Verwijderen</button>
+    <div class="actions" style="justify-content:flex-end;flex-wrap:nowrap;">
+      <button class="btn secondary compact" id="confirm-cancel" style="flex:1;">Annuleren</button>
+      <button class="btn danger compact" id="confirm-ok" style="flex:1;">Verwijderen</button>
     </div>
   </div>
 </div>
@@ -645,21 +660,37 @@ function renderMetaView(){
 function renderSourceList(){
   const list = document.getElementById('source-list');
   list.innerHTML = '';
+  selectedSourceId = null;
+  updateEditSelectedSourceButton();
   bronnen.forEach(b=>{
     const row = document.createElement('div');
     row.className = 'source-row';
-    row.innerHTML = `
-      <div class="title">${escapeHtml(b.titel)}</div>
-      <div class="btns">
-        <button data-act="edit" data-id="${b.id}" aria-label="Bewerken" title="Bewerken">
-          <svg viewBox="0 0 24 24"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
-        </button>
-      </div>`;
+    row.dataset.id = b.id;
+    row.innerHTML = `<div class="title">${escapeHtml(b.titel)}</div>`;
+    row.addEventListener('click', ()=>{
+      const wasSelected = row.classList.contains('selected');
+      list.querySelectorAll('.source-row.selected').forEach(r=>r.classList.remove('selected'));
+      if(wasSelected){
+        selectedSourceId = null;
+      } else {
+        row.classList.add('selected');
+        selectedSourceId = b.id;
+      }
+      updateEditSelectedSourceButton();
+    });
     list.appendChild(row);
   });
-  list.querySelectorAll('button[data-act=edit]').forEach(btn=>btn.addEventListener('click', ()=>editSource(btn.dataset.id)));
   renderMetaView();
 }
+
+let selectedSourceId = null;
+function updateEditSelectedSourceButton(){
+  document.getElementById('btn-edit-selected-source').disabled = !selectedSourceId;
+}
+document.getElementById('btn-edit-selected-source').addEventListener('click', ()=>{
+  if(!selectedSourceId) return;
+  editSource(selectedSourceId);
+});
 
 function openSourceModal(){
   document.getElementById('source-modal-overlay').style.display = 'flex';
@@ -914,9 +945,39 @@ document.getElementById('btn-edit-selected-datapoint').addEventListener('click',
   editingDataKey = selectedDataKey;
   document.getElementById('datapoint-modal-title').textContent = 'Meetpunt bewerken';
   document.getElementById('f-data-date').value = keyToIsoDate(selectedDataKey);
+  applyValueInputConstraints(getSource(id));
   document.getElementById('f-data-value').value = data[selectedDataKey];
   document.getElementById('btn-delete-datapoint').style.display = 'flex';
   openDatapointModal();
+});
+
+let valueInputDecimals = 1;
+function applyValueInputConstraints(src){
+  const el = document.getElementById('f-data-value');
+  el.min = (src?.min ?? null) !== null ? src.min : '';
+  el.max = (src?.max ?? null) !== null ? src.max : '';
+  const dec = src?.decimalen ?? 1;
+  el.step = dec>0 ? (1/Math.pow(10,dec)).toString() : '1';
+  valueInputDecimals = dec;
+}
+document.getElementById('f-data-value').addEventListener('input', (e)=>{
+  let v = e.target.value;
+  let cleaned = v.replace(/,/g, '.').replace(/[^0-9.\-]/g, '');
+  // maximaal één punt en één min-teken (vooraan) toestaan
+  cleaned = cleaned.replace(/(?!^)-/g, '');
+  const firstDot = cleaned.indexOf('.');
+  if(firstDot !== -1){
+    cleaned = cleaned.slice(0, firstDot+1) + cleaned.slice(firstDot+1).replace(/\./g, '');
+  }
+  if(valueInputDecimals === 0){
+    cleaned = cleaned.replace(/\./g, '');
+  } else {
+    const parts = cleaned.split('.');
+    if(parts.length > 1 && parts[1].length > valueInputDecimals){
+      cleaned = parts[0] + '.' + parts[1].slice(0, valueInputDecimals);
+    }
+  }
+  if(cleaned !== v) e.target.value = cleaned;
 });
 
 async function syncDataFile(id){
@@ -947,16 +1008,38 @@ function closeDatapointModal(){
   document.getElementById('btn-delete-datapoint').style.display = 'none';
 }
 
+function getDefaultDatapointValue(id, iso){
+  const data = dataCache[id] || {};
+  const prevKey = dateToKey(new Date(keyToDate(isoToKey(iso)).getTime() - 24*60*60*1000));
+  if(data[prevKey] != null) return data[prevKey];
+  const vals = Object.values(data).filter(v=>v!=null && !isNaN(v));
+  if(vals.length) return vals.reduce((s,v)=>s+v,0)/vals.length;
+  return null;
+}
+
 document.getElementById('btn-open-new-datapoint').addEventListener('click', ()=>{
   const id = document.getElementById('data-source-select').value;
   if(!id){ alert('Kies eerst een bron.'); return; }
   if(!dirHandle){ alert('Koppel eerst een werkmap (zie tabblad Bronnen).'); return; }
   editingDataKey = null;
   document.getElementById('datapoint-modal-title').textContent = 'Meetpunt toevoegen';
-  document.getElementById('f-data-date').value = keyToIsoDate(dateToKey(new Date()));
-  document.getElementById('f-data-value').value = '';
+  const iso = keyToIsoDate(dateToKey(new Date()));
+  document.getElementById('f-data-date').value = iso;
+  const src = getSource(id);
+  applyValueInputConstraints(src);
+  const def = getDefaultDatapointValue(id, iso);
+  document.getElementById('f-data-value').value = def!=null ? fmtVal(def, src?.decimalen) : '';
   document.getElementById('btn-delete-datapoint').style.display = 'none';
   openDatapointModal();
+});
+document.getElementById('f-data-date').addEventListener('change', ()=>{
+  if(editingDataKey) return; // alleen standaardwaarde toepassen bij een nieuw meetpunt
+  const id = document.getElementById('data-source-select').value;
+  const iso = document.getElementById('f-data-date').value;
+  if(!id || !iso) return;
+  const def = getDefaultDatapointValue(id, iso);
+  const src = getSource(id);
+  document.getElementById('f-data-value').value = def!=null ? fmtVal(def, src?.decimalen) : '';
 });
 document.getElementById('btn-cancel-datapoint').addEventListener('click', closeDatapointModal);
 document.getElementById('datapoint-modal-overlay').addEventListener('click', (e)=>{
@@ -978,12 +1061,29 @@ document.getElementById('btn-add-datapoint').addEventListener('click', async ()=
   if(!id){ alert('Kies eerst een bron.'); return; }
   if(!dirHandle){ alert('Koppel eerst een werkmap (zie tabblad Bronnen).'); return; }
   const iso = document.getElementById('f-data-date').value;
-  const val = document.getElementById('f-data-value').value;
+  const valueEl = document.getElementById('f-data-value');
+  const val = valueEl.value;
   if(!iso || val===''){ alert('Vul datum en waarde in.'); return; }
+  const num = Number(val);
+  if(isNaN(num)){ alert('Ongeldige waarde.'); return; }
+  const src = getSource(id);
+  if(src?.min != null && num < src.min){ alert(`Waarde moet minimaal ${src.min} zijn.`); return; }
+  if(src?.max != null && num > src.max){ alert(`Waarde moet maximaal ${src.max} zijn.`); return; }
+  const dec = src?.decimalen ?? 1;
+  const decimalsInInput = val.includes('.') ? val.split('.')[1].length : 0;
+  if(decimalsInInput > dec){
+    alert(`Deze bron staat maximaal ${dec} decima${dec===1?'al':'len'} toe.`);
+    return;
+  }
   dataCache[id] = dataCache[id] || {};
   const newKey = isoToKey(iso);
+  const willOverwrite = newKey !== editingDataKey && dataCache[id][newKey] != null;
+  if(willOverwrite){
+    const ok = await showConfirm(`Er bestaat al een meting op ${fmtDateNL(newKey)} (${fmtVal(dataCache[id][newKey], dec)} ${src?.eenheid||''}). Wil je die overschrijven?`, 'Overschrijven');
+    if(!ok) return;
+  }
   if(editingDataKey && editingDataKey !== newKey) delete dataCache[id][editingDataKey];
-  dataCache[id][newKey] = Number(val);
+  dataCache[id][newKey] = num;
   await syncDataFile(id);
   closeDatapointModal();
   renderDataView();
@@ -1284,6 +1384,25 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
     ctx.beginPath(); ctx.arc(x,y,3.4,0,Math.PI*2); ctx.fillStyle = color; ctx.fill();
   });
 }
+
+/* Zorgt dat een gefocust invoerveld in een modal zichtbaar blijft
+   zodra het toetsenbord opengaat (voorkomt dat het veld erachter verdwijnt). */
+function scrollFocusedIntoView(){
+  const el = document.activeElement;
+  if(!el || !(el.tagName==='INPUT' || el.tagName==='SELECT')) return;
+  if(!el.closest('.modal-overlay')) return;
+  el.scrollIntoView({block:'center', behavior:'smooth'});
+}
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', ()=>{
+    setTimeout(scrollFocusedIntoView, 50);
+  });
+}
+document.addEventListener('focusin', (e)=>{
+  if(e.target.closest('.modal-overlay')){
+    setTimeout(scrollFocusedIntoView, 300);
+  }
+});
 
 /* ================= boot ================= */
 if(!supportsFSA){
