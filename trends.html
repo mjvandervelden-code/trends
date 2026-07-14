@@ -364,19 +364,11 @@
   <!-- CHART VIEW -->
   <section id="view-chart" class="view">
     <div class="panel">
-      <h2 class="accent-title" id="chart-source-name" style="text-align:center;margin-bottom:20px;color:var(--text);"></h2>
+      <h2 class="accent-title" id="chart-source-name" style="text-align:center;margin-bottom:12px;"></h2>
 
-      <h2 class="accent-title" style="font-size:16px;margin-bottom:14px;">Controlekaart</h2>
       <div class="stats-row" id="chart-stats"></div>
 
       <canvas id="chart-canvas" width="880" height="220"></canvas>
-
-      <div class="legend">
-        <span><span class="swatch" style="background:var(--accent);"></span><span style="position:relative;display:inline-block;text-transform:none;">x<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span></span>
-        <span><span class="swatch" style="background:var(--warn);"></span>±2σ</span>
-        <span><span class="swatch" style="background:var(--danger);"></span>±3σ</span>
-        <span><span class="swatch" style="background:var(--muted);"></span>doel</span>
-      </div>
 
       <div class="segmented" id="chart-agg-filter" style="margin-top:18px;">
         <button data-agg="d" class="active">dag</button>
@@ -401,6 +393,14 @@
         <div class="field"><label>Van</label><input type="date" id="chart-range-from"></div>
         <div class="field"><label>Tot</label><input type="date" id="chart-range-to"></div>
       </div>
+
+      <div style="max-height:480px;overflow:auto;margin-top:20px;">
+        <table>
+
+          <tbody id="chart-table-body"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="chart-table-empty" style="display:none;">Geen meetwaarden in de geselecteerde periode.</div>
     </div>
   </section>
 
@@ -494,8 +494,39 @@ async function readJsonFromDir(name){
   }
 }
 async function writeJsonToDir(name, obj){
+  await maybeBackupFile(name);
   const handle = await dirHandle.getFileHandle(name, {create:true});
   await writeHandleJson(handle, obj);
+}
+
+function backupFilename(name){
+  const dot = name.lastIndexOf('.');
+  return dot === -1 ? name+'_backup' : name.slice(0,dot)+'_backup'+name.slice(dot);
+}
+
+/* Bij de eerste wijziging van de dag per bestand: huidige inhoud
+   wegschrijven naar <naam>_backup.json vóórdat het echte bestand
+   wordt overschreven. Daarna niet meer, tot de volgende kalenderdag. */
+async function maybeBackupFile(name){
+  const today = dateToKey(new Date());
+  const idbKey = 'backup:'+name;
+  let last = null;
+  try{ last = await idbGet(idbKey); }catch(e){}
+  if(last === today) return;
+  try{
+    const existing = await dirHandle.getFileHandle(name).catch(()=>null);
+    if(existing){
+      const file = await existing.getFile();
+      const text = await file.text();
+      const backupHandle = await dirHandle.getFileHandle(backupFilename(name), {create:true});
+      const writable = await backupHandle.createWritable();
+      await writable.write(text);
+      await writable.close();
+    }
+  }catch(e){
+    console.error('backup mislukt voor', name, e);
+  }
+  try{ await idbSet(idbKey, today); }catch(e){}
 }
 
 /* ================= state ================= */
@@ -504,7 +535,7 @@ let dataCache = {};      // id -> {YYYYMMDD: value}
 let dataFileExists = {}; // id -> bool (bestaat het gegevensbestand al in de werkmap?)
 let dirHandle = null;    // FileSystemDirectoryHandle van de gekoppelde werkmap
 let editingId = null;
-const META_FILENAME = 'mvtrends.json';
+const META_FILENAME = 'trends.json';
 
 const supportsFSA = 'showDirectoryPicker' in window;
 
@@ -938,17 +969,22 @@ function updateEditSelectedButton(){
   document.getElementById('btn-edit-selected-datapoint').disabled = !selectedDataKey;
 }
 
+function openEditDatapointModal(id, key){
+  const data = dataCache[id] || {};
+  if(data[key] == null) return;
+  editingDataKey = key;
+  document.getElementById('datapoint-modal-title').textContent = 'Meetpunt bewerken';
+  document.getElementById('f-data-date').value = keyToIsoDate(key);
+  applyValueInputConstraints(getSource(id));
+  document.getElementById('f-data-value').value = data[key];
+  document.getElementById('btn-delete-datapoint').style.display = 'flex';
+  openDatapointModal();
+}
+
 document.getElementById('btn-edit-selected-datapoint').addEventListener('click', ()=>{
   const id = document.getElementById('data-source-select').value;
   if(!id || !selectedDataKey) return;
-  const data = dataCache[id] || {};
-  editingDataKey = selectedDataKey;
-  document.getElementById('datapoint-modal-title').textContent = 'Meetpunt bewerken';
-  document.getElementById('f-data-date').value = keyToIsoDate(selectedDataKey);
-  applyValueInputConstraints(getSource(id));
-  document.getElementById('f-data-value').value = data[selectedDataKey];
-  document.getElementById('btn-delete-datapoint').style.display = 'flex';
-  openDatapointModal();
+  openEditDatapointModal(id, selectedDataKey);
 });
 
 let valueInputDecimals = 1;
@@ -1017,7 +1053,7 @@ function getDefaultDatapointValue(id, iso){
   return null;
 }
 
-document.getElementById('btn-open-new-datapoint').addEventListener('click', ()=>{
+function openNewDatapointModal(){
   const id = document.getElementById('data-source-select').value;
   if(!id){ alert('Kies eerst een bron.'); return; }
   if(!dirHandle){ alert('Koppel eerst een werkmap (zie tabblad Bronnen).'); return; }
@@ -1031,7 +1067,8 @@ document.getElementById('btn-open-new-datapoint').addEventListener('click', ()=>
   document.getElementById('f-data-value').value = def!=null ? fmtVal(def, src?.decimalen) : '';
   document.getElementById('btn-delete-datapoint').style.display = 'none';
   openDatapointModal();
-});
+}
+document.getElementById('btn-open-new-datapoint').addEventListener('click', openNewDatapointModal);
 document.getElementById('f-data-date').addEventListener('change', ()=>{
   if(editingDataKey) return; // alleen standaardwaarde toepassen bij een nieuw meetpunt
   const id = document.getElementById('data-source-select').value;
@@ -1054,6 +1091,7 @@ document.getElementById('btn-delete-datapoint').addEventListener('click', async 
   await syncDataFile(id);
   closeDatapointModal();
   renderDataView();
+  renderChartView();
 });
 
 document.getElementById('btn-add-datapoint').addEventListener('click', async ()=>{
@@ -1087,6 +1125,7 @@ document.getElementById('btn-add-datapoint').addEventListener('click', async ()=
   await syncDataFile(id);
   closeDatapointModal();
   renderDataView();
+  renderChartView();
 });
 
 /* ================= CHART VIEW ================= */
@@ -1237,6 +1276,8 @@ async function renderChartView(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   statsEl.innerHTML = '';
   noteEl.textContent = '';
+  document.getElementById('chart-table-body').innerHTML = '';
+  document.getElementById('chart-table-empty').style.display = 'block';
   if(!id){ noteEl.textContent = 'Geen bron geselecteerd.'; return; }
 
   const sel = await getChartPointsForCurrentSelection();
@@ -1281,8 +1322,35 @@ async function renderChartView(){
   noteEl.textContent = '';
 
   drawChart(ctx, canvas, points, mean, sigma, src, chartXMin, chartXMax, AGG_MAX_GAP_DAYS[chartAggMode]);
+  renderChartTable(points, src);
 }
 
+function renderChartTable(points, src){
+  const tbody = document.getElementById('chart-table-body');
+  const emptyEl = document.getElementById('chart-table-empty');
+  tbody.innerHTML = '';
+  emptyEl.style.display = points.length ? 'none' : 'block';
+  const dec = src?.decimalen ?? 1;
+  const rows = points.slice().reverse();
+  rows.forEach((p,idx)=>{
+    const prev = rows[idx+1];
+    let diffCell = '';
+    if(prev){
+      const diff = p.value - prev.value;
+      if(diff > 0){
+        diffCell = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--danger);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:3px;"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>${fmtVal(Math.abs(diff), dec)}`;
+      } else if(diff < 0){
+        diffCell = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--good);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:3px;"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="6 13 12 19 18 13"/></svg>${fmtVal(Math.abs(diff), dec)}`;
+      } else {
+        diffCell = '–';
+      }
+    }
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${fmtDateNL(dateToKey(p.date))}</td><td class="val">${fmtVal(p.value, dec)} ${escapeHtml(src?.eenheid||'')}</td>
+      <td class="actions-cell">${diffCell}</td>`;
+    tbody.appendChild(tr);
+  });
+}
 function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays){
   maxGapDays = maxGapDays ?? 1;
   const dpr = window.devicePixelRatio || 1;
