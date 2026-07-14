@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trends</title>
+<meta name="theme-color" content="#0f1417">
+<meta name="description" content="Trend data analyseren, bewerken en visualiseren als controlekaart.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+  :root{
+    --bg:#0f1417;
+    --panel:#161d21;
+    --panel-2:#1c242a;
+    --line:#28323a;
+    --text:#e7edf0;
+    --muted:#8a99a1;
+    --accent:#4fd1c5;
+    --accent-dim:#2f6f6a;
+    --warn:#f0a84f;
+    --danger:#ef5b5b;
+    --good:#6fcf97;
+    --mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);height:100%;}
+  body{
+    display:flex;flex-direction:column;overflow:hidden;
+    height:100vh;height:100dvh;
+  }
+  header{
+    flex:0 0 auto;
+    padding:22px 18px 14px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#131a1d,#0f1417);
+  }
+  header .eyebrow{
+    font-family:var(--mono);font-size:17px;letter-spacing:.14em;color:var(--accent);
+    text-transform:uppercase;margin-bottom:4px;
+  }
+  header h1{margin:0;font-size:33px;font-weight:650;letter-spacing:-.01em;}
+  header p{margin:4px 0 0;color:var(--muted);font-size:20px;}
+
+  nav.tabs{
+    flex:0 0 auto;
+    display:flex;gap:2px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));
+    background:#12181c;border-top:1px solid var(--line);
+    max-width:920px;width:100%;margin:0 auto;
+  }
+  nav.tabs button{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    background:none;border:none;color:var(--muted);font-family:var(--sans);font-size:14.5px;
+    font-weight:600;padding:8px 4px;cursor:pointer;border-radius:8px;
+  }
+  nav.tabs button svg{width:24px;height:24px;stroke:var(--muted);fill:none;stroke-width:1.8;}
+  nav.tabs button.active{color:var(--accent);background:#1a2226;}
+  nav.tabs button.active svg{stroke:var(--accent);}
+  nav.tabs button:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible{
+    outline:2px solid var(--accent);outline-offset:2px;
+  }
+
+  main{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;max-width:920px;margin:0 auto;padding:18px 14px 24px;width:100%;}
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .panel{
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:16px;margin-bottom:16px;
+  }
+  .panel h2{margin:0 0 12px;font-size:24px;letter-spacing:.02em;color:var(--text);}
+  .accent-title{color:var(--accent);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;font-size:18px;}
+  .panel h2.accent-title{color:var(--accent);font-size:18px;}
+  .panel h2 .sub{color:var(--muted);font-weight:500;font-size:18px;}
+  .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .panel-header h2{margin:0;}
+  .panel-header .icon-btn-sm{width:38px;height:38px;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media (max-width:520px){.grid2{grid-template-columns:1fr;}}
+
+  label{display:block;font-size:17px;color:var(--muted);margin-bottom:6px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;}
+  input[type=text],input[type=number],input[type=date],select{
+    width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    padding:13px 14px;border-radius:8px;font-family:var(--mono);font-size:21px;margin-bottom:12px;
+  }
+  .field{margin-bottom:0;}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+  button.btn{
+    background:var(--accent);color:#08221f;border:none;border-radius:6px;padding:9px 14px;
+    font-family:var(--sans);font-weight:650;font-size:20px;cursor:pointer;padding:12px 18px;
+  }
+  button.btn.compact{padding:11px 18px;font-size:17px;}
+  button.btn.secondary{background:var(--panel-2);color:var(--text);border:1px solid var(--line);}
+  button.btn.warn{background:var(--warn);color:#2a1a02;}
+  button.btn.danger{background:var(--danger);color:#2a0808;}
+  button.btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  .source-list{display:flex;flex-direction:column;gap:6px;}
+  .source-row{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;
+  }
+  .source-row .title{font-weight:650;font-size:21px;}
+  .source-row .btns{display:flex;gap:6px;}
+  .source-row button{
+    background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;
+    width:42px;height:42px;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .source-row button svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round;}
+  .source-row button:hover{color:var(--text);border-color:var(--accent);}
+
+  .toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-bottom:14px;}
+  .toolbar .field{flex:1;min-width:160px;}
+
+  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:20px;}
+  th{text-align:left;color:var(--muted);font-weight:600;font-size:16px;text-transform:uppercase;
+     letter-spacing:.04em;padding:6px 8px;border-bottom:1px solid var(--line);}
+  td{padding:6px 8px;border-bottom:1px solid #1d2529;}
+  tr:hover td{background:#1a2226;}
+  td.val{text-align:right;}
+  td.actions-cell{text-align:right;white-space:nowrap;}
+  td.actions-cell button{
+    background:none;border:none;color:var(--muted);cursor:pointer;padding:6px 8px;
+    display:inline-flex;align-items:center;justify-content:center;
+  }
+  td.actions-cell button svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round;}
+  td.actions-cell button:hover{color:var(--accent);}
+  .empty{color:var(--muted);font-size:19px;padding:20px 0;text-align:center;}
+
+  .stats-row{display:flex;flex-wrap:nowrap;gap:10px;margin:12px 0 4px;}
+  .stats-row .stat{flex:1;min-width:0;}
+  .stat{font-family:var(--mono);text-align:center;}
+  .stat .num{font-size:26px;font-weight:650;}
+  .stat .lbl{font-size:17px;color:var(--text);text-transform:uppercase;letter-spacing:.05em;}
+  .stat.warn .num{color:var(--warn);}
+  .stat.danger .num{color:var(--danger);}
+  .stat.accent .num{color:var(--accent);}
+
+  .legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:17px;color:var(--muted);margin-top:8px;font-family:var(--mono);}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .swatch{width:10px;height:10px;border-radius:2px;display:inline-block;}
+
+  canvas{width:100%;height:220px;display:block;background:var(--panel-2);border-radius:8px;border:1px solid var(--line);}
+
+  .hint{font-size:18px;color:var(--muted);margin-top:6px;}
+  .file-link{border:1px solid var(--line);border-radius:8px;padding:12px;}
+  .file-link-empty .status{font-size:19px;color:var(--muted);font-family:var(--mono);margin-bottom:10px;}
+  .file-link-empty .actions{display:flex;gap:10px;}
+  .file-link-empty .actions .icon-btn{width:auto;flex:1;padding:13px 10px;}
+  .icon-btn{
+    width:100%;height:auto;padding:13px 16px;
+    display:flex;flex-direction:row;align-items:center;justify-content:center;gap:12px;
+  }
+  .icon-btn .icon-label{font-size:18px;font-weight:600;line-height:1.2;white-space:normal;}
+  .icon-btn svg{width:22px;height:22px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round;}
+
+  .status-dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;background:var(--muted);}
+  .status-dot.linked{background:var(--good);}
+  .status-dot.error{background:var(--danger);}
+  .file-link-row{display:flex;align-items:center;gap:12px;}
+  .file-link-row .filename{font-family:var(--mono);font-size:18px;color:var(--text);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .file-link-row .time{font-size:15px;color:var(--muted);margin-top:2px;}
+  .icon-btn-sm{
+    flex:0 0 auto;width:42px;height:42px;padding:0;border-radius:8px;
+    background:none;border:1px solid var(--line);color:var(--muted);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .icon-btn-sm svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round;}
+  .icon-btn-sm:hover{color:var(--text);border-color:var(--accent);}
+  .icon-btn-sm:disabled{opacity:.4;cursor:not-allowed;}
+
+  .auth-banner{display:flex;flex-direction:column;gap:10px;
+    background:#2a2410;border:1px solid #55481a;border-radius:8px;padding:12px;}
+  .auth-banner-text{color:#f0d98a;font-size:17px;line-height:1.4;}
+  .unsupported{
+    background:#2a1f10;border:1px solid #4a3616;color:#f0c98a;border-radius:8px;
+    padding:14px;font-size:19px;
+  }
+
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .modal-box{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:20px;max-width:360px;width:100%;
+  }
+  .modal-box p{margin:0 0 16px;font-size:19px;line-height:1.4;color:var(--text);}
+</style>
+</head>
+<body>
+
+<main>
+
+  <div id="unsupported-banner" class="unsupported" style="display:none;margin-bottom:16px;">
+    Deze browser ondersteunt geen rechtstreekse bestandstoegang (File System Access API). Deze app werkt daarom hier niet.
+    Gebruik een recente versie van Chrome, Edge of Opera.
+  </div>
+
+  <!-- METADATA VIEW -->
+  <section id="view-meta" class="view active">
+    <div class="panel">
+      <h2 class="accent-title">Bronspecificaties</h2>
+      <div class="file-link">
+        <div class="file-link-empty" id="meta-file-empty">
+          <div class="status" id="meta-file-status-empty">Geen bestand gekoppeld.</div>
+          <div class="actions">
+            <button class="btn secondary icon-btn" id="btn-open-meta" title="Bestand openen" aria-label="Bestand openen">
+              <svg viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span class="icon-label">Openen</span>
+            </button>
+            <button class="btn secondary icon-btn" id="btn-new-meta" title="Nieuw bestand aanmaken" aria-label="Nieuw bestand aanmaken">
+              <svg viewBox="0 0 24 24"><path d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              <span class="icon-label">Nieuw</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-banner" id="meta-file-authneeded" style="display:none;">
+          <div class="auth-banner-text" id="meta-file-status-auth"></div>
+          <button class="btn warn" id="btn-authorize-meta">Toegang autoriseren</button>
+        </div>
+
+        <div class="file-link-row" id="meta-file-linked-row" style="display:none;">
+          <span class="status-dot" id="meta-status-dot"></span>
+          <div style="flex:1;min-width:0;">
+            <div class="filename" id="meta-file-name"></div>
+            <div class="time" id="meta-file-time"></div>
+          </div>
+          <button class="icon-btn-sm" id="btn-refresh-meta" title="Vernieuwen" aria-label="Vernieuwen">
+            <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
+          </button>
+          <button class="icon-btn-sm" id="btn-unlink-meta" title="Ontkoppelen" aria-label="Ontkoppelen">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h2><span class="accent-title">Bronnen</span> <span class="sub" id="source-count"></span></h2>
+        <button class="icon-btn-sm" id="btn-open-new-source" title="Nieuwe bron" aria-label="Nieuwe bron toevoegen">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+      <div class="source-list" id="source-list"></div>
+      <div class="empty" id="source-empty" style="display:none;">Nog geen bronnen. Koppel eerst een metadatabestand hierboven.</div>
+    </div>
+
+    <div id="source-modal-overlay" class="modal-overlay" style="display:none;">
+      <div class="modal-box" style="max-width:480px;max-height:85vh;overflow-y:auto;">
+        <h2 id="meta-form-title">Nieuwe bron</h2>
+        <div class="grid2">
+          <div class="field"><label>Titel</label><input type="text" id="f-titel" placeholder="bv. Gewicht Mark"></div>
+          <div class="field"><label>Bestandsnaam</label><input type="text" id="f-bestand" placeholder="bv. Gewicht_Mark.json"></div>
+          <div class="field"><label>Eenheid</label><input type="text" id="f-eenheid" placeholder="bv. kg"></div>
+          <div class="field"><label>Decimalen</label><input type="number" id="f-decimalen" value="1" min="0" max="6" step="1"></div>
+          <div class="field"><label>Min</label><input type="number" id="f-min" placeholder="0"></div>
+          <div class="field"><label>Max</label><input type="number" id="f-max" placeholder="250"></div>
+          <div class="field"><label>Doelwaarde (streefgemiddelde)</label><input type="number" id="f-doelx" placeholder="optioneel" step="any"></div>
+          <div class="field"><label>Doel-spreiding (optioneel)</label><input type="number" id="f-doelr" placeholder="optioneel" step="any"></div>
+        </div>
+        <div class="hint" id="meta-form-hint"></div>
+        <div class="actions" style="flex-wrap:nowrap;margin-top:8px;">
+          <button class="icon-btn-sm" id="btn-delete-source" aria-label="Verwijderen" title="Verwijderen" style="display:none;">
+            <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+          </button>
+          <button class="btn secondary compact" id="btn-cancel-edit" style="flex:1;">Annuleren</button>
+          <button class="btn compact" id="btn-save-source" style="flex:1;">Opslaan</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DATA VIEW -->
+  <section id="view-data" class="view">
+    <div class="panel">
+      <div class="toolbar" style="margin-bottom:2px;">
+        <div class="field"><label class="accent-title">Bron</label><select id="data-source-select"></select></div>
+      </div>
+
+      <div class="file-link">
+        <div class="file-link-empty" id="data-file-empty">
+          <div class="status" id="data-file-status-empty">Kies eerst een bron.</div>
+          <div class="actions">
+            <button class="btn secondary icon-btn" id="btn-open-data" title="Bestand openen" aria-label="Bestand openen">
+              <svg viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              <span class="icon-label">Openen</span>
+            </button>
+            <button class="btn secondary icon-btn" id="btn-new-data" title="Nieuw bestand aanmaken" aria-label="Nieuw bestand aanmaken">
+              <svg viewBox="0 0 24 24"><path d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 3v6h6"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              <span class="icon-label">Nieuw</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-banner" id="data-file-authneeded" style="display:none;">
+          <div class="auth-banner-text" id="data-file-status-auth"></div>
+          <button class="btn warn" id="btn-authorize-data">Toegang autoriseren</button>
+        </div>
+
+        <div class="file-link-row" id="data-file-linked-row" style="display:none;">
+          <span class="status-dot" id="data-status-dot"></span>
+          <div style="flex:1;min-width:0;">
+            <div class="filename" id="data-file-name"></div>
+            <div class="time" id="data-file-time"></div>
+          </div>
+          <button class="icon-btn-sm" id="btn-refresh-data" title="Vernieuwen" aria-label="Vernieuwen">
+            <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
+          </button>
+          <button class="icon-btn-sm" id="btn-unlink-data" title="Ontkoppelen" aria-label="Ontkoppelen">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h2 class="accent-title">Meetwaarden <span class="sub" id="data-count"></span></h2>
+        <button class="icon-btn-sm" id="btn-open-new-datapoint" title="Meetpunt toevoegen" aria-label="Meetpunt toevoegen">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="display:inline;text-transform:none;font-family:var(--sans);font-size:20px;color:var(--text);">
+          <input type="checkbox" id="data-show-all" style="width:20px;height:20px;margin:0 8px 0 0;vertical-align:middle;">alles tonen (i.p.v. laatste 60)
+        </label>
+      </div>
+      <div style="max-height:480px;overflow:auto;">
+        <table>
+          <thead><tr><th>Datum</th><th style="text-align:right;">Waarde</th><th></th></tr></thead>
+          <tbody id="data-table-body"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="data-empty" style="display:none;">Geen meetwaarden voor deze bron.</div>
+    </div>
+
+    <div id="datapoint-modal-overlay" class="modal-overlay" style="display:none;">
+      <div class="modal-box" style="max-width:400px;">
+        <h2 id="datapoint-modal-title">Meetpunt toevoegen</h2>
+        <div class="grid2">
+          <div class="field"><label>Datum</label><input type="date" id="f-data-date"></div>
+          <div class="field"><label>Waarde</label><input type="number" id="f-data-value" step="any"></div>
+        </div>
+        <div class="actions" style="flex-wrap:nowrap;margin-top:8px;">
+          <button class="icon-btn-sm" id="btn-delete-datapoint" aria-label="Verwijderen" title="Verwijderen" style="display:none;">
+            <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+          </button>
+          <button class="btn secondary compact" id="btn-cancel-datapoint" style="flex:1;">Annuleren</button>
+          <button class="btn compact" id="btn-add-datapoint" style="flex:1;">Opslaan</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHART VIEW -->
+  <section id="view-chart" class="view">
+    <div class="panel">
+      <div class="toolbar">
+        <div class="field"><label class="accent-title">Bron</label><select id="chart-source-select"></select></div>
+        <div class="field">
+          <label class="accent-title">Periode</label>
+          <select id="chart-period-select">
+            <option value="1w">1 week</option>
+            <option value="1m" selected>1 maand</option>
+            <option value="3m">3 maanden</option>
+            <option value="6m">6 maanden</option>
+            <option value="1y">1 jaar</option>
+            <option value="5y">5 jaar</option>
+            <option value="all">alles</option>
+          </select>
+        </div>
+      </div>
+
+      <canvas id="chart-canvas" width="880" height="220"></canvas>
+
+      <div class="legend">
+        <span><span class="swatch" style="background:var(--accent);"></span><span style="position:relative;display:inline-block;text-transform:none;">x<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span></span>
+        <span><span class="swatch" style="background:var(--warn);"></span>±2σ</span>
+        <span><span class="swatch" style="background:var(--danger);"></span>±3σ</span>
+        <span><span class="swatch" style="background:var(--muted);"></span>doel</span>
+      </div>
+
+      <div class="stats-row" id="chart-stats"></div>
+      <div class="hint" id="chart-note"></div>
+    </div>
+  </section>
+
+</main>
+
+<nav class="tabs">
+  <button data-view="meta" class="active">
+    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2.2"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2.2"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="10" cy="18" r="2.2"/></svg>
+    Bronnen
+  </button>
+  <button data-view="data">
+    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="2"/><line x1="3.5" y1="9.5" x2="20.5" y2="9.5"/><line x1="3.5" y1="14.5" x2="20.5" y2="14.5"/><line x1="10" y1="4" x2="10" y2="20"/></svg>
+    Data
+  </button>
+  <button data-view="chart">
+    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="4" y2="4"/><line x1="4" y1="20" x2="20" y2="20"/><path d="M6 15.5l4-5 3.5 3 4.5-7"/></svg>
+    Grafiek
+  </button>
+</nav>
+
+<div id="confirm-overlay" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <p id="confirm-text"></p>
+    <div class="actions" style="justify-content:flex-end;">
+      <button class="btn secondary" id="confirm-cancel">Annuleren</button>
+      <button class="btn danger" id="confirm-ok">Verwijderen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= IndexedDB: bewaart bestandskoppelingen (FileSystemFileHandle) tussen sessies ================= */
+const DB_NAME = 'controlekaart-db', STORE = 'handles';
+function idbOpen(){
+  return new Promise((resolve,reject)=>{
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = ()=>{ req.result.createObjectStore(STORE); };
+    req.onsuccess = ()=>resolve(req.result);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+async function idbSet(key,val){
+  const db = await idbOpen();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).put(val,key);
+    tx.oncomplete = ()=>resolve(true);
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+async function idbGet(key){
+  const db = await idbOpen();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(STORE,'readonly');
+    const req = tx.objectStore(STORE).get(key);
+    req.onsuccess = ()=>resolve(req.result || null);
+    req.onerror = ()=>reject(req.error);
+  });
+}
+async function idbDelete(key){
+  const db = await idbOpen();
+  return new Promise((resolve,reject)=>{
+    const tx = db.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).delete(key);
+    tx.oncomplete = ()=>resolve(true);
+    tx.onerror = ()=>reject(tx.error);
+  });
+}
+
+async function writeHandleJson(handle, obj){
+  const writable = await handle.createWritable();
+  await writable.write(JSON.stringify(obj, null, '\t'));
+  await writable.close();
+}
+async function readHandleJson(handle){
+  const file = await handle.getFile();
+  const text = await file.text();
+  return text.trim() ? JSON.parse(text) : {};
+}
+
+/* ================= state ================= */
+let bronnen = [];        // [{id,titel,bestand,eenheid,decimalen,min,max,doel_x,doel_r}]
+let dataCache = {};      // id -> {YYYYMMDD: value}
+let metaFileHandle = null;
+let dataFileHandles = {}; // id -> FileSystemFileHandle
+let editingId = null;
+
+const supportsFSA = 'showOpenFilePicker' in window && 'showSaveFilePicker' in window;
+
+/* ================= utils ================= */
+function slugify(s){
+  return (s||'').replace(/\.json$/i,'').trim().replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_-]/g,'');
+}
+function uniqueId(base){
+  let id = slugify(base) || ('bron_' + Date.now());
+  let n = 1;
+  while(bronnen.some(b=>b.id===id && b.id!==editingId)){ id = slugify(base)+'_'+(++n); }
+  return id;
+}
+function keyToDate(k){ return new Date(Date.UTC(+k.slice(0,4), +k.slice(4,6)-1, +k.slice(6,8))); }
+function dateToKey(d){ return d.getFullYear().toString() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0'); }
+function fmtDateNL(k){ return k.slice(6,8)+'-'+k.slice(4,6)+'-'+k.slice(0,4); }
+function fmtVal(v, dec){ return Number(v).toFixed(dec ?? 1); }
+function getSource(id){ return bronnen.find(b=>b.id===id); }
+function numOrNull(v){ return v===''||v===null||v===undefined ? null : Number(v); }
+function escapeHtml(s){ return (s??'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function keyToIsoDate(k){ return k.slice(0,4)+'-'+k.slice(4,6)+'-'+k.slice(6,8); }
+function isoToKey(iso){ return iso.replace(/-/g,''); }
+function metaFileObj(){ return { bronnen: bronnen.map(({id, ...rest})=>rest) }; }
+function dataFileObj(data){ const o={}; Object.keys(data).sort().forEach(k=>o[k]=data[k]); return o; }
+
+/* ================= tabs ================= */
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    if(btn.dataset.view==='data') renderDataView();
+    if(btn.dataset.view==='chart') renderChartView();
+  });
+});
+
+/* ================= METADATA: bestandskoppeling ================= */
+async function loadMetaFromHandle(){
+  const json = await readHandleJson(metaFileHandle);
+  const list = Array.isArray(json) ? json : (json.bronnen || []);
+  bronnen = list.map(item=>{
+    const id = slugify(item.bestand || item.titel);
+    return {
+      id,
+      titel: item.titel || id,
+      bestand: item.bestand || (id+'.json'),
+      eenheid: item.eenheid || '',
+      decimalen: item.decimalen ?? 1,
+      min: item.min ?? null,
+      max: item.max ?? null,
+      doel_x: item.doel_x ?? null,
+      doel_r: item.doel_r ?? null
+    };
+  });
+  renderSourceList();
+  renderSourceSelects();
+}
+async function syncMetaFile(){
+  if(!metaFileHandle) return;
+  try{
+    await writeHandleJson(metaFileHandle, metaFileObj());
+    setFileLinkUI('meta', 'linked', {name: metaFileHandle.name, timeText: 'bijgewerkt om '+nowTime()});
+  }catch(e){
+    console.error('meta schrijven mislukt', e);
+    setFileLinkUI('meta', 'error', {name: metaFileHandle.name, timeText: 'schrijven mislukt: '+e.message});
+  }
+}
+function nowTime(){ return new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+
+/* state: 'empty' | 'auth' | 'linked' | 'error' */
+function setFileLinkUI(prefix, state, opts){
+  opts = opts || {};
+  document.getElementById(prefix+'-file-empty').style.display = state==='empty' ? 'block' : 'none';
+  document.getElementById(prefix+'-file-authneeded').style.display = state==='auth' ? 'flex' : 'none';
+  document.getElementById(prefix+'-file-linked-row').style.display = (state==='linked'||state==='error') ? 'flex' : 'none';
+  if(state==='empty'){
+    document.getElementById(prefix+'-file-status-empty').textContent = opts.text || 'Geen bestand gekoppeld.';
+  }
+  if(state==='auth'){
+    document.getElementById(prefix+'-file-status-auth').textContent = opts.text || 'Toegang opnieuw autoriseren nodig.';
+  }
+  if(state==='linked' || state==='error'){
+    document.getElementById(prefix+'-status-dot').className = 'status-dot' + (state==='error' ? ' error' : ' linked');
+    document.getElementById(prefix+'-file-name').textContent = opts.name || '';
+    document.getElementById(prefix+'-file-time').textContent = opts.timeText || '';
+  }
+}
+
+document.getElementById('btn-open-meta').addEventListener('click', async ()=>{
+  try{
+    const [handle] = await window.showOpenFilePicker({types:[{description:'JSON', accept:{'application/json':['.json']}}]});
+    metaFileHandle = handle;
+    await idbSet('meta', handle);
+    await loadMetaFromHandle();
+    setFileLinkUI('meta', 'linked', {name: handle.name, timeText: 'zojuist gekoppeld'});
+  }catch(e){ if(e.name!=='AbortError') setFileLinkUI('meta', 'empty', {text:'Openen mislukt: '+e.message}); }
+});
+
+document.getElementById('btn-new-meta').addEventListener('click', async ()=>{
+  try{
+    const handle = await window.showSaveFilePicker({suggestedName:'mvtrends.json', types:[{description:'JSON', accept:{'application/json':['.json']}}]});
+    metaFileHandle = handle;
+    await idbSet('meta', handle);
+    bronnen = [];
+    await writeHandleJson(handle, metaFileObj());
+    renderSourceList(); renderSourceSelects();
+    setFileLinkUI('meta', 'linked', {name: handle.name, timeText: 'zojuist aangemaakt'});
+  }catch(e){ if(e.name!=='AbortError') setFileLinkUI('meta', 'empty', {text:'Aanmaken mislukt: '+e.message}); }
+});
+
+document.getElementById('btn-authorize-meta').addEventListener('click', async ()=>{
+  try{
+    const perm = await metaFileHandle.requestPermission({mode:'readwrite'});
+    if(perm==='granted'){
+      await loadMetaFromHandle();
+      setFileLinkUI('meta', 'linked', {name: metaFileHandle.name, timeText: 'geautoriseerd om '+nowTime()});
+    } else {
+      setFileLinkUI('meta', 'auth', {text: 'Toegang geweigerd. Probeer opnieuw of ontkoppel dit bestand.'});
+    }
+  }catch(e){ setFileLinkUI('meta', 'auth', {text: 'Autoriseren mislukt: '+e.message}); }
+});
+
+document.getElementById('btn-refresh-meta').addEventListener('click', async ()=>{
+  if(!metaFileHandle) return;
+  try{ await loadMetaFromHandle(); setFileLinkUI('meta', 'linked', {name: metaFileHandle.name, timeText: 'vernieuwd om '+nowTime()}); }
+  catch(e){ setFileLinkUI('meta', 'error', {name: metaFileHandle.name, timeText: 'vernieuwen mislukt: '+e.message}); }
+});
+
+document.getElementById('btn-unlink-meta').addEventListener('click', async ()=>{
+  const ok = await showConfirm('Metadatabestand ontkoppelen? De bronnenlijst in de app wordt geleegd (het bestand zelf blijft ongewijzigd op je toestel staan).', 'Ontkoppelen');
+  if(!ok) return;
+  metaFileHandle = null;
+  await idbDelete('meta');
+  bronnen = [];
+  renderSourceList(); renderSourceSelects();
+  setFileLinkUI('meta', 'empty');
+});
+
+async function bootMeta(){
+  const handle = await idbGet('meta').catch(()=>null);
+  if(!handle){ setFileLinkUI('meta', 'empty'); return; }
+  metaFileHandle = handle;
+  try{
+    const perm = await handle.queryPermission({mode:'readwrite'});
+    if(perm==='granted'){
+      await loadMetaFromHandle();
+      setFileLinkUI('meta', 'linked', {name: handle.name});
+    } else {
+      setFileLinkUI('meta', 'auth', {text: `Gekoppeld aan "${handle.name}" — toegang opnieuw autoriseren nodig.`});
+    }
+  }catch(e){ setFileLinkUI('meta', 'empty', {text: 'Kon eerder gekoppeld bestand niet laden: '+e.message}); }
+}
+
+/* ================= METADATA: bronnen CRUD ================= */
+function renderMetaView(){
+  document.getElementById('source-count').textContent = bronnen.length ? '('+bronnen.length+')' : '';
+  document.getElementById('source-empty').style.display = bronnen.length ? 'none' : 'block';
+  document.getElementById('meta-form-hint').textContent = metaFileHandle ? '' : 'Koppel eerst een metadatabestand voordat je een bron opslaat.';
+  document.getElementById('btn-save-source').disabled = !metaFileHandle;
+  document.getElementById('btn-open-new-source').disabled = !metaFileHandle;
+}
+
+function renderSourceList(){
+  const list = document.getElementById('source-list');
+  list.innerHTML = '';
+  bronnen.forEach(b=>{
+    const row = document.createElement('div');
+    row.className = 'source-row';
+    row.innerHTML = `
+      <div class="title">${escapeHtml(b.titel)}</div>
+      <div class="btns">
+        <button data-act="edit" data-id="${b.id}" aria-label="Bewerken" title="Bewerken">
+          <svg viewBox="0 0 24 24"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+        </button>
+      </div>`;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('button[data-act=edit]').forEach(btn=>btn.addEventListener('click', ()=>editSource(btn.dataset.id)));
+  renderMetaView();
+}
+
+function openSourceModal(){
+  document.getElementById('source-modal-overlay').style.display = 'flex';
+}
+function closeSourceModal(){
+  document.getElementById('source-modal-overlay').style.display = 'none';
+  resetSourceForm();
+}
+
+document.getElementById('btn-open-new-source').addEventListener('click', ()=>{
+  resetSourceForm();
+  openSourceModal();
+});
+document.getElementById('source-modal-overlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'source-modal-overlay') closeSourceModal();
+});
+
+function editSource(id){
+  const b = getSource(id);
+  if(!b) return;
+  editingId = id;
+  document.getElementById('meta-form-title').textContent = 'Bron bewerken';
+  document.getElementById('f-titel').value = b.titel || '';
+  document.getElementById('f-bestand').value = b.bestand || '';
+  document.getElementById('f-eenheid').value = b.eenheid || '';
+  document.getElementById('f-decimalen').value = b.decimalen ?? 1;
+  document.getElementById('f-min').value = b.min ?? '';
+  document.getElementById('f-max').value = b.max ?? '';
+  document.getElementById('f-doelx').value = b.doel_x ?? '';
+  document.getElementById('f-doelr').value = b.doel_r ?? '';
+  document.getElementById('btn-delete-source').style.display = 'flex';
+  openSourceModal();
+}
+
+function resetSourceForm(){
+  editingId = null;
+  document.getElementById('meta-form-title').textContent = 'Nieuwe bron';
+  ['f-titel','f-bestand','f-eenheid','f-min','f-max','f-doelx','f-doelr'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-decimalen').value = 1;
+  document.getElementById('btn-delete-source').style.display = 'none';
+}
+document.getElementById('btn-cancel-edit').addEventListener('click', closeSourceModal);
+document.getElementById('btn-delete-source').addEventListener('click', async ()=>{
+  if(!editingId) return;
+  await deleteSource(editingId);
+  closeSourceModal();
+});
+
+document.getElementById('btn-save-source').addEventListener('click', async ()=>{
+  if(!metaFileHandle){ alert('Koppel eerst een metadatabestand.'); return; }
+  const titel = document.getElementById('f-titel').value.trim();
+  if(!titel){ alert('Titel is verplicht.'); return; }
+  const bestandRaw = document.getElementById('f-bestand').value.trim() || titel + '.json';
+  const id = editingId || uniqueId(bestandRaw);
+  const src = {
+    id, titel, bestand: bestandRaw,
+    eenheid: document.getElementById('f-eenheid').value.trim(),
+    decimalen: parseInt(document.getElementById('f-decimalen').value || '1', 10),
+    min: numOrNull(document.getElementById('f-min').value),
+    max: numOrNull(document.getElementById('f-max').value),
+    doel_x: numOrNull(document.getElementById('f-doelx').value),
+    doel_r: numOrNull(document.getElementById('f-doelr').value)
+  };
+  const idx = bronnen.findIndex(b=>b.id===id);
+  if(idx>=0) bronnen[idx] = src; else bronnen.push(src);
+  await syncMetaFile();
+  closeSourceModal();
+  renderSourceList();
+  renderSourceSelects();
+});
+
+function showConfirm(message, okLabel){
+  return new Promise(resolve=>{
+    const overlay = document.getElementById('confirm-overlay');
+    document.getElementById('confirm-text').textContent = message;
+    const cancelBtn = document.getElementById('confirm-cancel');
+    const okBtn = document.getElementById('confirm-ok');
+    okBtn.textContent = okLabel || 'Verwijderen';
+    overlay.style.display = 'flex';
+    function cleanup(result){
+      overlay.style.display = 'none';
+      cancelBtn.removeEventListener('click', onCancel);
+      okBtn.removeEventListener('click', onOk);
+      overlay.removeEventListener('click', onOverlay);
+      resolve(result);
+    }
+    function onCancel(){ cleanup(false); }
+    function onOk(){ cleanup(true); }
+    function onOverlay(e){ if(e.target===overlay) cleanup(false); }
+    cancelBtn.addEventListener('click', onCancel);
+    okBtn.addEventListener('click', onOk);
+    overlay.addEventListener('click', onOverlay);
+  });
+}
+
+async function deleteSource(id){
+  const b = getSource(id);
+  if(!b) return;
+  const ok = await showConfirm(`Bron "${b.titel}" verwijderen uit de metadata? De bijbehorende koppeling met het gegevensbestand wordt losgemaakt (het bestand zelf blijft bestaan).`);
+  if(!ok) return;
+  bronnen = bronnen.filter(x=>x.id!==id);
+  await syncMetaFile();
+  delete dataCache[id];
+  delete dataFileHandles[id];
+  await idbDelete('data:'+id);
+  renderSourceList();
+  renderSourceSelects();
+}
+
+/* ================= DATA VIEW: bestandskoppeling per bron ================= */
+function renderSourceSelects(){
+  ['data-source-select','chart-source-select'].forEach(selId=>{
+    const sel = document.getElementById(selId);
+    const prev = sel.value;
+    sel.innerHTML = bronnen.map(b=>`<option value="${b.id}">${escapeHtml(b.titel)}</option>`).join('');
+    if(bronnen.some(b=>b.id===prev)) sel.value = prev;
+  });
+}
+
+let dataNeedsAuth = {}; // id -> true als toegang opnieuw geautoriseerd moet worden
+
+async function ensureDataHandleHydrated(id){
+  if(dataFileHandles[id] !== undefined) return; // al eerder deze sessie geprobeerd
+  const handle = await idbGet('data:'+id).catch(()=>null);
+  dataFileHandles[id] = handle || null;
+  if(!handle) return;
+  try{
+    const perm = await handle.queryPermission({mode:'readwrite'});
+    if(perm==='granted'){
+      dataCache[id] = dataFileObj(await readHandleJson(handle));
+    } else {
+      dataNeedsAuth[id] = true;
+    }
+  }catch(e){ /* handle mogelijk niet meer geldig */ }
+}
+
+document.getElementById('data-source-select').addEventListener('change', async ()=>{
+  await ensureDataHandleHydrated(document.getElementById('data-source-select').value);
+  renderDataView();
+});
+
+document.getElementById('data-show-all').addEventListener('change', renderDataView);
+
+async function renderDataView(){
+  const id = document.getElementById('data-source-select').value;
+  const tbody = document.getElementById('data-table-body');
+  const emptyEl = document.getElementById('data-empty');
+  tbody.innerHTML = '';
+  if(!id){
+    emptyEl.style.display='block';
+    document.getElementById('data-count').textContent='';
+    setFileLinkUI('data', 'empty', {text:'Kies eerst een bron.'});
+    return;
+  }
+  await ensureDataHandleHydrated(id);
+  const src = getSource(id);
+  const handle = dataFileHandles[id];
+  if(handle && dataNeedsAuth[id]){
+    setFileLinkUI('data', 'auth', {text: `Gekoppeld aan "${handle.name}" — toegang opnieuw autoriseren nodig.`});
+  } else if(handle){
+    setFileLinkUI('data', 'linked', {name: handle.name});
+  } else {
+    setFileLinkUI('data', 'empty', {text:'Geen bestand gekoppeld voor deze bron.'});
+  }
+
+  const data = dataCache[id] || {};
+  let keys = Object.keys(data).sort().reverse();
+  const keysAsc = keys.slice().reverse();
+  document.getElementById('data-count').textContent = '('+keys.length+')';
+  const showAll = document.getElementById('data-show-all').checked;
+  const shown = showAll ? keys : keys.slice(0,60);
+  emptyEl.style.display = keys.length ? 'none' : 'block';
+  shown.forEach(k=>{
+    const tr = document.createElement('tr');
+    const idx = keysAsc.indexOf(k);
+    const prevVal = idx > 0 ? data[keysAsc[idx-1]] : null;
+    let arrow = '';
+    if(prevVal !== null){
+      if(data[k] > prevVal){
+        arrow = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--danger);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:4px;"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>`;
+      } else if(data[k] < prevVal){
+        arrow = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--good);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="6 13 12 19 18 13"/></svg>`;
+      }
+    }
+    tr.innerHTML = `<td>${fmtDateNL(k)}</td><td class="val">${arrow}${fmtVal(data[k], src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
+      <td class="actions-cell">
+        <button data-act="edit" data-k="${k}" aria-label="Bewerken" title="Bewerken">
+          <svg viewBox="0 0 24 24"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('button[data-act=edit]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      editingDataKey = btn.dataset.k;
+      document.getElementById('datapoint-modal-title').textContent = 'Meetpunt bewerken';
+      document.getElementById('f-data-date').value = keyToIsoDate(btn.dataset.k);
+      document.getElementById('f-data-value').value = data[btn.dataset.k];
+      document.getElementById('btn-delete-datapoint').style.display = 'flex';
+      openDatapointModal();
+    });
+  });
+}
+
+async function syncDataFile(id){
+  const handle = dataFileHandles[id];
+  if(!handle) return;
+  try{
+    await writeHandleJson(handle, dataFileObj(dataCache[id] || {}));
+    setFileLinkUI('data', 'linked', {name: handle.name, timeText: 'bijgewerkt om '+nowTime()});
+  }catch(e){
+    console.error('data schrijven mislukt', e);
+    setFileLinkUI('data', 'error', {name: handle.name, timeText: 'schrijven mislukt: '+e.message});
+  }
+}
+
+let editingDataKey = null;
+
+function openDatapointModal(){
+  document.getElementById('datapoint-modal-overlay').style.display = 'flex';
+}
+function closeDatapointModal(){
+  document.getElementById('datapoint-modal-overlay').style.display = 'none';
+  editingDataKey = null;
+  document.getElementById('datapoint-modal-title').textContent = 'Meetpunt toevoegen';
+  document.getElementById('f-data-date').value = '';
+  document.getElementById('f-data-value').value = '';
+  document.getElementById('btn-delete-datapoint').style.display = 'none';
+}
+
+document.getElementById('btn-open-new-datapoint').addEventListener('click', ()=>{
+  const id = document.getElementById('data-source-select').value;
+  if(!id){ alert('Kies eerst een bron.'); return; }
+  if(!dataFileHandles[id]){ alert('Koppel eerst een gegevensbestand voor deze bron.'); return; }
+  editingDataKey = null;
+  document.getElementById('datapoint-modal-title').textContent = 'Meetpunt toevoegen';
+  document.getElementById('f-data-date').value = keyToIsoDate(dateToKey(new Date()));
+  document.getElementById('f-data-value').value = '';
+  document.getElementById('btn-delete-datapoint').style.display = 'none';
+  openDatapointModal();
+});
+document.getElementById('btn-cancel-datapoint').addEventListener('click', closeDatapointModal);
+document.getElementById('datapoint-modal-overlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'datapoint-modal-overlay') closeDatapointModal();
+});
+document.getElementById('btn-delete-datapoint').addEventListener('click', async ()=>{
+  const id = document.getElementById('data-source-select').value;
+  if(!id || !editingDataKey) return;
+  const ok = await showConfirm(`Meting van ${fmtDateNL(editingDataKey)} verwijderen?`, 'Verwijderen');
+  if(!ok) return;
+  delete dataCache[id][editingDataKey];
+  await syncDataFile(id);
+  closeDatapointModal();
+  renderDataView();
+});
+
+document.getElementById('btn-add-datapoint').addEventListener('click', async ()=>{
+  const id = document.getElementById('data-source-select').value;
+  if(!id){ alert('Kies eerst een bron.'); return; }
+  if(!dataFileHandles[id]){ alert('Koppel eerst een gegevensbestand voor deze bron.'); return; }
+  const iso = document.getElementById('f-data-date').value;
+  const val = document.getElementById('f-data-value').value;
+  if(!iso || val===''){ alert('Vul datum en waarde in.'); return; }
+  dataCache[id] = dataCache[id] || {};
+  const newKey = isoToKey(iso);
+  if(editingDataKey && editingDataKey !== newKey) delete dataCache[id][editingDataKey];
+  dataCache[id][newKey] = Number(val);
+  await syncDataFile(id);
+  closeDatapointModal();
+  renderDataView();
+});
+
+document.getElementById('btn-open-data').addEventListener('click', async ()=>{
+  const id = document.getElementById('data-source-select').value;
+  if(!id){ alert('Kies eerst een bron.'); return; }
+  try{
+    const [handle] = await window.showOpenFilePicker({types:[{description:'JSON', accept:{'application/json':['.json']}}]});
+    dataFileHandles[id] = handle;
+    delete dataNeedsAuth[id];
+    await idbSet('data:'+id, handle);
+    dataCache[id] = dataFileObj(await readHandleJson(handle));
+    renderDataView();
+  }catch(e){ if(e.name!=='AbortError') setFileLinkUI('data', 'empty', {text:'Openen mislukt: '+e.message}); }
+});
+
+document.getElementById('btn-new-data').addEventListener('click', async ()=>{
+  const id = document.getElementById('data-source-select').value;
+  if(!id){ alert('Kies eerst een bron.'); return; }
+  const src = getSource(id);
+  try{
+    const handle = await window.showSaveFilePicker({suggestedName: src?.bestand || (id+'.json'), types:[{description:'JSON', accept:{'application/json':['.json']}}]});
+    dataFileHandles[id] = handle;
+    delete dataNeedsAuth[id];
+    await idbSet('data:'+id, handle);
+    dataCache[id] = {};
+    await writeHandleJson(handle, {});
+    renderDataView();
+  }catch(e){ if(e.name!=='AbortError') setFileLinkUI('data', 'empty', {text:'Aanmaken mislukt: '+e.message}); }
+});
+
+document.getElementById('btn-authorize-data').addEventListener('click', async ()=>{
+  const id = document.getElementById('data-source-select').value;
+  const handle = dataFileHandles[id];
+  if(!handle) return;
+  try{
+    const perm = await handle.requestPermission({mode:'readwrite'});
+    if(perm==='granted'){
+      delete dataNeedsAuth[id];
+      dataCache[id] = dataFileObj(await readHandleJson(handle));
+      renderDataView();
+    } else { setFileLinkUI('data', 'auth', {text:'Toegang geweigerd. Probeer opnieuw of ontkoppel dit bestand.'}); }
+  }catch(e){ setFileLinkUI('data', 'auth', {text:'Autoriseren mislukt: '+e.message}); }
+});
+
+document.getElementById('btn-refresh-data').addEventListener('click', async ()=>{
+  const id = document.getElementById('data-source-select').value;
+  const handle = dataFileHandles[id];
+  if(!handle) return;
+  try{ dataCache[id] = dataFileObj(await readHandleJson(handle)); renderDataView(); }
+  catch(e){ setFileLinkUI('data', 'error', {name: handle.name, timeText: 'vernieuwen mislukt: '+e.message}); }
+});
+
+document.getElementById('btn-unlink-data').addEventListener('click', async ()=>{
+  const id = document.getElementById('data-source-select').value;
+  const src = getSource(id);
+  const ok = await showConfirm(`Gegevensbestand van "${src?.titel || id}" ontkoppelen? Het bestand zelf blijft ongewijzigd op je toestel staan.`, 'Ontkoppelen');
+  if(!ok) return;
+  delete dataFileHandles[id];
+  delete dataNeedsAuth[id];
+  await idbDelete('data:'+id);
+  renderDataView();
+});
+
+/* ================= CHART VIEW ================= */
+const PERIOD_DAYS = {'1w':7,'1m':30,'3m':91,'6m':182,'1y':365,'5y':1826,'all':null};
+
+document.getElementById('chart-source-select').addEventListener('change', renderChartView);
+document.getElementById('chart-period-select').addEventListener('change', renderChartView);
+
+async function renderChartView(){
+  const id = document.getElementById('chart-source-select').value;
+  const statsEl = document.getElementById('chart-stats');
+  const noteEl = document.getElementById('chart-note');
+  const canvas = document.getElementById('chart-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  statsEl.innerHTML = '';
+  noteEl.textContent = '';
+  if(!id){ noteEl.textContent = 'Geen bron geselecteerd.'; return; }
+
+  await ensureDataHandleHydrated(id);
+  const src = getSource(id);
+  const data = dataCache[id] || {};
+  if(!dataFileHandles[id]){
+    noteEl.textContent = 'Geen gegevensbestand gekoppeld voor deze bron (koppel dit op het tabblad Data).';
+    return;
+  }
+
+  const periodKey = document.getElementById('chart-period-select').value;
+  const days = PERIOD_DAYS[periodKey];
+
+  const today = new Date();
+  const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+  const cutoff = days===null ? new Date(Date.UTC(1970,0,1)) : (()=>{ const c = new Date(todayUTC); c.setUTCDate(c.getUTCDate()-days); return c; })();
+
+  const points = Object.entries(data)
+    .map(([k,v])=>({key:k, date:keyToDate(k), value:Number(v)}))
+    .filter(p => p.date >= cutoff && p.date <= todayUTC)
+    .sort((a,b)=>a.date-b.date);
+
+  const n = points.length;
+  let mean=null, sigma=null;
+  if(n>=2){
+    mean = points.reduce((s,p)=>s+p.value,0)/n;
+    const variance = points.reduce((s,p)=>s+Math.pow(p.value-mean,2),0)/(n-1);
+    sigma = Math.sqrt(variance);
+  } else if(n===1){
+    mean = points[0].value; sigma = 0;
+  }
+
+  const dec = src?.decimalen ?? 1;
+  const unit = src?.eenheid || '';
+  if(n===0){
+    statsEl.innerHTML = `<div class="stat"><div class="num">0</div><div class="lbl"><span style="text-transform:none;">n</span></div></div>`;
+    noteEl.textContent = 'Geen meetwaarden in de geselecteerde periode.';
+    return;
+  }
+  statsEl.innerHTML = `
+    <div class="stat"><div class="num">${n}</div><div class="lbl"><span style="text-transform:none;">n</span></div></div>
+    <div class="stat accent"><div class="num">${fmtVal(mean,dec)}</div><div class="lbl"><span style="position:relative;display:inline-block;vertical-align:baseline;text-transform:none;">x<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span> <span style="vertical-align:baseline;color:var(--muted);text-transform:none;">${unit}</span></div></div>
+    <div class="stat"><div class="num">${sigma>0?fmtVal(sigma,dec):'–'}</div><div class="lbl"><span style="text-transform:none;">σₙ₋₁</span></div></div>`;
+
+  const chartXMin = (days===null && points.length) ? points[0].date : cutoff;
+  noteEl.textContent = n<2
+    ? 'Minder dan 2 metingen in deze periode: regelgrenzen kunnen niet betrouwbaar berekend worden.'
+    : '';
+
+  drawChart(ctx, canvas, points, mean, sigma, src, chartXMin, todayUTC);
+}
+
+function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax){
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 880, cssH = 220;
+  canvas.width = cssW*dpr; canvas.height = cssH*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+
+  const pad = {left:54,right:16,top:16,bottom:30};
+  const plotW = cssW - pad.left - pad.right;
+  const plotH = cssH - pad.top - pad.bottom;
+
+  const values = points.map(p=>p.value);
+  let yMin, yMax;
+  if(mean!==null && sigma>0){
+    yMin = Math.min(...values, mean-3.4*sigma);
+    yMax = Math.max(...values, mean+3.4*sigma);
+  } else {
+    yMin = Math.min(...values); yMax = Math.max(...values);
+    if(yMin===yMax){ yMin-=1; yMax+=1; }
+  }
+  if(src?.doel_x != null && src?.doel_r != null){
+    yMin = Math.min(yMin, src.doel_x - src.doel_r/2);
+    yMax = Math.max(yMax, src.doel_x + src.doel_r/2);
+  }
+  const yPadAmt = (yMax-yMin)*0.08 || 1;
+  yMin -= yPadAmt; yMax += yPadAmt;
+
+  const xSpan = Math.max(1, xMax - xMin);
+  function xPix(d){ return pad.left + ((d - xMin)/xSpan)*plotW; }
+  function yPix(v){ return pad.top + (1 - (v-yMin)/(yMax-yMin))*plotH; }
+
+  ctx.strokeStyle = '#22292e'; ctx.lineWidth = 1;
+  const ySteps = 5;
+  ctx.font = '11px ui-monospace, monospace';
+  ctx.fillStyle = '#8a99a1';
+  for(let i=0;i<=ySteps;i++){
+    const v = yMin + (yMax-yMin)*i/ySteps;
+    const y = yPix(v);
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(cssW-pad.right,y); ctx.stroke();
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.fillText(fmtVal(v, src?.decimalen), pad.left-8, y);
+  }
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  [0,0.5,1].forEach(f=>{
+    const d = new Date(xMin.getTime() + xSpan*f);
+    ctx.fillText(fmtDateNL(dateToKey(d)), pad.left + plotW*f, cssH-pad.bottom+8);
+  });
+
+  function hLine(v, color, dash){
+    const y = yPix(v);
+    ctx.strokeStyle = color; ctx.setLineDash(dash||[]); ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(cssW-pad.right,y); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  if(mean!==null){
+    if(sigma>0){
+      hLine(mean+3*sigma, '#ef5b5b', [5,4]);
+      hLine(mean+2*sigma, '#f0a84f', [5,4]);
+      hLine(mean-2*sigma, '#f0a84f', [5,4]);
+      hLine(mean-3*sigma, '#ef5b5b', [5,4]);
+    }
+    hLine(mean, '#4fd1c5', []);
+  }
+  if(src?.doel_x != null && src?.doel_r != null){
+    const top = yPix(src.doel_x + src.doel_r/2);
+    const bottom = yPix(src.doel_x - src.doel_r/2);
+    ctx.fillStyle = 'rgba(159,216,224,0.08)';
+    ctx.fillRect(pad.left, top, plotW, bottom-top);
+    hLine(src.doel_x + src.doel_r/2, '#6f8890', [2,3]);
+    hLine(src.doel_x - src.doel_r/2, '#6f8890', [2,3]);
+  }
+  if(src?.doel_x != null) hLine(src.doel_x, '#8a99a1', [2,3]);
+
+  if(points.length>1){
+    ctx.strokeStyle = '#5c6f79'; ctx.lineWidth = 1.8; ctx.beginPath();
+    const oneDayMs = 24*60*60*1000;
+    points.forEach((p,i)=>{
+      const x=xPix(p.date), y=yPix(p.value);
+      if(i===0){
+        ctx.moveTo(x,y);
+      } else {
+        const gapDays = (p.date - points[i-1].date) / oneDayMs;
+        if(gapDays > 1) ctx.moveTo(x,y);
+        else ctx.lineTo(x,y);
+      }
+    });
+    ctx.stroke();
+  }
+
+  points.forEach(p=>{
+    const x=xPix(p.date), y=yPix(p.value);
+    let color = '#9fd8e0';
+    if(mean!==null && sigma>0){
+      const dist = Math.abs(p.value-mean);
+      if(dist > 3*sigma) color = '#ef5b5b';
+      else if(dist > 2*sigma) color = '#f0a84f';
+    }
+    ctx.beginPath(); ctx.arc(x,y,3.4,0,Math.PI*2); ctx.fillStyle = color; ctx.fill();
+  });
+}
+
+/* ================= boot ================= */
+if(!supportsFSA){
+  document.getElementById('unsupported-banner').style.display = 'block';
+  ['btn-open-meta','btn-new-meta','btn-open-data','btn-new-data'].forEach(id=>document.getElementById(id).disabled = true);
+} else {
+  bootMeta();
+}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(e=>console.error('SW registratie mislukt', e));
+  });
+}
+</script>
+</body>
+</html>
