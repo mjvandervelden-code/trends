@@ -329,12 +329,21 @@
         <button data-period="3m">3 m</button>
         <button data-period="6m">6 m</button>
         <button data-period="1y">1 j</button>
-        <button data-period="5y">5 j</button>
-        <button data-period="custom">eigen</button>
+        <button data-period="2y">2 jr</button>
+        <button data-period="custom">#</button>
       </div>
-      <div class="custom-range" id="data-custom-range">
-        <div class="field"><label>Van</label><input type="date" id="data-range-from"></div>
-        <div class="field"><label>Tot</label><input type="date" id="data-range-to"></div>
+      <div class="modal-overlay" id="data-range-modal-overlay" style="display:none;">
+        <div class="modal-box" style="max-width:360px;">
+          <h2 style="margin:0 0 16px;font-size:18px;color:var(--text);">Eigen periode</h2>
+          <div class="grid2">
+            <div class="field"><label>Van</label><input type="date" id="data-range-from"></div>
+            <div class="field"><label>Tot</label><input type="date" id="data-range-to"></div>
+          </div>
+          <div class="actions" style="justify-content:flex-end;flex-wrap:nowrap;margin-top:12px;">
+            <button class="btn secondary compact" id="data-range-cancel" style="flex:1;">Annuleren</button>
+            <button class="btn compact" id="data-range-apply" style="flex:1;">Toepassen</button>
+          </div>
+        </div>
       </div>
       <div id="data-table-scroll" style="overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;">
         <table>
@@ -388,12 +397,21 @@
         <button data-period="3m">3 m</button>
         <button data-period="6m">6 m</button>
         <button data-period="1y">1 j</button>
-        <button data-period="5y">5 j</button>
-        <button data-period="custom">eigen</button>
+        <button data-period="2y">2 jr</button>
+        <button data-period="custom">#</button>
       </div>
-      <div class="custom-range" id="chart-custom-range">
-        <div class="field"><label>Van</label><input type="date" id="chart-range-from"></div>
-        <div class="field"><label>Tot</label><input type="date" id="chart-range-to"></div>
+      <div class="modal-overlay" id="chart-range-modal-overlay" style="display:none;">
+        <div class="modal-box" style="max-width:360px;">
+          <h2 style="margin:0 0 16px;font-size:18px;color:var(--text);">Eigen periode</h2>
+          <div class="grid2">
+            <div class="field"><label>Van</label><input type="date" id="chart-range-from"></div>
+            <div class="field"><label>Tot</label><input type="date" id="chart-range-to"></div>
+          </div>
+          <div class="actions" style="justify-content:flex-end;flex-wrap:nowrap;margin-top:12px;">
+            <button class="btn secondary compact" id="chart-range-cancel" style="flex:1;">Annuleren</button>
+            <button class="btn compact" id="chart-range-apply" style="flex:1;">Toepassen</button>
+          </div>
+        </div>
       </div>
 
       <div id="chart-table-scroll" style="overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;margin-top:8px;">
@@ -873,35 +891,45 @@ document.getElementById('data-source-select').addEventListener('change', async (
 });
 
 let dataPeriodFilter = '3m';
-const DATA_PERIOD_DAYS = {'1w':7,'1m':30,'3m':91,'6m':182,'1y':365,'5y':1826};
-let dataPreviousPeriod = '3m';
+const DATA_PERIOD_DAYS = {'1w':7,'1m':30,'3m':91,'6m':182,'1y':365,'2y':730};
 function setDataPeriod(period){
   const group = document.getElementById('data-period-filter');
-  if(period === 'custom' && dataPeriodFilter === 'custom'){
-    period = dataPreviousPeriod;
-  } else if(period === 'custom'){
-    dataPreviousPeriod = dataPeriodFilter;
+  if(period === 'custom'){
+    openDataRangeModal();
+    return;
   }
   dataPeriodFilter = period;
   group.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.period===period));
-  document.getElementById('data-custom-range').classList.toggle('active', period==='custom');
-  if(period==='custom'){
-    const id = document.getElementById('data-source-select').value;
-    const range = getDateRange(dataCache[id] || {});
-    const fromEl = document.getElementById('data-range-from');
-    const toEl = document.getElementById('data-range-to');
-    if(range){
-      if(!fromEl.value) fromEl.value = keyToIsoDate(range.first);
-      if(!toEl.value) toEl.value = keyToIsoDate(range.last);
-    }
-  }
   renderDataView();
 }
 document.getElementById('data-period-filter').querySelectorAll('button').forEach(btn=>{
   btn.addEventListener('click', ()=>setDataPeriod(btn.dataset.period));
 });
-document.getElementById('data-range-from').addEventListener('change', renderDataView);
-document.getElementById('data-range-to').addEventListener('change', renderDataView);
+
+function openDataRangeModal(){
+  const id = document.getElementById('data-source-select').value;
+  const range = getDateRange(dataCache[id] || {});
+  const fromEl = document.getElementById('data-range-from');
+  const toEl = document.getElementById('data-range-to');
+  if(range){
+    if(!fromEl.value) fromEl.value = keyToIsoDate(range.first);
+    if(!toEl.value) toEl.value = keyToIsoDate(range.last);
+  }
+  document.getElementById('data-range-modal-overlay').style.display = 'flex';
+}
+function closeDataRangeModal(){
+  document.getElementById('data-range-modal-overlay').style.display = 'none';
+}
+document.getElementById('data-range-cancel').addEventListener('click', closeDataRangeModal);
+document.getElementById('data-range-modal-overlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'data-range-modal-overlay') closeDataRangeModal();
+});
+document.getElementById('data-range-apply').addEventListener('click', ()=>{
+  dataPeriodFilter = 'custom';
+  document.getElementById('data-period-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.period==='custom'));
+  closeDataRangeModal();
+  renderDataView();
+});
 
 async function renderDataView(){
   const id = document.getElementById('data-source-select').value;
@@ -1151,7 +1179,7 @@ document.getElementById('btn-add-datapoint').addEventListener('click', async ()=
 });
 
 /* ================= CHART VIEW ================= */
-const PERIOD_DAYS = {'1w':7,'1m':30,'3m':91,'6m':182,'1y':365,'5y':1826,'all':null};
+const PERIOD_DAYS = {'1w':7,'1m':30,'3m':91,'6m':182,'1y':365,'2y':730,'all':null};
 let chartPeriodFilter = '1m';
 
 function getDateRange(data){
@@ -1161,35 +1189,46 @@ function getDateRange(data){
 }
 
 document.getElementById('data-source-select').addEventListener('change', renderChartView);
-let chartPreviousPeriod = '1m';
 function setChartPeriod(period){
   const group = document.getElementById('chart-period-filter');
-  if(period === 'custom' && chartPeriodFilter === 'custom'){
-    period = chartPreviousPeriod;
-  } else if(period === 'custom'){
-    chartPreviousPeriod = chartPeriodFilter;
+  if(period === 'custom'){
+    openChartRangeModal();
+    return;
   }
   chartPeriodFilter = period;
   group.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.period===period));
-  document.getElementById('chart-custom-range').classList.toggle('active', period==='custom');
-  if(period==='custom'){
-    const id = document.getElementById('data-source-select').value;
-    const range = getDateRange(dataCache[id] || {});
-    const fromEl = document.getElementById('chart-range-from');
-    const toEl = document.getElementById('chart-range-to');
-    if(range){
-      if(!fromEl.value) fromEl.value = keyToIsoDate(range.first);
-      if(!toEl.value) toEl.value = keyToIsoDate(range.last);
-    }
-  }
   updateAggButtonStates();
   renderChartView();
 }
 document.getElementById('chart-period-filter').querySelectorAll('button').forEach(btn=>{
   btn.addEventListener('click', ()=>setChartPeriod(btn.dataset.period));
 });
-document.getElementById('chart-range-from').addEventListener('change', ()=>{ updateAggButtonStates(); renderChartView(); });
-document.getElementById('chart-range-to').addEventListener('change', ()=>{ updateAggButtonStates(); renderChartView(); });
+
+function openChartRangeModal(){
+  const id = document.getElementById('data-source-select').value;
+  const range = getDateRange(dataCache[id] || {});
+  const fromEl = document.getElementById('chart-range-from');
+  const toEl = document.getElementById('chart-range-to');
+  if(range){
+    if(!fromEl.value) fromEl.value = keyToIsoDate(range.first);
+    if(!toEl.value) toEl.value = keyToIsoDate(range.last);
+  }
+  document.getElementById('chart-range-modal-overlay').style.display = 'flex';
+}
+function closeChartRangeModal(){
+  document.getElementById('chart-range-modal-overlay').style.display = 'none';
+}
+document.getElementById('chart-range-cancel').addEventListener('click', closeChartRangeModal);
+document.getElementById('chart-range-modal-overlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'chart-range-modal-overlay') closeChartRangeModal();
+});
+document.getElementById('chart-range-apply').addEventListener('click', ()=>{
+  chartPeriodFilter = 'custom';
+  document.getElementById('chart-period-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.period==='custom'));
+  closeChartRangeModal();
+  updateAggButtonStates();
+  renderChartView();
+});
 
 let chartAggMode = 'd';
 const AGG_DAYS = {d:1, w:7, m:30, q:91, y:365};
