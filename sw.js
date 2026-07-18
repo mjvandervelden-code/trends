@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'trends-v1';
+const CACHE_VERSION = 'trends-v2';
 const PRECACHE_URLS = [
   './',
   './index.html',
