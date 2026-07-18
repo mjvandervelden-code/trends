@@ -32,19 +32,6 @@
     height:100vh;height:100dvh;
     position:fixed;inset:0;width:100%;
   }
-  header{
-    flex:0 0 auto;
-    padding:22px 18px 14px;
-    border-bottom:1px solid var(--line);
-    background:linear-gradient(180deg,#131a1d,#0f1417);
-  }
-  header .eyebrow{
-    font-family:var(--mono);font-size:17px;letter-spacing:.14em;color:var(--accent);
-    text-transform:uppercase;margin-bottom:4px;
-  }
-  header h1{margin:0;font-size:33px;font-weight:650;letter-spacing:-.01em;}
-  header p{margin:4px 0 0;color:var(--muted);font-size:20px;}
-
   nav.tabs{
     flex:0 0 auto;
     display:flex;gap:2px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));
@@ -149,19 +136,6 @@
   td.actions-cell button:hover{color:var(--accent);}
   .empty{color:var(--muted);font-size:19px;padding:20px 0;text-align:center;}
 
-  .stats-row{display:flex;flex-wrap:wrap;justify-content:center;gap:18px;margin:12px 0 4px;}
-  .stats-row .stat{flex:0 0 auto;}
-  .stat{font-family:var(--mono);text-align:center;}
-  .stat .num{font-size:17px;font-weight:650;}
-  .stat .lbl{font-size:17px;color:var(--text);text-transform:uppercase;letter-spacing:.05em;}
-  .stat.warn .num{color:var(--warn);}
-  .stat.danger .num{color:var(--danger);}
-  .stat.accent .num{color:var(--accent);}
-  .stats-row .stat.accent{border-color:var(--accent);}
-
-  .legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:17px;color:var(--muted);margin-top:8px;font-family:var(--mono);}
-  .legend span{display:inline-flex;align-items:center;gap:5px;}
-  .swatch{width:10px;height:10px;border-radius:2px;display:inline-block;}
 
   canvas{width:100%;height:220px;display:block;background:var(--panel-2);border-radius:8px;border:1px solid var(--line);}
 
@@ -185,7 +159,6 @@
   .file-link-row{display:flex;align-items:center;gap:12px;}
   .file-link-row .filename{font-family:var(--mono);font-size:21px;color:var(--text);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .file-link-row .time{font-size:15px;color:var(--muted);margin-top:2px;}
   .icon-btn-sm{
     flex:0 0 auto;width:42px;height:42px;padding:0;border-radius:8px;
     background:none;border:1px solid var(--line);color:var(--muted);
@@ -222,9 +195,6 @@
   .segmented button.active{background:#4f8ff0;color:#eef4ff;border-color:#4f8ff0;}
   #chart-stats-tabs button:not(.active){background:#28333b;}
   .segmented button:disabled{opacity:.35;cursor:not-allowed;}
-  .custom-range{display:none;gap:10px;margin-bottom:12px;}
-  .custom-range.active{display:flex;}
-  .custom-range .field{flex:1;}
 
   .auth-banner{display:flex;flex-direction:column;gap:10px;
     background:#2a2410;border:1px solid #55481a;border-radius:8px;padding:12px;}
@@ -350,7 +320,7 @@
           </button>
           <select id="data-source-select" style="display:none;"></select>
         </div>
-        <button type="button" class="icon-btn-sm icon-btn-filled" id="btn-toggle-chart" title="Grafiek tonen/verbergen" aria-label="Grafiek tonen/verbergen" style="box-shadow:inset 0 0 0 2px #4f8ff0;">
+        <button type="button" class="icon-btn-sm icon-btn-blue" id="btn-toggle-chart" title="Grafiek tonen/verbergen" aria-label="Grafiek tonen/verbergen">
           <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="4" y2="4"/><line x1="4" y1="20" x2="20" y2="20"/><path d="M6 15.5l4-5 3.5 3 4.5-7"/></svg>
         </button>
       </div>
@@ -738,7 +708,6 @@ async function syncMetaFile(){
     setFileLinkUI('dir', 'error', {name: dirHandle.name});
   }
 }
-function nowTime(){ return new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
 
 /* state: 'empty' | 'auth' | 'linked' | 'error' */
 function setFileLinkUI(prefix, state, opts){
@@ -821,6 +790,7 @@ async function bootDir(){
         updateSourcePickerLabel();
       }
       if(bronnen.length) switchToView('data');
+      if(dataShowChart) setDataShowChart(true);
     } else {
       setFileLinkUI('dir', 'auth', {name: handle.name});
     }
@@ -1104,7 +1074,7 @@ document.getElementById('data-source-select').addEventListener('change', async (
   document.getElementById('data-agg-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.agg==='d'));
   updateDataAggButtonStates();
   chartViewMode = 'standard';
-  setDataShowChart(false);
+  setDataShowChart(true);
   await ensureDataLoaded(document.getElementById('data-source-select').value);
   renderDataView();
 });
@@ -1119,7 +1089,7 @@ document.getElementById('data-agg-filter').querySelectorAll('button').forEach(bt
   });
 });
 
-let dataShowChart = false;
+let dataShowChart = true;
 async function setDataShowChart(show){
   dataShowChart = show;
   document.getElementById('data-chart-preview').style.display = show ? 'block' : 'none';
@@ -1263,6 +1233,35 @@ document.getElementById('data-range-apply').addEventListener('click', ()=>{
   renderDataView();
 });
 
+function computeMeanSigma(vals){
+  const n = vals.length;
+  if(n===0) return {mean:null, sigma:null};
+  if(n===1) return {mean:vals[0], sigma:0};
+  const mean = vals.reduce((s,v)=>s+v,0)/n;
+  const variance = vals.reduce((s,v)=>s+Math.pow(v-mean,2),0)/(n-1);
+  return {mean, sigma:Math.sqrt(variance)};
+}
+function computeRBar(valsAsc){
+  if(valsAsc.length<2) return null;
+  let sum=0;
+  for(let i=1;i<valsAsc.length;i++) sum+=Math.abs(valsAsc[i]-valsAsc[i-1]);
+  return sum/(valsAsc.length-1);
+}
+function classifyValueColor(v, mean, sigma, rBar, mode){
+  if(mean===null) return 'var(--text)';
+  if(mode === 'xmr' && rBar!=null && rBar>0){
+    const dist = Math.abs(v-mean);
+    if(dist > 2.66*rBar) return 'var(--danger)';
+    if(dist > 1.77*rBar) return 'var(--warn)';
+    return 'var(--text)';
+  }
+  if(!(sigma>0)) return 'var(--text)';
+  const dist = Math.abs(v-mean);
+  if(dist > 3*sigma) return 'var(--danger)';
+  if(dist > 2*sigma) return 'var(--warn)';
+  return 'var(--text)';
+}
+
 function getShownDataKeys(keys){
   if(dataPeriodFilter === 'custom'){
     const fromIso = document.getElementById('data-range-from').value;
@@ -1276,7 +1275,7 @@ function getShownDataKeys(keys){
   const today = new Date();
   const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
   const cutoff = new Date(todayUTC); cutoff.setUTCDate(cutoff.getUTCDate() - days);
-  return keys.filter(k => keyToDate(k) >= cutoff);
+  return keys.filter(k => keyToDate(k) >= cutoff && keyToDate(k) <= todayUTC);
 }
 
 function updateDataControlsEnabled(){
@@ -1353,6 +1352,42 @@ async function renderDataView(){
   if(dataAggMode === 'd'){
     const ascIndexOf = new Map();
     keysAsc.forEach((k,i)=>ascIndexOf.set(k,i));
+    const {mean: tblMean, sigma: tblSigma} = computeMeanSigma(shown.map(k=>data[k]));
+    const tblRBar = computeRBar(shown.slice().reverse().map(k=>data[k]));
+    const tblChartMode = (chartViewMode === 'xmr' && dataAggMode === 'd') ? 'xmr' : 'standard';
+    function valColor(v){
+      return classifyValueColor(v, tblMean, tblSigma, tblRBar, tblChartMode);
+    }
+    const isRangeMode = chartViewMode === 'range' && dataAggMode === 'd';
+    function diffMagColor(absDiff){
+      if(!isRangeMode || tblRBar==null || tblRBar<=0) return null;
+      return absDiff > 3.267*tblRBar ? 'var(--danger)' : null;
+    }
+    // Voor de Range-kaart: per dag de range-waarde (|verschil met vorige meting|),
+    // en per range-waarde het verschil met de vórige range-waarde (de 'delta').
+    const rangeValMap = new Map();
+    const rangeKeysAsc = [];
+    if(isRangeMode){
+      keysAsc.forEach((k,i)=>{
+        if(i>0){
+          rangeValMap.set(k, Math.abs(data[k]-data[keysAsc[i-1]]));
+          rangeKeysAsc.push(k);
+        }
+      });
+    }
+    const rangeDeltaMap = new Map();
+    let rBarBar = null;
+    if(isRangeMode){
+      const allDeltas = [];
+      rangeKeysAsc.forEach((k,i)=>{
+        if(i>0){
+          const delta = rangeValMap.get(k) - rangeValMap.get(rangeKeysAsc[i-1]);
+          rangeDeltaMap.set(k, delta);
+          allDeltas.push(Math.abs(delta));
+        }
+      });
+      if(allDeltas.length) rBarBar = allDeltas.reduce((s,v)=>s+v,0)/allDeltas.length;
+    }
     let allKeysDesc = [];
     if(dataShowGaps){
       if(keys.length){
@@ -1375,6 +1410,24 @@ async function renderDataView(){
         return `<tr data-k="${k}"${rowClassAttr}${rowStyle}><td>${formatDateCell(k)}</td><td class="val">–</td>
         <td class="actions-cell">–</td></tr>`;
       }
+      if(isRangeMode){
+        const rv = rangeValMap.get(k);
+        const rvStyle = (rv!=null && diffMagColor(rv)) ? ` style="color:${diffMagColor(rv)};"` : '';
+        const rvTxt = rv!=null ? `${fmtVal(rv, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}` : '–';
+        const delta = rangeDeltaMap.get(k);
+        let deltaCell = '–';
+        if(delta!=null){
+          if(delta > 0){
+            deltaCell = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--danger);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:3px;"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>${fmtVal(Math.abs(delta), src?.decimalen)}`;
+          } else if(delta < 0){
+            deltaCell = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--good);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:3px;"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="6 13 12 19 18 13"/></svg>${fmtVal(Math.abs(delta), src?.decimalen)}`;
+          } else {
+            deltaCell = '–';
+          }
+        }
+        return `<tr data-k="${k}"${rowClassAttr}${rowStyle}><td>${formatDateCell(k)}</td><td class="val"${rvStyle}>${rvTxt}</td>
+        <td class="actions-cell">${deltaCell}</td></tr>`;
+      }
       const idx = ascIndexOf.get(k);
       const prevVal = idx > 0 ? data[keysAsc[idx-1]] : null;
       let diffCell = '';
@@ -1388,13 +1441,17 @@ async function renderDataView(){
           diffCell = '–';
         }
       }
-      return `<tr data-k="${k}"${rowClassAttr}${rowStyle}><td>${formatDateCell(k)}</td><td class="val">${fmtVal(data[k], src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
+      return `<tr data-k="${k}"${rowClassAttr}${rowStyle}><td>${formatDateCell(k)}</td><td class="val" style="color:${valColor(data[k])};">${fmtVal(data[k], src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
         <td class="actions-cell">${diffCell}</td></tr>`;
     });
   } else {
     const pointsAsc = shown.slice().reverse().map(k=>({date: keyToDate(k), value: data[k]}));
     const aggPoints = aggregatePoints(pointsAsc, dataAggMode);
     const rows = aggPoints.slice().reverse();
+    const {mean: aggMean, sigma: aggSigma} = computeMeanSigma(aggPoints.map(p=>p.value));
+    function aggValColor(v){
+      return classifyValueColor(v, aggMean, aggSigma, null, 'standard');
+    }
     rowsHtml = rows.map((p,idx)=>{
       const prev = rows[idx+1];
       let diffCell = '';
@@ -1408,7 +1465,7 @@ async function renderDataView(){
           diffCell = '–';
         }
       }
-      return `<tr${idx%2?' style="background:rgba(255,255,255,0.06);"':''}><td>${formatDateCell(dateToKey(p.date))}</td><td class="val">${fmtVal(p.value, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
+      return `<tr${idx%2?' style="background:rgba(255,255,255,0.06);"':''}><td>${formatDateCell(dateToKey(p.date))}</td><td class="val" style="color:${aggValColor(p.value)};">${fmtVal(p.value, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
         <td class="actions-cell">${diffCell}</td></tr>`;
     });
   }
@@ -1434,6 +1491,7 @@ document.getElementById('data-table-body').addEventListener('click', (e)=>{
     selectedDataKey = k;
   }
   updateEditSelectedButton();
+  if(dataShowChart) renderDataChartPreview();
 });
 
 function updateEditSelectedButton(){
@@ -1758,38 +1816,49 @@ async function renderDataChartPreview(){
     maxVal = Math.max(...points.map(p=>p.value));
     sumVal = points.reduce((s,p)=>s+p.value,0);
   }
-  if(n>=2){
-    mean = points.reduce((s,p)=>s+p.value,0)/n;
-    const variance = points.reduce((s,p)=>s+Math.pow(p.value-mean,2),0)/(n-1);
-    sigma = Math.sqrt(variance);
-  } else if(n===1){
-    mean = points[0].value; sigma = 0;
-  }
+  ({mean, sigma} = computeMeanSigma(points.map(p=>p.value)));
 
   const totalCount = Object.keys(dataCache[id] || {}).length;
   const dec = src?.decimalen ?? 1;
   if(n===0){
-    window.lastChartStats = {n:0, totalCount, mean:null, sigma:null, rBar:null, minVal:null, maxVal:null, sumVal:null, ucl:null, uwl:null, lwl:null, lcl:null, doelWaarde:null, doelBoven:null, doelOnder:null, dec, chartMode:'standard'};
+    window.lastChartStats = {n:0, totalCount, mean:null, sigma:null, rBar:null, rBarBar:null, madVal:null, minVal:null, maxVal:null, sumVal:null, ucl:null, uwl:null, lwl:null, lcl:null, doelWaarde:null, doelBereik:null, doelBoven:null, doelOnder:null, dec, chartMode:'standard'};
     return;
   }
   let rBar = null;
+  let rBarBar = null;
   if(n>=2){
     let sum = 0;
-    for(let i=1;i<points.length;i++) sum += Math.abs(points[i].value - points[i-1].value);
+    const rangeSeries = [];
+    for(let i=1;i<points.length;i++){
+      const rv = Math.abs(points[i].value - points[i-1].value);
+      sum += rv;
+      rangeSeries.push(rv);
+    }
     rBar = sum / (n-1);
+    if(rangeSeries.length>=2){
+      let sum2 = 0;
+      for(let i=1;i<rangeSeries.length;i++) sum2 += Math.abs(rangeSeries[i]-rangeSeries[i-1]);
+      rBarBar = sum2 / (rangeSeries.length-1);
+    }
   }
-  const effectiveChartMode = (dataAggMode === 'd') ? chartViewMode : 'standard';
+  let madVal = null;
+  if(n>=1 && mean!=null){
+    madVal = points.reduce((s,p)=>s+Math.abs(p.value-mean),0) / n;
+  }
+  const effectiveChartMode = (chartViewMode === 'xmr' && dataAggMode !== 'd') ? 'standard' : chartViewMode;
   const useXmr = effectiveChartMode === 'xmr' && rBar!=null && rBar>0;
-  const ucl = useXmr ? mean + 2.66*rBar : ((mean!=null && sigma!=null) ? mean + 3*sigma : null);
-  const uwl = useXmr ? mean + 1.77*rBar : ((mean!=null && sigma!=null) ? mean + 2*sigma : null);
-  const lwl = useXmr ? mean - 1.77*rBar : ((mean!=null && sigma!=null) ? mean - 2*sigma : null);
-  const lcl = useXmr ? mean - 2.66*rBar : ((mean!=null && sigma!=null) ? mean - 3*sigma : null);
-  const doelWaarde = src?.doel_x ?? null;
-  const doelBoven = (src?.doel_x != null && src?.doel_r != null) ? src.doel_x + src.doel_r/2 : null;
-  const doelOnder = (src?.doel_x != null && src?.doel_r != null) ? src.doel_x - src.doel_r/2 : null;
-  window.lastChartStats = {n, totalCount, mean, sigma, rBar, minVal, maxVal, sumVal, ucl, uwl, lwl, lcl, doelWaarde, doelBoven, doelOnder, dec, chartMode: effectiveChartMode};
+  const useRange = effectiveChartMode === 'range' && rBar!=null;
+  const ucl = useRange ? rBar*3.267 : (useXmr ? mean + 2.66*rBar : ((mean!=null && sigma!=null) ? mean + 3*sigma : null));
+  const uwl = useRange ? null : (useXmr ? mean + 1.77*rBar : ((mean!=null && sigma!=null) ? mean + 2*sigma : null));
+  const lwl = useRange ? null : (useXmr ? mean - 1.77*rBar : ((mean!=null && sigma!=null) ? mean - 2*sigma : null));
+  const lcl = useRange ? 0 : (useXmr ? mean - 2.66*rBar : ((mean!=null && sigma!=null) ? mean - 3*sigma : null));
+  const doelWaarde = useRange ? null : (src?.doel_x ?? null);
+  const doelBereik = useRange ? null : (src?.doel_r ?? null);
+  const doelBoven = (!useRange && src?.doel_x != null && src?.doel_r != null) ? src.doel_x + src.doel_r/2 : null;
+  const doelOnder = (!useRange && src?.doel_x != null && src?.doel_r != null) ? src.doel_x - src.doel_r/2 : null;
+  window.lastChartStats = {n, totalCount, mean, sigma, rBar, rBarBar, madVal, minVal, maxVal, sumVal, ucl, uwl, lwl, lcl, doelWaarde, doelBereik, doelBoven, doelOnder, dec, chartMode: effectiveChartMode};
 
-  drawChart(ctx, canvas, points, mean, sigma, src, chartXMin, chartXMax, AGG_MAX_GAP_DAYS[dataAggMode], rBar, effectiveChartMode, dataAggMode==='d');
+  drawChart(ctx, canvas, points, mean, sigma, src, chartXMin, chartXMax, AGG_MAX_GAP_DAYS[dataAggMode], rBar, effectiveChartMode, true, selectedDataKey, rBarBar);
 }
 
 function openChartStatsModal(){
@@ -1807,23 +1876,44 @@ function openChartStatsModal(){
   const bodyChart = document.getElementById('chart-stats-modal-body-chart');
   const xBar = '<span style="position:relative;display:inline-block;vertical-align:baseline;">x<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>';
   const rBarSym = '<span style="position:relative;display:inline-block;vertical-align:baseline;">r<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>';
+  const rBarBarSym = '<span style="position:relative;display:inline-block;vertical-align:baseline;">r<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i><i style="position:absolute;left:0;right:0;top:-2px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>';
+  const madSym = `MAD (|x−${xBar}|)`;
   const statsRows = [
     ['n / N', `${stats.n} / ${stats.totalCount}`, 'var(--text)'],
     [xBar, stats.mean!=null ? fmtVal(stats.mean, stats.dec) : '–', 'var(--accent)'],
     ['σₙ₋₁', (stats.sigma!=null && stats.sigma>0) ? fmtVal(stats.sigma, stats.dec) : '–', 'var(--text)'],
-    [rBarSym, stats.rBar!=null ? fmtVal(stats.rBar, stats.dec) : '–', 'var(--text)'],
+    [`${rBarSym} / ${rBarBarSym}`, `${stats.rBar!=null ? fmtVal(stats.rBar, stats.dec) : '–'} / ${stats.rBarBar!=null ? fmtVal(stats.rBarBar, stats.dec) : '–'}`, 'var(--text)'],
+    [madSym, stats.madVal!=null ? fmtVal(stats.madVal, stats.dec) : '–', 'var(--text)'],
     ['Σ', stats.sumVal!=null ? fmtVal(stats.sumVal, stats.dec) : '–', 'var(--text)'],
     ['min', stats.minVal!=null ? fmtVal(stats.minVal, stats.dec) : '–', 'var(--text)'],
     ['max', stats.maxVal!=null ? fmtVal(stats.maxVal, stats.dec) : '–', 'var(--text)'],
   ];
+  const formulaStyle = 'font-size:11px;color:var(--muted);margin-left:6px;';
+  let uclF, uwlF, lwlF, lclF;
+  if(stats.chartMode === 'range'){
+    uclF = `<span style="${formulaStyle}">3,267×${rBarSym}</span>`;
+    uwlF = ''; lwlF = '';
+    lclF = `<span style="${formulaStyle}">0</span>`;
+  } else if(stats.chartMode === 'xmr'){
+    uclF = `<span style="${formulaStyle}">${xBar}+2,66×${rBarSym}</span>`;
+    uwlF = `<span style="${formulaStyle}">${xBar}+1,77×${rBarSym}</span>`;
+    lwlF = `<span style="${formulaStyle}">${xBar}−1,77×${rBarSym}</span>`;
+    lclF = `<span style="${formulaStyle}">${xBar}−2,66×${rBarSym}</span>`;
+  } else {
+    uclF = `<span style="${formulaStyle}">${xBar}+3σₙ₋₁</span>`;
+    uwlF = `<span style="${formulaStyle}">${xBar}+2σₙ₋₁</span>`;
+    lwlF = `<span style="${formulaStyle}">${xBar}−2σₙ₋₁</span>`;
+    lclF = `<span style="${formulaStyle}">${xBar}−3σₙ₋₁</span>`;
+  }
   const chartRows = [
-    ['UCL', stats.ucl!=null ? fmtVal(stats.ucl, stats.dec) : '–', '#ef5b5b'],
-    ['UWL', stats.uwl!=null ? fmtVal(stats.uwl, stats.dec) : '–', '#f0a84f'],
-    ['LWL', stats.lwl!=null ? fmtVal(stats.lwl, stats.dec) : '–', '#f0a84f'],
-    ['LCL', stats.lcl!=null ? fmtVal(stats.lcl, stats.dec) : '–', '#ef5b5b'],
+    ['UCL'+uclF, stats.ucl!=null ? fmtVal(stats.ucl, stats.dec) : '–', '#ef5b5b'],
+    ['UWL'+uwlF, stats.uwl!=null ? fmtVal(stats.uwl, stats.dec) : '–', '#f0a84f'],
+    ['LWL'+lwlF, stats.lwl!=null ? fmtVal(stats.lwl, stats.dec) : '–', '#f0a84f'],
+    ['LCL'+lclF, stats.lcl!=null ? fmtVal(stats.lcl, stats.dec) : '–', '#ef5b5b'],
     ['Doel', stats.doelWaarde!=null ? fmtVal(stats.doelWaarde, stats.dec) : '–', 'var(--muted)'],
-    ['Doel max', stats.doelBoven!=null ? fmtVal(stats.doelBoven, stats.dec) : '–', 'var(--muted)'],
-    ['Doel min', stats.doelOnder!=null ? fmtVal(stats.doelOnder, stats.dec) : '–', 'var(--muted)'],
+    ['Doel·bereik', stats.doelBereik!=null ? fmtVal(stats.doelBereik, stats.dec) : '–', 'var(--muted)'],
+    ['Doel·max', stats.doelBoven!=null ? fmtVal(stats.doelBoven, stats.dec) : '–', 'var(--muted)'],
+    ['Doel·min', stats.doelOnder!=null ? fmtVal(stats.doelOnder, stats.dec) : '–', 'var(--muted)'],
   ];
   function renderRows(rows){
     return rows.map(([label,val,color],i)=>
@@ -1866,7 +1956,6 @@ document.getElementById('chart-stats-tabs').querySelectorAll('button').forEach(b
 document.getElementById('data-chart-canvas').addEventListener('click', openChartStatsModal);
 (function(){
   const canvas = document.getElementById('data-chart-canvas');
-  const CAROUSEL = ['standard','xmr','range'];
   let startX=null, startY=null, wasSwipe=false, swipeDx=0;
   canvas.addEventListener('touchstart', (e)=>{
     if(e.touches.length !== 1){ startX=null; return; }
@@ -1881,12 +1970,14 @@ document.getElementById('data-chart-canvas').addEventListener('click', openChart
     if(Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) * 1.5){ wasSwipe = true; swipeDx = dx; }
   }, {passive:true});
   canvas.addEventListener('touchend', ()=>{
-    if(wasSwipe && dataAggMode === 'd'){
-      const curIdx = CAROUSEL.indexOf(chartViewMode);
-      const dir = swipeDx < 0 ? 1 : -1; // links -> volgende (xmr eerst), rechts -> vorige (range eerst)
-      const nextIdx = (curIdx + dir + CAROUSEL.length) % CAROUSEL.length;
-      chartViewMode = CAROUSEL[nextIdx];
-      renderDataChartPreview();
+    if(wasSwipe){
+      const carousel = dataAggMode === 'd' ? ['standard','xmr','range'] : ['standard','range'];
+      const curIdx = carousel.indexOf(chartViewMode);
+      const startIdx = curIdx === -1 ? 0 : curIdx;
+      const dir = swipeDx < 0 ? 1 : -1; // links -> volgende (xmr/range eerst), rechts -> vorige
+      const nextIdx = (startIdx + dir + carousel.length) % carousel.length;
+      chartViewMode = carousel[nextIdx];
+      renderDataView();
       window.chartSwipeJustHappened = true;
       setTimeout(()=>{ window.chartSwipeJustHappened = false; }, 400);
     }
@@ -1900,7 +1991,7 @@ document.getElementById('chart-stats-modal-overlay').addEventListener('click', (
   if(e.target.id === 'chart-stats-modal-overlay') document.getElementById('chart-stats-modal-overlay').style.display = 'none';
 });
 
-function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays, rBar, chartMode, swipeEnabled){
+function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays, rBar, chartMode, swipeEnabled, selectedKey, rBarBar){
   maxGapDays = maxGapDays ?? 1;
   const dpr = window.devicePixelRatio || 1;
   const cssW = canvas.clientWidth || 880, cssH = 220;
@@ -1924,35 +2015,60 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
     ctx.beginPath(); ctx.moveTo(x, y-9); ctx.lineTo(x+w, y-9); ctx.stroke();
     return w;
   }
+  function drawDoubleOverlineChar(x, y, ch, color){
+    ctx.fillStyle = color;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(ch, x, y);
+    const w = ctx.measureText(ch).width;
+    ctx.strokeStyle = color; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, y-9); ctx.lineTo(x+w, y-9); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, y-12); ctx.lineTo(x+w, y-12); ctx.stroke();
+    return w;
+  }
   ctx.font = '13px ui-monospace, monospace';
   const statY = 20;
   let sx = cssW/2;
   const isRange = chartMode === 'range';
   const nForHeader = isRange ? Math.max(0, n-1) : n;
   const nTxt = `n=${nForHeader}`;
-  const rBarTxt = `=${rBar!=null?fmtVal(rBar,dec):'–'}`;
+  const rBarValTxt = rBar!=null?fmtVal(rBar,dec):'–';
+  const rBarTxt = `=${rBarValTxt}`;
   const gap = 18;
   if(isRange){
     // geen x̄ bij de Range-kaart, r̄ is hier de eigenlijke middellijn
-    const totalW = ctx.measureText(nTxt).width + gap + ctx.measureText('r').width + ctx.measureText(rBarTxt).width;
+    const rBarBarValTxt = rBarBar!=null?fmtVal(rBarBar,dec):'–';
+    const rBarBarTxt = `=${rBarBarValTxt}`;
+    const totalW = ctx.measureText(nTxt).width + gap + ctx.measureText('r').width + ctx.measureText(rBarTxt).width + gap + ctx.measureText('r').width + ctx.measureText(rBarBarTxt).width;
     sx = (cssW - totalW)/2;
     ctx.textAlign='left'; ctx.textBaseline='alphabetic'; ctx.fillStyle = '#e7edf0';
     ctx.fillText(nTxt, sx, statY);
     sx += ctx.measureText(nTxt).width + gap;
-    sx += drawOverlineChar(sx, statY, 'r', '#4fd1c5');
+    sx += drawOverlineChar(sx, statY, 'r', '#e7edf0');
+    ctx.fillStyle = '#e7edf0';
+    ctx.fillText('=', sx, statY);
+    sx += ctx.measureText('=').width;
     ctx.fillStyle = '#4fd1c5';
-    ctx.fillText(rBarTxt, sx, statY);
+    ctx.fillText(rBarValTxt, sx, statY);
+    sx += ctx.measureText(rBarValTxt).width + gap;
+    sx += drawDoubleOverlineChar(sx, statY, 'r', '#e7edf0');
+    ctx.fillStyle = '#e7edf0';
+    ctx.fillText(rBarBarTxt, sx, statY);
   } else {
-    const xBarTxt = `=${mean!=null?fmtVal(mean,dec):'–'}`;
+    const xBarValTxt = mean!=null?fmtVal(mean,dec):'–';
+    const xBarTxt = `=${xBarValTxt}`;
     const totalW = ctx.measureText(nTxt).width + gap + ctx.measureText('x').width + ctx.measureText(xBarTxt).width + gap + ctx.measureText('r').width + ctx.measureText(rBarTxt).width;
     sx = (cssW - totalW)/2;
     ctx.textAlign='left'; ctx.textBaseline='alphabetic'; ctx.fillStyle = '#e7edf0';
     ctx.fillText(nTxt, sx, statY);
     sx += ctx.measureText(nTxt).width + gap;
-    sx += drawOverlineChar(sx, statY, 'x', '#4fd1c5');
+    sx += drawOverlineChar(sx, statY, 'x', '#e7edf0');
+    ctx.fillStyle = '#e7edf0';
+    ctx.fillText('=', sx, statY);
+    sx += ctx.measureText('=').width;
     ctx.fillStyle = '#4fd1c5';
-    ctx.fillText(xBarTxt, sx, statY);
-    sx += ctx.measureText(xBarTxt).width + gap;
+    ctx.fillText(xBarValTxt, sx, statY);
+    sx += ctx.measureText(xBarValTxt).width + gap;
     sx += drawOverlineChar(sx, statY, 'r', '#e7edf0');
     ctx.fillStyle = '#e7edf0';
     ctx.fillText(rBarTxt, sx, statY);
@@ -1992,7 +2108,10 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
 
   const values = points.map(p=>p.value);
   let yMin, yMax;
-  if(mean!==null && sigma>0){
+  if(chartMode === 'xmr' && mean!==null && rBar!=null && rBar>0){
+    yMin = Math.min(...values, mean-3*rBar);
+    yMax = Math.max(...values, mean+3*rBar);
+  } else if(mean!==null && sigma>0){
     yMin = Math.min(...values, mean-3.4*sigma);
     yMax = Math.max(...values, mean+3.4*sigma);
   } else if(chartMode === 'range'){
@@ -2083,18 +2202,36 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
     ctx.stroke();
   }
 
+  let selectedPoint = null;
   points.forEach(p=>{
     const x=xPix(p.date), y=yPix(p.value);
     let color = '#9fd8e0';
     if(chartMode === 'range' && mean!==null){
       if(p.value > mean*3.267) color = '#ef5b5b';
+    } else if(chartMode === 'xmr' && mean!==null && rBar!=null && rBar>0){
+      const dist = Math.abs(p.value-mean);
+      if(dist > 2.66*rBar) color = '#ef5b5b';
+      else if(dist > 1.77*rBar) color = '#f0a84f';
     } else if(mean!==null && sigma>0){
       const dist = Math.abs(p.value-mean);
       if(dist > 3*sigma) color = '#ef5b5b';
       else if(dist > 2*sigma) color = '#f0a84f';
     }
+    const isSelected = selectedKey && dateToKey(p.date) === selectedKey;
+    if(isSelected){ selectedPoint = {x,y}; return; } // apart, als laatste, tekenen
     ctx.beginPath(); ctx.arc(x,y,3.4,0,Math.PI*2); ctx.fillStyle = color; ctx.fill();
   });
+  if(selectedPoint){
+    const {x,y} = selectedPoint;
+    ctx.beginPath(); ctx.arc(x,y,4.6,0,Math.PI*2); ctx.fillStyle = '#4f8ff0'; ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x-8, y-17);
+    ctx.lineTo(x+8, y-17);
+    ctx.lineTo(x, y-5);
+    ctx.closePath();
+    ctx.fillStyle = '#4f8ff0';
+    ctx.fill();
+  }
 
   if(swipeEnabled){
     const midY = pad.top + plotH/2;
