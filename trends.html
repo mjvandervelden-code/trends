@@ -1465,7 +1465,11 @@ async function renderDataView(){
           diffCell = '–';
         }
       }
-      return `<tr${idx%2?' style="background:rgba(255,255,255,0.06);"':''}><td>${formatDateCell(dateToKey(p.date))}</td><td class="val" style="color:${aggValColor(p.value)};">${fmtVal(p.value, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
+      const k = dateToKey(p.date);
+      const rowClasses = [];
+      if(k===selectedDataKey) rowClasses.push('selected');
+      const rowClassAttr = rowClasses.length ? ` class="${rowClasses.join(' ')}"` : '';
+      return `<tr data-k="${k}"${rowClassAttr}${idx%2?' style="background:rgba(255,255,255,0.06);"':''}><td>${formatDateCell(k)}</td><td class="val" style="color:${aggValColor(p.value)};">${fmtVal(p.value, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
         <td class="actions-cell">${diffCell}</td></tr>`;
     });
   }
@@ -1497,9 +1501,10 @@ document.getElementById('data-table-body').addEventListener('click', (e)=>{
 function updateEditSelectedButton(){
   const editBtn = document.getElementById('btn-edit-selected-datapoint');
   const newBtn = document.getElementById('btn-open-new-datapoint');
-  const showEdit = !!selectedDataKey && dataAggMode === 'd';
+  const showEdit = !!selectedDataKey;
   editBtn.style.display = showEdit ? 'flex' : 'none';
   newBtn.style.display = showEdit ? 'none' : 'flex';
+  editBtn.disabled = dataAggMode !== 'd';
   newBtn.disabled = dataAggMode !== 'd';
 }
 
