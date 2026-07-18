@@ -751,6 +751,13 @@ document.getElementById('btn-authorize-dir').addEventListener('click', async ()=
     if(perm==='granted'){
       await loadMetaFromDir();
       setFileLinkUI('dir', 'linked', {name: dirHandle.name});
+      const lastBronId = await idbGet('lastBron').catch(()=>null);
+      if(lastBronId && bronnen.some(b=>b.id===lastBronId)){
+        document.getElementById('data-source-select').value = lastBronId;
+        updateSourcePickerLabel();
+      }
+      if(bronnen.length) await switchToView('data');
+      if(dataShowChart) await setDataShowChart(true);
     } else {
       setFileLinkUI('dir', 'auth', {name: dirHandle.name});
     }
@@ -763,7 +770,8 @@ document.getElementById('btn-refresh-dir').addEventListener('click', async ()=>{
     await loadMetaFromDir();
     dataCache = {}; dataFileExists = {};
     setFileLinkUI('dir', 'linked', {name: dirHandle.name});
-    renderDataView();
+    await renderDataView();
+    if(dataShowChart) await setDataShowChart(true);
   }catch(e){ setFileLinkUI('dir', 'error', {name: dirHandle.name}); }
 });
 
