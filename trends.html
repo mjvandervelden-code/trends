@@ -26,10 +26,11 @@
     --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);height:100%;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);height:100%;overflow:hidden;overscroll-behavior:none;}
   body{
     display:flex;flex-direction:column;overflow:hidden;
     height:100vh;height:100dvh;
+    position:fixed;inset:0;width:100%;
   }
   header{
     flex:0 0 auto;
@@ -62,16 +63,18 @@
     outline:2px solid var(--accent);outline-offset:2px;
   }
 
-  main{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;max-width:920px;margin:0 auto;padding:18px 14px 24px;width:100%;}
-  .view{display:none;}
+  main{flex:1 1 auto;min-height:0;overflow-y:auto;max-width:920px;margin:0 auto;padding:0 14px 24px;width:100%;}
+  .view{display:none;padding-top:10px;}
   .view.active{display:block;}
 
   .panel{
     margin-bottom:22px;
   }
-  .data-sticky-header{
-    position:sticky;top:0;z-index:5;background:var(--bg);
-    padding-top:4px;margin-bottom:14px;
+  .data-sticky-toolbar{
+    position:sticky;
+    top:0;
+    z-index:5;
+    background:#0f1417;
   }
   .panel h2{margin:0 0 12px;font-size:24px;letter-spacing:.02em;color:var(--text);}
   .accent-title{color:var(--accent);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;font-size:18px;}
@@ -188,7 +191,7 @@
     background:none;border:1px solid var(--line);color:var(--muted);
     display:flex;align-items:center;justify-content:center;cursor:pointer;
   }
-  .icon-btn-sm svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;
+  .icon-btn-sm svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;
     stroke-linecap:round;stroke-linejoin:round;}
   .icon-btn-sm:hover{color:var(--text);border-color:var(--accent);}
   .icon-btn-sm:disabled{opacity:.4;cursor:not-allowed;}
@@ -196,7 +199,7 @@
     background:var(--accent);border-color:var(--accent);color:#08221f;
     width:46px;height:46px;
   }
-  .icon-btn-prominent svg{width:22px;height:22px;}
+  .icon-btn-prominent svg{width:20px;height:20px;}
   .icon-btn-prominent:hover{color:#08221f;border-color:var(--accent);opacity:.85;}
   .icon-btn-prominent:disabled{opacity:.35;}
   .icon-btn-filled{
@@ -217,6 +220,7 @@
     white-space:nowrap;height:34px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;
   }
   .segmented button.active{background:#4f8ff0;color:#eef4ff;border-color:#4f8ff0;}
+  #chart-stats-tabs button:not(.active){background:#28333b;}
   .segmented button:disabled{opacity:.35;cursor:not-allowed;}
   .custom-range{display:none;gap:10px;margin-bottom:12px;}
   .custom-range.active{display:flex;}
@@ -258,10 +262,10 @@
       <div class="panel-header">
         <h2 class="accent-title">Werkmap</h2>
         <div style="display:none;gap:8px;" id="dir-file-buttons">
-          <button class="icon-btn-sm icon-btn-filled" id="btn-refresh-dir" title="Vernieuwen" aria-label="Vernieuwen">
+          <button class="icon-btn-sm icon-btn-filled" id="btn-refresh-dir" title="Vernieuwen" aria-label="Vernieuwen" style="width:46px;height:46px;">
             <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
           </button>
-          <button class="icon-btn-sm icon-btn-filled" id="btn-unlink-dir" title="Ontkoppelen" aria-label="Ontkoppelen">
+          <button class="icon-btn-sm icon-btn-filled" id="btn-unlink-dir" title="Ontkoppelen" aria-label="Ontkoppelen" style="width:46px;height:46px;">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
           </button>
         </div>
@@ -292,15 +296,21 @@
       <div class="panel-header">
         <h2 class="accent-title">Bronnen <span class="sub" id="source-count"></span></h2>
         <div style="display:flex;gap:8px;">
-          <button class="icon-btn-sm icon-btn-prominent" id="btn-edit-selected-source" title="Wijzig geselecteerde bron" aria-label="Wijzig geselecteerde bron" disabled>
+          <button class="icon-btn-sm icon-btn-filled" id="btn-move-source-up" title="Naar boven verplaatsen" aria-label="Naar boven verplaatsen" style="width:34px;height:46px;display:none;">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
+          </button>
+          <button class="icon-btn-sm icon-btn-filled" id="btn-move-source-down" title="Naar beneden verplaatsen" aria-label="Naar beneden verplaatsen" style="width:34px;height:46px;display:none;">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="6 13 12 19 18 13"/></svg>
+          </button>
+          <button class="icon-btn-sm icon-btn-prominent" id="btn-edit-selected-source" title="Wijzig geselecteerde bron" aria-label="Wijzig geselecteerde bron" style="width:46px;height:46px;display:none;">
             <svg viewBox="0 0 24 24"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
           </button>
-          <button class="icon-btn-sm icon-btn-prominent" id="btn-open-new-source" title="Nieuwe bron" aria-label="Nieuwe bron toevoegen">
+          <button class="icon-btn-sm icon-btn-prominent" id="btn-open-new-source" title="Nieuwe bron" aria-label="Nieuwe bron toevoegen" style="width:46px;height:46px;">
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
         </div>
       </div>
-      <div class="source-list" id="source-list"></div>
+      <div class="source-list" id="source-list" style="max-height:60vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;"></div>
       <div class="empty" id="source-empty" style="display:none;">Nog geen bronnen. Koppel eerst een metadatabestand hierboven.</div>
     </div>
 
@@ -308,9 +318,9 @@
       <div class="modal-box" style="max-width:480px;max-height:85vh;overflow-y:auto;">
         <h2 id="meta-form-title" class="accent-title" style="margin:0 0 16px;">Nieuwe bron</h2>
         <div class="grid2">
-          <div class="field"><label>Titel</label><input type="text" id="f-titel" placeholder="bv. Gewicht Mark"></div>
-          <div class="field"><label>Bestandsnaam</label><input type="text" id="f-bestand" placeholder="bv. Gewicht_Mark.json"></div>
-          <div class="field"><label>Eenheid</label><input type="text" id="f-eenheid" placeholder="bv. kg"></div>
+          <div class="field"><label>Titel</label><input type="text" id="f-titel" placeholder="bv. Bloeddruk"></div>
+          <div class="field"><label>Bestandsnaam</label><input type="text" id="f-bestand" placeholder="bv. Bloeddruk.json"></div>
+          <div class="field"><label>Eenheid</label><input type="text" id="f-eenheid" placeholder="bv. mmHg"></div>
           <div class="field"><label>Decimalen</label><input type="number" id="f-decimalen" placeholder="1" min="0" max="6" step="1"></div>
           <div class="field"><label>Min</label><input type="text" inputmode="decimal" id="f-min" placeholder="0"></div>
           <div class="field"><label>Max</label><input type="text" inputmode="decimal" id="f-max" placeholder="250"></div>
@@ -331,56 +341,76 @@
 
   <!-- DATA VIEW -->
   <section id="view-data" class="view">
-    <div id="data-sticky-header" style="display:flex;flex-direction:column;gap:10px;">
-      <div class="panel" style="margin-bottom:0;">
-        <div class="toolbar" style="margin-bottom:2px;align-items:center;">
-          <div class="field" style="flex:1;">
-            <button type="button" class="picker-btn" id="data-source-picker-btn" style="margin-bottom:0;height:46px;">
-              <span id="data-source-picker-label" style="color:var(--accent);">Kies een bron</span>
-              <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <select id="data-source-select" style="display:none;"></select>
-          </div>
-          <button type="button" class="icon-btn-sm icon-btn-prominent" id="btn-toggle-chart" title="Grafiek tonen/verbergen" aria-label="Grafiek tonen/verbergen">
-            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="4" y2="4"/><line x1="4" y1="20" x2="20" y2="20"/><path d="M6 15.5l4-5 3.5 3 4.5-7"/></svg>
+    <div class="data-sticky-toolbar" style="padding:0;">
+      <div style="display:grid;grid-template-columns:1fr 46px;gap:10px;align-items:center;margin-bottom:2px;">
+        <div class="field" style="flex:1;">
+          <button type="button" class="picker-btn" id="data-source-picker-btn" style="margin-bottom:0;height:46px;">
+            <span id="data-source-picker-label" style="color:var(--accent);">Kies een bron</span>
+            <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
+          <select id="data-source-select" style="display:none;"></select>
         </div>
-        <div id="data-chart-preview" style="display:none;">
-          <div class="stats-row" id="data-chart-stats"></div>
-          <canvas id="data-chart-canvas" width="880" height="220"></canvas>
+        <button type="button" class="icon-btn-sm icon-btn-filled" id="btn-toggle-chart" title="Grafiek tonen/verbergen" aria-label="Grafiek tonen/verbergen" style="box-shadow:inset 0 0 0 2px #4f8ff0;">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="4" y2="4"/><line x1="4" y1="20" x2="20" y2="20"/><path d="M6 15.5l4-5 3.5 3 4.5-7"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;margin-bottom:10px;">
+      <div id="data-chart-preview" style="display:none;">
+        <canvas id="data-chart-canvas" width="880" height="220" style="cursor:pointer;"></canvas>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="chart-stats-modal-overlay" style="display:none;">
+      <div class="modal-box" style="max-width:340px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 16px;">
+          <h2 class="accent-title" style="margin:0;">Analyse</h2>
+          <span id="chart-stats-badge" style="display:none;background:#4f8ff0;color:#eef4ff;font-family:var(--mono);font-size:12px;font-weight:600;padding:4px 9px;border-radius:5px;"></span>
+        </div>
+        <div class="segmented" id="chart-stats-tabs" style="margin-bottom:12px;">
+          <button data-stattab="stats" class="active">Statistieken</button>
+          <button data-stattab="chart">Kaart</button>
+        </div>
+        <table style="width:100%;font-family:var(--mono);font-size:19px;">
+          <tbody id="chart-stats-modal-body"></tbody>
+          <tbody id="chart-stats-modal-body-chart" style="display:none;"></tbody>
+        </table>
+        <div class="actions" style="justify-content:flex-end;margin-top:16px;">
+          <button class="btn secondary compact" id="chart-stats-modal-close" style="flex:1;">Sluiten</button>
         </div>
       </div>
+    </div>
 
-      <div class="panel" style="margin-top:0;margin-bottom:0;display:flex;flex-direction:column;gap:10px;">
-        <div style="display:flex;align-items:stretch;gap:8px;">
-          <div class="segmented" id="data-agg-filter" style="flex:1;margin-bottom:0;">
-            <button data-agg="d" class="active">dag</button>
-            <button data-agg="w">week</button>
-            <button data-agg="m">1 mnd</button>
-            <button data-agg="q">3 mnd</button>
-            <button data-agg="y">jaar</button>
-          </div>
-          <button type="button" class="icon-btn-sm icon-btn-prominent" id="btn-toggle-gaps" title="Gaten tonen/verbergen" aria-label="Gaten tonen/verbergen" style="width:46px;height:34px;">
-            <svg viewBox="0 0 24 24" stroke-linecap="round"><line x1="3" y1="12" x2="8" y2="12"/><line x1="13" y1="12" x2="18" y2="12"/><line x1="21" y1="12" x2="21.01" y2="12"/></svg>
-          </button>
+    <div class="panel" id="data-filters-panel" style="margin-top:0;margin-bottom:0;display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;align-items:stretch;gap:8px;">
+        <div class="segmented" id="data-agg-filter" style="flex:1;margin-bottom:0;">
+          <button data-agg="d" class="active">dag</button>
+          <button data-agg="w">week</button>
+          <button data-agg="m">1 mnd</button>
+          <button data-agg="q">3 mnd</button>
+          <button data-agg="y">jaar</button>
         </div>
-        <div style="display:flex;align-items:stretch;gap:8px;">
-          <div class="segmented" id="data-period-filter" style="flex:1;margin-bottom:0;">
-            <button data-period="1w">1 w</button>
-            <button data-period="1m" class="active">1 m</button>
-            <button data-period="3m">3 m</button>
-            <button data-period="6m">6 m</button>
-            <button data-period="9m">9 m</button>
-            <button data-period="1y">1 j</button>
-            <button data-period="custom">⋯</button>
-          </div>
-          <button class="icon-btn-sm icon-btn-prominent" id="btn-edit-selected-datapoint" title="Wijzig geselecteerd meetpunt" aria-label="Wijzig geselecteerd meetpunt" style="width:46px;height:34px;display:none;">
-            <svg viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
-          </button>
-          <button class="icon-btn-sm icon-btn-prominent" id="btn-open-new-datapoint" title="Meetpunt toevoegen" aria-label="Meetpunt toevoegen" style="width:46px;height:34px;">
-            <svg viewBox="0 0 24 24" style="width:16px;height:16px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </button>
+        <button type="button" class="icon-btn-sm icon-btn-blue" id="btn-toggle-gaps" title="Gaten tonen/verbergen" aria-label="Gaten tonen/verbergen" style="width:46px;height:34px;">
+          <svg viewBox="0 0 24 24" stroke-linecap="round"><line x1="3" y1="12" x2="8" y2="12"/><line x1="13" y1="12" x2="18" y2="12"/><line x1="21" y1="12" x2="21.01" y2="12"/></svg>
+        </button>
+      </div>
+      <div style="display:flex;align-items:stretch;gap:8px;">
+        <div class="segmented" id="data-period-filter" style="flex:1;margin-bottom:0;">
+          <button data-period="1w">1 w</button>
+          <button data-period="1m" class="active">1 m</button>
+          <button data-period="3m">3 m</button>
+          <button data-period="6m">6 m</button>
+          <button data-period="9m">9 m</button>
+          <button data-period="1y">1 j</button>
+          <button data-period="custom">⋯</button>
         </div>
+        <button class="icon-btn-sm icon-btn-prominent" id="btn-edit-selected-datapoint" title="Wijzig geselecteerd meetpunt" aria-label="Wijzig geselecteerd meetpunt" style="width:46px;height:34px;display:none;">
+          <svg viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+        </button>
+        <button class="icon-btn-sm icon-btn-prominent" id="btn-open-new-datapoint" title="Meetpunt toevoegen" aria-label="Meetpunt toevoegen" style="width:46px;height:34px;">
+          <svg viewBox="0 0 24 24" style="width:20px;height:20px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
       </div>
     </div>
 
@@ -425,7 +455,7 @@
           </div>
         </div>
       </div>
-      <div id="data-table-scroll" style="overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;margin-top:10px;">
+      <div id="data-table-scroll" style="overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;margin-top:10px;">
         <table>
 
           <tbody id="data-table-body"></tbody>
@@ -648,6 +678,7 @@ document.querySelectorAll('nav.tabs button').forEach(btn=>{
   mainEl.addEventListener('touchstart', (e)=>{
     if(document.querySelector('.modal-overlay[style*="flex"]')){ tracking=false; return; }
     if(e.touches.length !== 1){ tracking=false; return; }
+    if(e.target.closest('#data-chart-canvas')){ tracking=false; return; } // canvas heeft eigen swipe (XmR-wissel)
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     tracking = true;
@@ -664,18 +695,14 @@ document.querySelectorAll('nav.tabs button').forEach(btn=>{
     const activeView = activeBtn?.dataset.view;
     const idx = VIEW_ORDER.indexOf(activeView);
     if(idx === -1) return;
-    if(dx < 0){
-      if(activeView === 'data'){
-        setDataShowChart(!dataShowChart); // links vegen op Data -> grafiek tonen/verbergen
-      } else if(idx < VIEW_ORDER.length-1){
-        switchToView(VIEW_ORDER[idx+1]); // naar links vegen -> volgende tab
-      }
-    } else if(dx > 0){
-      if(activeView === 'data' && dataShowChart){
-        setDataShowChart(false); // rechts vegen op Data met zichtbare grafiek -> eerst grafiek weg
-      } else if(idx > 0){
-        switchToView(VIEW_ORDER[idx-1]); // naar rechts vegen -> vorige tab
-      }
+    if(activeView === 'data'){
+      setDataShowChart(!dataShowChart); // op Data: elke swipe (beide richtingen) toggled de grafiek
+      return;
+    }
+    if(dx < 0 && idx < VIEW_ORDER.length-1){
+      switchToView(VIEW_ORDER[idx+1]); // naar links vegen -> volgende tab
+    } else if(dx > 0 && idx > 0){
+      switchToView(VIEW_ORDER[idx-1]); // naar rechts vegen -> vorige tab
     }
   }, {passive:true});
 })();
@@ -788,6 +815,11 @@ async function bootDir(){
     if(perm==='granted'){
       await loadMetaFromDir();
       setFileLinkUI('dir', 'linked', {name: handle.name});
+      const lastBronId = await idbGet('lastBron').catch(()=>null);
+      if(lastBronId && bronnen.some(b=>b.id===lastBronId)){
+        document.getElementById('data-source-select').value = lastBronId;
+        updateSourcePickerLabel();
+      }
       if(bronnen.length) switchToView('data');
     } else {
       setFileLinkUI('dir', 'auth', {name: handle.name});
@@ -832,9 +864,39 @@ function renderSourceList(){
 
 let selectedSourceId = null;
 function updateEditSelectedSourceButton(){
-  document.getElementById('btn-edit-selected-source').disabled = !selectedSourceId;
-  document.getElementById('btn-open-new-source').disabled = !dirHandle || !!selectedSourceId;
+  const editBtn = document.getElementById('btn-edit-selected-source');
+  const newBtn = document.getElementById('btn-open-new-source');
+  const upBtn = document.getElementById('btn-move-source-up');
+  const downBtn = document.getElementById('btn-move-source-down');
+  const showEdit = !!selectedSourceId;
+  editBtn.style.display = showEdit ? 'flex' : 'none';
+  newBtn.style.display = showEdit ? 'none' : 'flex';
+  newBtn.disabled = !dirHandle;
+  upBtn.style.display = showEdit ? 'flex' : 'none';
+  downBtn.style.display = showEdit ? 'flex' : 'none';
+  if(showEdit){
+    const idx = bronnen.findIndex(b=>b.id===selectedSourceId);
+    upBtn.disabled = idx <= 0;
+    downBtn.disabled = idx === -1 || idx >= bronnen.length-1;
+  }
 }
+async function moveSelectedSource(dir){
+  const idx = bronnen.findIndex(b=>b.id===selectedSourceId);
+  const newIdx = idx + dir;
+  if(idx<0 || newIdx<0 || newIdx>=bronnen.length) return;
+  const tmp = bronnen[idx];
+  bronnen[idx] = bronnen[newIdx];
+  bronnen[newIdx] = tmp;
+  await syncMetaFile();
+  const idToKeep = selectedSourceId;
+  renderSourceList();
+  selectedSourceId = idToKeep;
+  const row = document.querySelector(`.source-row[data-id="${selectedSourceId}"]`);
+  if(row) row.classList.add('selected');
+  updateEditSelectedSourceButton();
+}
+document.getElementById('btn-move-source-up').addEventListener('click', ()=>moveSelectedSource(-1));
+document.getElementById('btn-move-source-down').addEventListener('click', ()=>moveSelectedSource(1));
 document.getElementById('btn-edit-selected-source').addEventListener('click', ()=>{
   if(!selectedSourceId) return;
   editSource(selectedSourceId);
@@ -1034,11 +1096,14 @@ async function ensureDataLoaded(id){
 }
 
 document.getElementById('data-source-select').addEventListener('change', async ()=>{
+  const newId = document.getElementById('data-source-select').value;
+  idbSet('lastBron', newId).catch(()=>{});
   dataPeriodFilter = '1m';
   document.getElementById('data-period-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.period==='1m'));
   dataAggMode = 'd';
   document.getElementById('data-agg-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.agg==='d'));
   updateDataAggButtonStates();
+  chartViewMode = 'standard';
   setDataShowChart(false);
   await ensureDataLoaded(document.getElementById('data-source-select').value);
   renderDataView();
@@ -1055,28 +1120,30 @@ document.getElementById('data-agg-filter').querySelectorAll('button').forEach(bt
 });
 
 let dataShowChart = false;
-function setDataShowChart(show){
+async function setDataShowChart(show){
   dataShowChart = show;
   document.getElementById('data-chart-preview').style.display = show ? 'block' : 'none';
   const toggleBtn = document.getElementById('btn-toggle-chart');
-  toggleBtn.classList.toggle('icon-btn-prominent', !show);
-  toggleBtn.classList.toggle('icon-btn-filled', show);
-  toggleBtn.style.boxShadow = show ? 'inset 0 0 0 2px var(--accent)' : 'none';
-  if(show) renderDataChartPreview();
-  setTimeout(fitVisibleTableScrollBoxes, 0);
+  toggleBtn.classList.toggle('icon-btn-blue', show);
+  toggleBtn.classList.toggle('icon-btn-filled', !show);
+  toggleBtn.style.boxShadow = !show ? 'inset 0 0 0 2px #4f8ff0' : 'none';
+  if(show) await renderDataChartPreview();
+  requestAnimationFrame(fitVisibleTableScrollBoxes);
 }
 document.getElementById('btn-toggle-chart').addEventListener('click', ()=>{
   setDataShowChart(!dataShowChart);
 });
 
 let dataShowGaps = true;
+let chartViewMode = 'standard'; // 'standard' of 'xmr' — swipe op de kaart wisselt (alleen bij dag-groepering)
 function setDataShowGaps(show){
   dataShowGaps = show;
   const toggleBtn = document.getElementById('btn-toggle-gaps');
-  toggleBtn.classList.toggle('icon-btn-prominent', !show);
-  toggleBtn.classList.toggle('icon-btn-filled', show);
-  toggleBtn.style.boxShadow = show ? 'inset 0 0 0 2px var(--accent)' : 'none';
+  toggleBtn.classList.toggle('icon-btn-blue', show);
+  toggleBtn.classList.toggle('icon-btn-filled', !show);
+  toggleBtn.style.boxShadow = !show ? 'inset 0 0 0 2px #4f8ff0' : 'none';
   renderDataView();
+  requestAnimationFrame(fitVisibleTableScrollBoxes);
 }
 document.getElementById('btn-toggle-gaps').addEventListener('click', ()=>{
   setDataShowGaps(!dataShowGaps);
@@ -1297,14 +1364,15 @@ async function renderDataView(){
     } else {
       allKeysDesc = shown.slice();
     }
-    rowsHtml = allKeysDesc.map(k=>{
+    rowsHtml = allKeysDesc.map((k,rowIdx)=>{
       const rowClasses = [];
       if(k===dateToKey(new Date())) rowClasses.push('today-row');
       const hasVal = data[k] != null;
       if(k===selectedDataKey) rowClasses.push('selected');
       const rowClassAttr = rowClasses.length ? ` class="${rowClasses.join(' ')}"` : '';
+      const rowStyle = rowIdx%2 ? ' style="background:rgba(255,255,255,0.06);"' : '';
       if(!hasVal){
-        return `<tr data-k="${k}"${rowClassAttr}><td>${formatDateCell(k)}</td><td class="val">–</td>
+        return `<tr data-k="${k}"${rowClassAttr}${rowStyle}><td>${formatDateCell(k)}</td><td class="val">–</td>
         <td class="actions-cell">–</td></tr>`;
       }
       const idx = ascIndexOf.get(k);
@@ -1320,7 +1388,7 @@ async function renderDataView(){
           diffCell = '–';
         }
       }
-      return `<tr data-k="${k}"${rowClassAttr}><td>${formatDateCell(k)}</td><td class="val">${fmtVal(data[k], src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
+      return `<tr data-k="${k}"${rowClassAttr}${rowStyle}><td>${formatDateCell(k)}</td><td class="val">${fmtVal(data[k], src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
         <td class="actions-cell">${diffCell}</td></tr>`;
     });
   } else {
@@ -1340,7 +1408,7 @@ async function renderDataView(){
           diffCell = '–';
         }
       }
-      return `<tr><td>${formatDateCell(dateToKey(p.date))}</td><td class="val">${fmtVal(p.value, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
+      return `<tr${idx%2?' style="background:rgba(255,255,255,0.06);"':''}><td>${formatDateCell(dateToKey(p.date))}</td><td class="val">${fmtVal(p.value, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
         <td class="actions-cell">${diffCell}</td></tr>`;
     });
   }
@@ -1350,7 +1418,7 @@ async function renderDataView(){
       tr.classList.toggle('selected', tr.dataset.k === selectedDataKey);
     });
   });
-  if(dataShowChart) renderDataChartPreview();
+  if(dataShowChart) await renderDataChartPreview();
 }
 
 document.getElementById('data-table-body').addEventListener('click', (e)=>{
@@ -1660,11 +1728,9 @@ async function getChartPointsForSelection(periodKey, fromElId, toElId){
 async function renderDataChartPreview(){
   if(!dataShowChart) return;
   const id = document.getElementById('data-source-select').value;
-  const statsEl = document.getElementById('data-chart-stats');
   const canvas = document.getElementById('data-chart-canvas');
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  statsEl.innerHTML = '';
   if(!id) return;
 
   const sel = await getChartPointsForSelection(dataPeriodFilter, 'data-range-from', 'data-range-to');
@@ -1686,7 +1752,12 @@ async function renderDataChartPreview(){
     : rangeEnd;
 
   const n = points.length;
-  let mean=null, sigma=null;
+  let mean=null, sigma=null, minVal=null, maxVal=null, sumVal=null;
+  if(n>=1){
+    minVal = Math.min(...points.map(p=>p.value));
+    maxVal = Math.max(...points.map(p=>p.value));
+    sumVal = points.reduce((s,p)=>s+p.value,0);
+  }
   if(n>=2){
     mean = points.reduce((s,p)=>s+p.value,0)/n;
     const variance = points.reduce((s,p)=>s+Math.pow(p.value-mean,2),0)/(n-1);
@@ -1698,7 +1769,7 @@ async function renderDataChartPreview(){
   const totalCount = Object.keys(dataCache[id] || {}).length;
   const dec = src?.decimalen ?? 1;
   if(n===0){
-    statsEl.innerHTML = `<div class="stat"><span style="text-transform:none;">n</span>=0/${totalCount}</div>`;
+    window.lastChartStats = {n:0, totalCount, mean:null, sigma:null, rBar:null, minVal:null, maxVal:null, sumVal:null, ucl:null, uwl:null, lwl:null, lcl:null, doelWaarde:null, doelBoven:null, doelOnder:null, dec, chartMode:'standard'};
     return;
   }
   let rBar = null;
@@ -1707,16 +1778,129 @@ async function renderDataChartPreview(){
     for(let i=1;i<points.length;i++) sum += Math.abs(points[i].value - points[i-1].value);
     rBar = sum / (n-1);
   }
-  statsEl.innerHTML = `
-    <div class="stat"><span style="text-transform:none;">n</span>=${n}/${totalCount}</div>
-    <div class="stat accent"><span style="position:relative;display:inline-block;vertical-align:baseline;text-transform:none;">x<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>=<span style="color:var(--accent);">${fmtVal(mean,dec)}</span></div>
-    <div class="stat"><span style="text-transform:none;">σₙ₋₁</span>=${sigma>0?fmtVal(sigma,dec):'–'}</div>
-    <div class="stat"><span style="position:relative;display:inline-block;vertical-align:baseline;text-transform:none;">r<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>=${rBar!=null?fmtVal(rBar,dec):'–'}</div>`;
+  const effectiveChartMode = (dataAggMode === 'd') ? chartViewMode : 'standard';
+  const useXmr = effectiveChartMode === 'xmr' && rBar!=null && rBar>0;
+  const ucl = useXmr ? mean + 2.66*rBar : ((mean!=null && sigma!=null) ? mean + 3*sigma : null);
+  const uwl = useXmr ? mean + 1.77*rBar : ((mean!=null && sigma!=null) ? mean + 2*sigma : null);
+  const lwl = useXmr ? mean - 1.77*rBar : ((mean!=null && sigma!=null) ? mean - 2*sigma : null);
+  const lcl = useXmr ? mean - 2.66*rBar : ((mean!=null && sigma!=null) ? mean - 3*sigma : null);
+  const doelWaarde = src?.doel_x ?? null;
+  const doelBoven = (src?.doel_x != null && src?.doel_r != null) ? src.doel_x + src.doel_r/2 : null;
+  const doelOnder = (src?.doel_x != null && src?.doel_r != null) ? src.doel_x - src.doel_r/2 : null;
+  window.lastChartStats = {n, totalCount, mean, sigma, rBar, minVal, maxVal, sumVal, ucl, uwl, lwl, lcl, doelWaarde, doelBoven, doelOnder, dec, chartMode: effectiveChartMode};
 
-  drawChart(ctx, canvas, points, mean, sigma, src, chartXMin, chartXMax, AGG_MAX_GAP_DAYS[dataAggMode]);
+  drawChart(ctx, canvas, points, mean, sigma, src, chartXMin, chartXMax, AGG_MAX_GAP_DAYS[dataAggMode], rBar, effectiveChartMode, dataAggMode==='d');
 }
 
-function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays){
+function openChartStatsModal(){
+  if(window.chartSwipeJustHappened) return;
+  const stats = window.lastChartStats;
+  if(!stats) return;
+  const badgeEl = document.getElementById('chart-stats-badge');
+  if(stats.chartMode === 'xmr' || stats.chartMode === 'range'){
+    badgeEl.textContent = stats.chartMode === 'xmr' ? 'XmR' : 'Range';
+    badgeEl.style.display = 'inline-block';
+  } else {
+    badgeEl.style.display = 'none';
+  }
+  const bodyStats = document.getElementById('chart-stats-modal-body');
+  const bodyChart = document.getElementById('chart-stats-modal-body-chart');
+  const xBar = '<span style="position:relative;display:inline-block;vertical-align:baseline;">x<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>';
+  const rBarSym = '<span style="position:relative;display:inline-block;vertical-align:baseline;">r<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>';
+  const statsRows = [
+    ['n / N', `${stats.n} / ${stats.totalCount}`, 'var(--text)'],
+    [xBar, stats.mean!=null ? fmtVal(stats.mean, stats.dec) : '–', 'var(--accent)'],
+    ['σₙ₋₁', (stats.sigma!=null && stats.sigma>0) ? fmtVal(stats.sigma, stats.dec) : '–', 'var(--text)'],
+    [rBarSym, stats.rBar!=null ? fmtVal(stats.rBar, stats.dec) : '–', 'var(--text)'],
+    ['Σ', stats.sumVal!=null ? fmtVal(stats.sumVal, stats.dec) : '–', 'var(--text)'],
+    ['min', stats.minVal!=null ? fmtVal(stats.minVal, stats.dec) : '–', 'var(--text)'],
+    ['max', stats.maxVal!=null ? fmtVal(stats.maxVal, stats.dec) : '–', 'var(--text)'],
+  ];
+  const chartRows = [
+    ['UCL', stats.ucl!=null ? fmtVal(stats.ucl, stats.dec) : '–', '#ef5b5b'],
+    ['UWL', stats.uwl!=null ? fmtVal(stats.uwl, stats.dec) : '–', '#f0a84f'],
+    ['LWL', stats.lwl!=null ? fmtVal(stats.lwl, stats.dec) : '–', '#f0a84f'],
+    ['LCL', stats.lcl!=null ? fmtVal(stats.lcl, stats.dec) : '–', '#ef5b5b'],
+    ['Doel', stats.doelWaarde!=null ? fmtVal(stats.doelWaarde, stats.dec) : '–', 'var(--muted)'],
+    ['Doel max', stats.doelBoven!=null ? fmtVal(stats.doelBoven, stats.dec) : '–', 'var(--muted)'],
+    ['Doel min', stats.doelOnder!=null ? fmtVal(stats.doelOnder, stats.dec) : '–', 'var(--muted)'],
+  ];
+  function renderRows(rows){
+    return rows.map(([label,val,color],i)=>
+      `<tr style="background:${i%2? 'rgba(255,255,255,0.06)':'transparent'};"><td style="padding:8px 10px;color:var(--text);">${label}</td><td style="padding:8px 10px;text-align:right;color:${color};">${val}</td></tr>`
+    ).join('');
+  }
+  bodyStats.innerHTML = renderRows(statsRows);
+  bodyChart.innerHTML = renderRows(chartRows);
+  setStatsTab('stats');
+  document.getElementById('chart-stats-modal-overlay').style.display = 'flex';
+}
+function setStatsTab(tab){
+  document.getElementById('chart-stats-tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.stattab===tab));
+  document.getElementById('chart-stats-modal-body').style.display = tab==='stats' ? '' : 'none';
+  document.getElementById('chart-stats-modal-body-chart').style.display = tab==='chart' ? '' : 'none';
+}
+document.getElementById('chart-stats-tabs').querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click', ()=>setStatsTab(btn.dataset.stattab));
+});
+(function(){
+  const box = document.querySelector('#chart-stats-modal-overlay .modal-box');
+  let startX=null, startY=null, tracking=false;
+  box.addEventListener('touchstart', (e)=>{
+    if(e.touches.length !== 1){ tracking=false; return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, {passive:true});
+  box.addEventListener('touchend', (e)=>{
+    if(!tracking || startX===null) return;
+    tracking = false;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if(Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const activeTab = document.getElementById('chart-stats-tabs').querySelector('button.active')?.dataset.stattab;
+    if(dx < 0 && activeTab === 'stats') setStatsTab('chart');
+    else if(dx > 0 && activeTab === 'chart') setStatsTab('stats');
+  }, {passive:true});
+})();
+document.getElementById('data-chart-canvas').addEventListener('click', openChartStatsModal);
+(function(){
+  const canvas = document.getElementById('data-chart-canvas');
+  const CAROUSEL = ['standard','xmr','range'];
+  let startX=null, startY=null, wasSwipe=false, swipeDx=0;
+  canvas.addEventListener('touchstart', (e)=>{
+    if(e.touches.length !== 1){ startX=null; return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    wasSwipe = false;
+  }, {passive:true});
+  canvas.addEventListener('touchmove', (e)=>{
+    if(startX===null || e.touches.length!==1) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if(Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) * 1.5){ wasSwipe = true; swipeDx = dx; }
+  }, {passive:true});
+  canvas.addEventListener('touchend', ()=>{
+    if(wasSwipe && dataAggMode === 'd'){
+      const curIdx = CAROUSEL.indexOf(chartViewMode);
+      const dir = swipeDx < 0 ? 1 : -1; // links -> volgende (xmr eerst), rechts -> vorige (range eerst)
+      const nextIdx = (curIdx + dir + CAROUSEL.length) % CAROUSEL.length;
+      chartViewMode = CAROUSEL[nextIdx];
+      renderDataChartPreview();
+      window.chartSwipeJustHappened = true;
+      setTimeout(()=>{ window.chartSwipeJustHappened = false; }, 400);
+    }
+    startX = null; wasSwipe = false;
+  }, {passive:true});
+})();
+document.getElementById('chart-stats-modal-close').addEventListener('click', ()=>{
+  document.getElementById('chart-stats-modal-overlay').style.display = 'none';
+});
+document.getElementById('chart-stats-modal-overlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'chart-stats-modal-overlay') document.getElementById('chart-stats-modal-overlay').style.display = 'none';
+});
+
+function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays, rBar, chartMode, swipeEnabled){
   maxGapDays = maxGapDays ?? 1;
   const dpr = window.devicePixelRatio || 1;
   const cssW = canvas.clientWidth || 880, cssH = 220;
@@ -1724,25 +1908,107 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,cssW,cssH);
 
-  const pad = {left:54,right:16,top:16,bottom:30};
+  const pad = {left:54,right:16,top:34,bottom:30};
   const plotW = cssW - pad.left - pad.right;
   const plotH = cssH - pad.top - pad.bottom;
+
+  const dec = src?.decimalen ?? 1;
+  const n = points.length;
+  function drawOverlineChar(x, y, ch, color){
+    ctx.fillStyle = color;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(ch, x, y);
+    const w = ctx.measureText(ch).width;
+    ctx.strokeStyle = color; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, y-9); ctx.lineTo(x+w, y-9); ctx.stroke();
+    return w;
+  }
+  ctx.font = '13px ui-monospace, monospace';
+  const statY = 20;
+  let sx = cssW/2;
+  const isRange = chartMode === 'range';
+  const nForHeader = isRange ? Math.max(0, n-1) : n;
+  const nTxt = `n=${nForHeader}`;
+  const rBarTxt = `=${rBar!=null?fmtVal(rBar,dec):'–'}`;
+  const gap = 18;
+  if(isRange){
+    // geen x̄ bij de Range-kaart, r̄ is hier de eigenlijke middellijn
+    const totalW = ctx.measureText(nTxt).width + gap + ctx.measureText('r').width + ctx.measureText(rBarTxt).width;
+    sx = (cssW - totalW)/2;
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic'; ctx.fillStyle = '#e7edf0';
+    ctx.fillText(nTxt, sx, statY);
+    sx += ctx.measureText(nTxt).width + gap;
+    sx += drawOverlineChar(sx, statY, 'r', '#4fd1c5');
+    ctx.fillStyle = '#4fd1c5';
+    ctx.fillText(rBarTxt, sx, statY);
+  } else {
+    const xBarTxt = `=${mean!=null?fmtVal(mean,dec):'–'}`;
+    const totalW = ctx.measureText(nTxt).width + gap + ctx.measureText('x').width + ctx.measureText(xBarTxt).width + gap + ctx.measureText('r').width + ctx.measureText(rBarTxt).width;
+    sx = (cssW - totalW)/2;
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic'; ctx.fillStyle = '#e7edf0';
+    ctx.fillText(nTxt, sx, statY);
+    sx += ctx.measureText(nTxt).width + gap;
+    sx += drawOverlineChar(sx, statY, 'x', '#4fd1c5');
+    ctx.fillStyle = '#4fd1c5';
+    ctx.fillText(xBarTxt, sx, statY);
+    sx += ctx.measureText(xBarTxt).width + gap;
+    sx += drawOverlineChar(sx, statY, 'r', '#e7edf0');
+    ctx.fillStyle = '#e7edf0';
+    ctx.fillText(rBarTxt, sx, statY);
+  }
+  if(chartMode === 'xmr' || chartMode === 'range'){
+    ctx.font = '12px ui-monospace, monospace';
+    const badgeText = chartMode === 'xmr' ? 'XmR' : 'Range';
+    const textW = ctx.measureText(badgeText).width;
+    const padX = 7, padY = 4;
+    const boxW = textW + padX*2, boxH = 12 + padY*2;
+    const boxX = cssW - 4 - boxW, boxY = 4;
+    ctx.fillStyle = '#4f8ff0';
+    const r = 4;
+    ctx.beginPath();
+    ctx.moveTo(boxX+r, boxY);
+    ctx.arcTo(boxX+boxW, boxY, boxX+boxW, boxY+boxH, r);
+    ctx.arcTo(boxX+boxW, boxY+boxH, boxX, boxY+boxH, r);
+    ctx.arcTo(boxX, boxY+boxH, boxX, boxY, r);
+    ctx.arcTo(boxX, boxY, boxX+boxW, boxY, r);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#eef4ff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(badgeText, boxX+boxW/2, boxY+boxH/2+1);
+  }
+
+  if(chartMode === 'range'){
+    const rangePts = [];
+    for(let i=1;i<points.length;i++){
+      rangePts.push({date: points[i].date, value: Math.abs(points[i].value - points[i-1].value)});
+    }
+    points = rangePts;
+    mean = rBar;
+    sigma = null;
+  }
 
   const values = points.map(p=>p.value);
   let yMin, yMax;
   if(mean!==null && sigma>0){
     yMin = Math.min(...values, mean-3.4*sigma);
     yMax = Math.max(...values, mean+3.4*sigma);
+  } else if(chartMode === 'range'){
+    yMin = 0;
+    yMax = Math.max(...values, mean!=null ? mean*3.267 : 0);
   } else {
     yMin = Math.min(...values); yMax = Math.max(...values);
     if(yMin===yMax){ yMin-=1; yMax+=1; }
   }
-  if(src?.doel_x != null && src?.doel_r != null){
+  if(chartMode !== 'range' && src?.doel_x != null && src?.doel_r != null){
     yMin = Math.min(yMin, src.doel_x - src.doel_r/2);
     yMax = Math.max(yMax, src.doel_x + src.doel_r/2);
   }
   const yPadAmt = (yMax-yMin)*0.08 || 1;
   yMin -= yPadAmt; yMax += yPadAmt;
+  if(chartMode === 'range') yMin = Math.max(0, yMin);
 
   const xSpan = Math.max(1, xMax - xMin);
   function xPix(d){ return pad.left + ((d - xMin)/xSpan)*plotW; }
@@ -1776,7 +2042,14 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
     ctx.setLineDash([]);
   }
   if(mean!==null){
-    if(sigma>0){
+    if(chartMode === 'range'){
+      hLine(mean*3.267, '#ef5b5b', [5,4]); // D4=3,267 (bewegende spreiding, n=2)
+    } else if(chartMode === 'xmr' && rBar!=null && rBar>0){
+      hLine(mean+2.66*rBar, '#ef5b5b', [5,4]);
+      hLine(mean+1.77*rBar, '#f0a84f', [5,4]);
+      hLine(mean-1.77*rBar, '#f0a84f', [5,4]);
+      hLine(mean-2.66*rBar, '#ef5b5b', [5,4]);
+    } else if(sigma>0){
       hLine(mean+3*sigma, '#ef5b5b', [5,4]);
       hLine(mean+2*sigma, '#f0a84f', [5,4]);
       hLine(mean-2*sigma, '#f0a84f', [5,4]);
@@ -1784,7 +2057,7 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
     }
     hLine(mean, '#4fd1c5', []);
   }
-  if(src?.doel_x != null && src?.doel_r != null){
+  if(chartMode !== 'range' && src?.doel_x != null && src?.doel_r != null){
     const top = yPix(src.doel_x + src.doel_r/2);
     const bottom = yPix(src.doel_x - src.doel_r/2);
     ctx.fillStyle = 'rgba(159,216,224,0.08)';
@@ -1792,7 +2065,7 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
     hLine(src.doel_x + src.doel_r/2, '#6f8890', [2,3]);
     hLine(src.doel_x - src.doel_r/2, '#6f8890', [2,3]);
   }
-  if(src?.doel_x != null) hLine(src.doel_x, '#8a99a1', [2,3]);
+  if(chartMode !== 'range' && src?.doel_x != null) hLine(src.doel_x, '#8a99a1', [2,3]);
 
   if(points.length>1){
     ctx.strokeStyle = '#5c6f79'; ctx.lineWidth = 1.8; ctx.beginPath();
@@ -1813,13 +2086,24 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
   points.forEach(p=>{
     const x=xPix(p.date), y=yPix(p.value);
     let color = '#9fd8e0';
-    if(mean!==null && sigma>0){
+    if(chartMode === 'range' && mean!==null){
+      if(p.value > mean*3.267) color = '#ef5b5b';
+    } else if(mean!==null && sigma>0){
       const dist = Math.abs(p.value-mean);
       if(dist > 3*sigma) color = '#ef5b5b';
       else if(dist > 2*sigma) color = '#f0a84f';
     }
     ctx.beginPath(); ctx.arc(x,y,3.4,0,Math.PI*2); ctx.fillStyle = color; ctx.fill();
   });
+
+  if(swipeEnabled){
+    const midY = pad.top + plotH/2;
+    ctx.fillStyle = '#4f8ff0';
+    ctx.beginPath();
+    ctx.moveTo(6, midY-6); ctx.lineTo(6, midY+6); ctx.lineTo(0, midY); ctx.closePath(); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cssW-6, midY-6); ctx.lineTo(cssW-6, midY+6); ctx.lineTo(cssW, midY); ctx.closePath(); ctx.fill();
+  }
 }
 
 /* ================= Virtuele tabelrendering =================
@@ -1879,12 +2163,19 @@ function setupVirtualTable(scrollElId, tbodyId, rowsHtml, onRender){
    vh-waarde te gebruiken. */
 function fitTableScrollHeight(id){
   const el = document.getElementById(id);
-  const mainEl = document.querySelector('main');
-  if(!el || !mainEl || el.offsetParent === null) return; // niet zichtbaar, niets te doen
-  const containerTop = el.getBoundingClientRect().top;
-  const mainBottom = mainEl.getBoundingClientRect().bottom;
-  const available = mainBottom - containerTop - 12; // 12px marge onderaan
-  el.style.maxHeight = Math.max(160, Math.floor(available)) + 'px';
+  if(!el || el.offsetParent === null) return; // niet zichtbaar, niets te doen
+  const navEl = document.querySelector('nav.tabs');
+  const toolbarEl = document.querySelector('.data-sticky-toolbar');
+  const filtersEl = document.getElementById('data-filters-panel');
+  const navH = navEl ? navEl.getBoundingClientRect().height : 0;
+  let aboveTableH = 0;
+  if(toolbarEl && filtersEl){
+    const toolbarTop = toolbarEl.getBoundingClientRect().top;
+    const filtersBottom = filtersEl.getBoundingClientRect().bottom;
+    aboveTableH = Math.max(0, filtersBottom - toolbarTop);
+  }
+  const remaining = window.innerHeight - navH - aboveTableH - 26; // marge (incl. 10px margin-top van de tabel zelf)
+  el.style.maxHeight = Math.max(160, Math.floor(remaining)) + 'px';
 }
 function fitVisibleTableScrollBoxes(){
   fitTableScrollHeight('data-table-scroll');
