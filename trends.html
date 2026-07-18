@@ -232,11 +232,11 @@
       <div class="panel-header">
         <h2 class="accent-title">Werkmap</h2>
         <div style="display:none;gap:8px;" id="dir-file-buttons">
-          <button class="icon-btn-sm icon-btn-filled" id="btn-refresh-dir" title="Vernieuwen" aria-label="Vernieuwen" style="width:46px;height:46px;">
-            <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
+          <button class="icon-btn-sm icon-btn-filled" id="btn-refresh-dir" title="Vernieuwen" aria-label="Vernieuwen" style="width:38px;height:38px;">
+            <svg viewBox="0 0 24 24" style="width:18px;height:18px;"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
           </button>
-          <button class="icon-btn-sm icon-btn-filled" id="btn-unlink-dir" title="Ontkoppelen" aria-label="Ontkoppelen" style="width:46px;height:46px;">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+          <button class="icon-btn-sm icon-btn-filled" id="btn-unlink-dir" title="Ontkoppelen" aria-label="Ontkoppelen" style="width:38px;height:38px;">
+            <svg viewBox="0 0 24 24" style="width:18px;height:18px;"><circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
           </button>
         </div>
       </div>
@@ -262,24 +262,42 @@
       </div>
     </div>
 
+    <div class="panel" id="bron-validation-banner" style="display:none;background:rgba(240,168,79,0.12);border:1px solid var(--warn);">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;" id="bron-validation-summary-row">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:var(--warn);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14.18A2 2 0 0 0 3.83 21h16.34a2 2 0 0 0 1.72-3l-8.18-14.14a2 2 0 0 0-3.44 0z"/></svg>
+          <span id="bron-validation-summary-text" style="font-size:17px;color:var(--text);"></span>
+        </div>
+        <svg id="bron-validation-chevron" viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;transition:transform .15s;"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="bron-validation-details" style="display:none;margin-top:10px;font-size:16px;color:var(--muted);"></div>
+    </div>
+
     <div class="panel" style="margin-top:-8px;">
       <div class="panel-header">
         <h2 class="accent-title">Bronnen <span class="sub" id="source-count"></span></h2>
         <div style="display:flex;gap:8px;">
-          <button class="icon-btn-sm icon-btn-filled" id="btn-move-source-up" title="Naar boven verplaatsen" aria-label="Naar boven verplaatsen" style="width:34px;height:46px;display:none;">
+          <button class="icon-btn-sm icon-btn-filled" id="btn-move-source-up" title="Naar boven verplaatsen" aria-label="Naar boven verplaatsen" style="width:34px;height:38px;display:none;">
             <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
           </button>
-          <button class="icon-btn-sm icon-btn-filled" id="btn-move-source-down" title="Naar beneden verplaatsen" aria-label="Naar beneden verplaatsen" style="width:34px;height:46px;display:none;">
+          <button class="icon-btn-sm icon-btn-filled" id="btn-move-source-down" title="Naar beneden verplaatsen" aria-label="Naar beneden verplaatsen" style="width:34px;height:38px;display:none;">
             <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="6 13 12 19 18 13"/></svg>
           </button>
-          <button class="icon-btn-sm icon-btn-prominent" id="btn-edit-selected-source" title="Wijzig geselecteerde bron" aria-label="Wijzig geselecteerde bron" style="width:46px;height:46px;display:none;">
+          <button class="icon-btn-sm icon-btn-filled" id="btn-toggle-source-search" title="Zoeken" aria-label="Zoeken" style="width:38px;height:38px;">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/></svg>
+          </button>
+          <button class="icon-btn-sm icon-btn-prominent" id="btn-edit-selected-source" title="Wijzig geselecteerde bron" aria-label="Wijzig geselecteerde bron" style="width:38px;height:38px;display:none;">
             <svg viewBox="0 0 24 24"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
           </button>
-          <button class="icon-btn-sm icon-btn-prominent" id="btn-open-new-source" title="Nieuwe bron" aria-label="Nieuwe bron toevoegen" style="width:46px;height:46px;">
+          <button class="icon-btn-sm icon-btn-prominent" id="btn-open-new-source" title="Nieuwe bron" aria-label="Nieuwe bron toevoegen" style="width:38px;height:38px;">
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
         </div>
       </div>
+      <div class="field" id="source-search-wrap" style="margin:0 0 8px;display:none;">
+        <input type="text" id="source-search" placeholder="Zoek op titel…" autocomplete="off" style="width:100%;box-sizing:border-box;margin-bottom:0;">
+      </div>
+      <div class="empty" id="source-search-empty" style="display:none;color:var(--muted);padding:6px 0 12px;">Geen bronnen gevonden.</div>
       <div class="source-list" id="source-list" style="max-height:60vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;"></div>
       <div class="empty" id="source-empty" style="display:none;">Nog geen bronnen. Koppel eerst een metadatabestand hierboven.</div>
     </div>
@@ -320,7 +338,7 @@
           </button>
           <select id="data-source-select" style="display:none;"></select>
         </div>
-        <button type="button" class="icon-btn-sm icon-btn-blue" id="btn-toggle-chart" title="Grafiek tonen/verbergen" aria-label="Grafiek tonen/verbergen">
+        <button type="button" class="icon-btn-sm icon-btn-blue" id="btn-toggle-chart" title="Grafiek tonen/verbergen" aria-label="Grafiek tonen/verbergen" style="border:none;">
           <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="4" y2="4"/><line x1="4" y1="20" x2="20" y2="20"/><path d="M6 15.5l4-5 3.5 3 4.5-7"/></svg>
         </button>
       </div>
@@ -342,11 +360,15 @@
           <button data-stattab="stats" class="active">Statistieken</button>
           <button data-stattab="chart">Kaart</button>
         </div>
-        <table style="width:100%;font-family:var(--mono);font-size:19px;">
-          <tbody id="chart-stats-modal-body"></tbody>
-          <tbody id="chart-stats-modal-body-chart" style="display:none;"></tbody>
-        </table>
-        <div class="actions" style="justify-content:flex-end;margin-top:16px;">
+        <div style="display:grid;">
+          <table id="chart-stats-table-stats" style="grid-area:1/1;width:100%;font-family:var(--mono);font-size:19px;visibility:visible;">
+            <tbody id="chart-stats-modal-body"></tbody>
+          </table>
+          <table id="chart-stats-table-chart" style="grid-area:1/1;width:100%;font-family:var(--mono);font-size:19px;visibility:hidden;pointer-events:none;">
+            <tbody id="chart-stats-modal-body-chart"></tbody>
+          </table>
+        </div>
+        <div class="actions" style="justify-content:flex-end;margin-top:10px;">
           <button class="btn secondary compact" id="chart-stats-modal-close" style="flex:1;">Sluiten</button>
         </div>
       </div>
@@ -361,8 +383,8 @@
           <button data-agg="q">3 mnd</button>
           <button data-agg="y">jaar</button>
         </div>
-        <button type="button" class="icon-btn-sm icon-btn-blue" id="btn-toggle-gaps" title="Gaten tonen/verbergen" aria-label="Gaten tonen/verbergen" style="width:46px;height:34px;">
-          <svg viewBox="0 0 24 24" stroke-linecap="round"><line x1="3" y1="12" x2="8" y2="12"/><line x1="13" y1="12" x2="18" y2="12"/><line x1="21" y1="12" x2="21.01" y2="12"/></svg>
+        <button type="button" class="icon-btn-sm icon-btn-blue" id="btn-toggle-gaps" title="Gaten tonen/verbergen" aria-label="Gaten tonen/verbergen" style="width:46px;height:34px;border:none;">
+          <svg viewBox="0 0 24 24" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12" stroke-dasharray="4 3.5"/></svg>
         </button>
       </div>
       <div style="display:flex;align-items:stretch;gap:8px;">
@@ -386,8 +408,17 @@
 
     <div class="modal-overlay" id="data-source-picker-overlay" style="display:none;">
       <div class="modal-box" style="max-width:360px;">
-        <h2 class="accent-title" style="margin:0 0 16px;">Kies een bron</h2>
-        <div class="source-list" id="data-source-picker-list"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 16px;">
+          <h2 class="accent-title" style="margin:0;">Kies een bron</h2>
+          <button class="icon-btn-sm icon-btn-filled" id="btn-toggle-picker-search" title="Zoeken" aria-label="Zoeken" style="width:40px;height:40px;">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/></svg>
+          </button>
+        </div>
+        <div class="field" id="data-source-picker-search-wrap" style="margin:0 0 8px;display:none;">
+          <input type="text" id="data-source-picker-search" placeholder="Zoek op titel…" autocomplete="off" style="width:100%;box-sizing:border-box;margin-bottom:0;">
+        </div>
+        <div class="empty" id="data-source-picker-search-empty" style="display:none;color:var(--muted);padding:6px 0 12px;">Geen bronnen gevonden.</div>
+        <div class="source-list" id="data-source-picker-list" style="max-height:50vh;overflow-y:auto;"></div>
         <div class="actions" style="justify-content:flex-end;flex-wrap:nowrap;margin-top:12px;">
           <button class="btn secondary compact" id="data-source-picker-cancel" style="flex:1;">Annuleren</button>
           <button class="btn compact" id="data-source-picker-ok" style="flex:1;" disabled>OK</button>
@@ -403,8 +434,8 @@
             <div class="field">
               <label style="display:flex;align-items:center;justify-content:space-between;">
                 Van
-                <button type="button" class="icon-btn-sm icon-btn-prominent" id="data-range-first" title="Eerste meting" aria-label="Eerste meting">
-                  <svg viewBox="0 0 24 24"><line x1="4" y1="5" x2="4" y2="19"/><line x1="20" y1="12" x2="9" y2="12"/><polyline points="13 7 8 12 13 17"/></svg>
+                <button type="button" class="icon-btn-sm icon-btn-prominent" id="data-range-first" title="Eerste meting" aria-label="Eerste meting" style="width:38px;height:38px;">
+                  <svg viewBox="0 0 24 24" style="width:18px;height:18px;"><line x1="4" y1="5" x2="4" y2="19"/><line x1="20" y1="12" x2="9" y2="12"/><polyline points="13 7 8 12 13 17"/></svg>
                 </button>
               </label>
               <input type="date" id="data-range-from">
@@ -412,9 +443,14 @@
             <div class="field">
               <label style="display:flex;align-items:center;justify-content:space-between;">
                 T/M
-                <button type="button" class="icon-btn-sm icon-btn-prominent" id="data-range-last" title="Laatste meting" aria-label="Laatste meting">
-                  <svg viewBox="0 0 24 24"><line x1="20" y1="5" x2="20" y2="19"/><line x1="4" y1="12" x2="15" y2="12"/><polyline points="11 7 16 12 11 17"/></svg>
-                </button>
+                <span style="display:flex;gap:6px;">
+                  <button type="button" class="icon-btn-sm icon-btn-prominent" id="data-range-today" title="Vandaag" aria-label="Vandaag" style="width:38px;height:38px;">
+                    <svg viewBox="0 0 24 24" style="width:18px;height:18px;"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/><circle cx="12" cy="15" r="1.6" fill="currentColor" stroke="none"/></svg>
+                  </button>
+                  <button type="button" class="icon-btn-sm icon-btn-prominent" id="data-range-last" title="Laatste meting" aria-label="Laatste meting" style="width:38px;height:38px;">
+                    <svg viewBox="0 0 24 24" style="width:18px;height:18px;"><line x1="20" y1="5" x2="20" y2="19"/><line x1="4" y1="12" x2="15" y2="12"/><polyline points="11 7 16 12 11 17"/></svg>
+                  </button>
+                </span>
               </label>
               <input type="date" id="data-range-to">
             </div>
@@ -442,8 +478,8 @@
           <div class="field">
             <label style="display:flex;align-items:center;justify-content:space-between;">
               Waarde
-              <button type="button" class="icon-btn-sm icon-btn-prominent" id="btn-no-measurement" title="Geen meting" aria-label="Geen meting">
-                <svg viewBox="0 0 24 24"><line x1="6" y1="12" x2="18" y2="12"/></svg>
+              <button type="button" class="icon-btn-sm icon-btn-prominent" id="btn-no-measurement" title="Geen meting" aria-label="Geen meting" style="width:38px;height:38px;">
+                <svg viewBox="0 0 24 24" style="width:18px;height:18px;"><line x1="6" y1="12" x2="18" y2="12"/></svg>
               </button>
             </label>
             <input type="text" inputmode="decimal" id="f-data-value">
@@ -699,7 +735,58 @@ async function loadMetaFromDir(){
   });
   renderSourceList();
   renderSourceSelects();
+  validateBronnen();
 }
+async function validateBronnen(){
+  const issues = [];
+  const byBestand = new Map();
+  for(const b of bronnen){
+    if(!byBestand.has(b.bestand)) byBestand.set(b.bestand, []);
+    byBestand.get(b.bestand).push(b);
+  }
+  for(const [bestand, group] of byBestand){
+    if(group.length > 1){
+      group.forEach(b=>issues.push({titel: b.titel, tekst: `Verwijst naar hetzelfde bestand (${bestand}) als een andere bron.`}));
+    }
+  }
+  for(const b of bronnen){
+    try{
+      const handle = await dirHandle.getFileHandle(b.bestand);
+      const file = await handle.getFile();
+      const text = await file.text();
+      if(text.trim().length){
+        JSON.parse(text);
+      }
+    }catch(e){
+      if(e.name === 'NotFoundError'){
+        issues.push({titel: b.titel, tekst: `Bestand ontbreekt (${b.bestand}).`});
+      } else if(e instanceof SyntaxError){
+        issues.push({titel: b.titel, tekst: `Bestand is beschadigd of onleesbaar (${b.bestand}).`});
+      }
+    }
+  }
+  renderBronValidationBanner(issues);
+}
+function renderBronValidationBanner(issues){
+  const banner = document.getElementById('bron-validation-banner');
+  if(!issues.length){
+    banner.style.display = 'none';
+    return;
+  }
+  banner.style.display = 'block';
+  document.getElementById('bron-validation-summary-text').textContent =
+    issues.length === 1 ? '1 bron heeft een probleem' : `${issues.length} bronnen hebben een probleem`;
+  document.getElementById('bron-validation-details').innerHTML = issues.map(i=>
+    `<div style="padding:6px 0;border-top:1px solid var(--line);"><strong style="color:var(--text);">${escapeHtml(i.titel)}</strong><br>${escapeHtml(i.tekst)}</div>`
+  ).join('');
+}
+document.getElementById('bron-validation-summary-row').addEventListener('click', ()=>{
+  const details = document.getElementById('bron-validation-details');
+  const chevron = document.getElementById('bron-validation-chevron');
+  const open = details.style.display !== 'none';
+  details.style.display = open ? 'none' : 'block';
+  chevron.style.transform = open ? '' : 'rotate(180deg)';
+});
 async function syncMetaFile(){
   if(!dirHandle) return;
   try{
@@ -825,6 +912,7 @@ function renderSourceList(){
     const row = document.createElement('div');
     row.className = 'source-row';
     row.dataset.id = b.id;
+    row.dataset.titel = b.titel.toLowerCase();
     row.innerHTML = `<div class="title">${escapeHtml(b.titel)}</div>`;
     row.addEventListener('click', ()=>{
       const wasSelected = row.classList.contains('selected');
@@ -839,8 +927,41 @@ function renderSourceList(){
     });
     list.appendChild(row);
   });
+  applySourceSearchFilter();
   renderMetaView();
 }
+let sourceSearchQuery = '';
+let sourceSearchOpen = false;
+function applySourceSearchFilter(){
+  const q = sourceSearchQuery.trim().toLowerCase();
+  let visibleCount = 0;
+  document.querySelectorAll('#source-list .source-row').forEach(row=>{
+    const match = !q || row.dataset.titel.includes(q);
+    row.style.display = match ? '' : 'none';
+    if(match) visibleCount++;
+  });
+  document.getElementById('source-search-empty').style.display = (q && visibleCount===0) ? 'block' : 'none';
+  updateEditSelectedSourceButton();
+}
+document.getElementById('source-search').addEventListener('input', (e)=>{
+  sourceSearchQuery = e.target.value;
+  applySourceSearchFilter();
+});
+document.getElementById('btn-toggle-source-search').addEventListener('click', ()=>{
+  sourceSearchOpen = !sourceSearchOpen;
+  const btn = document.getElementById('btn-toggle-source-search');
+  const wrap = document.getElementById('source-search-wrap');
+  btn.classList.toggle('icon-btn-blue', sourceSearchOpen);
+  wrap.style.display = sourceSearchOpen ? 'block' : 'none';
+  if(sourceSearchOpen){
+    document.getElementById('source-search').focus();
+  } else {
+    sourceSearchQuery = '';
+    document.getElementById('source-search').value = '';
+    applySourceSearchFilter();
+  }
+  updateEditSelectedSourceButton();
+});
 
 let selectedSourceId = null;
 function updateEditSelectedSourceButton(){
@@ -851,10 +972,10 @@ function updateEditSelectedSourceButton(){
   const showEdit = !!selectedSourceId;
   editBtn.style.display = showEdit ? 'flex' : 'none';
   newBtn.style.display = showEdit ? 'none' : 'flex';
-  newBtn.disabled = !dirHandle;
-  upBtn.style.display = showEdit ? 'flex' : 'none';
-  downBtn.style.display = showEdit ? 'flex' : 'none';
-  if(showEdit){
+  newBtn.disabled = !dirHandle || sourceSearchOpen;
+  upBtn.style.display = (showEdit && !sourceSearchOpen) ? 'flex' : 'none';
+  downBtn.style.display = (showEdit && !sourceSearchOpen) ? 'flex' : 'none';
+  if(showEdit && !sourceSearchOpen){
     const idx = bronnen.findIndex(b=>b.id===selectedSourceId);
     upBtn.disabled = idx <= 0;
     downBtn.disabled = idx === -1 || idx >= bronnen.length-1;
@@ -1029,12 +1150,18 @@ function openSourcePicker(){
   const sel = document.getElementById('data-source-select');
   const list = document.getElementById('data-source-picker-list');
   const okBtn = document.getElementById('data-source-picker-ok');
+  const searchEl = document.getElementById('data-source-picker-search');
   list.innerHTML = '';
+  searchEl.value = '';
+  document.getElementById('data-source-picker-search-wrap').style.display = 'none';
+  document.getElementById('data-source-picker-search-empty').style.display = 'none';
+  document.getElementById('btn-toggle-picker-search').classList.remove('icon-btn-blue');
   pickedSourceId = bronnen.some(b=>b.id===sel.value) ? sel.value : null;
   okBtn.disabled = !pickedSourceId;
   bronnen.forEach(b=>{
     const row = document.createElement('div');
     row.className = 'source-row';
+    row.dataset.titel = b.titel.toLowerCase();
     if(b.id === pickedSourceId) row.classList.add('selected');
     row.innerHTML = `<div class="title">${escapeHtml(b.titel)}</div>`;
     row.addEventListener('click', ()=>{
@@ -1047,6 +1174,30 @@ function openSourcePicker(){
   });
   document.getElementById('data-source-picker-overlay').style.display = 'flex';
 }
+document.getElementById('data-source-picker-search').addEventListener('input', (e)=>{
+  const q = e.target.value.trim().toLowerCase();
+  let visibleCount = 0;
+  document.querySelectorAll('#data-source-picker-list .source-row').forEach(row=>{
+    const match = !q || row.dataset.titel.includes(q);
+    row.style.display = match ? '' : 'none';
+    if(match) visibleCount++;
+  });
+  document.getElementById('data-source-picker-search-empty').style.display = (q && visibleCount===0) ? 'block' : 'none';
+});
+document.getElementById('btn-toggle-picker-search').addEventListener('click', ()=>{
+  const btn = document.getElementById('btn-toggle-picker-search');
+  const wrap = document.getElementById('data-source-picker-search-wrap');
+  const isOpen = wrap.style.display !== 'none';
+  btn.classList.toggle('icon-btn-blue', !isOpen);
+  wrap.style.display = isOpen ? 'none' : 'block';
+  if(!isOpen){
+    document.getElementById('data-source-picker-search').focus();
+  } else {
+    const searchEl = document.getElementById('data-source-picker-search');
+    searchEl.value = '';
+    searchEl.dispatchEvent(new Event('input'));
+  }
+});
 function closeSourcePicker(){
   document.getElementById('data-source-picker-overlay').style.display = 'none';
 }
@@ -1089,7 +1240,7 @@ document.getElementById('data-source-select').addEventListener('change', async (
   renderDataView();
 });
 
-let dataPeriodFilter = '3m';
+let dataPeriodFilter = '1m';
 let dataAggMode = 'd';
 document.getElementById('data-agg-filter').querySelectorAll('button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
@@ -1106,7 +1257,6 @@ async function setDataShowChart(show){
   const toggleBtn = document.getElementById('btn-toggle-chart');
   toggleBtn.classList.toggle('icon-btn-blue', show);
   toggleBtn.classList.toggle('icon-btn-filled', !show);
-  toggleBtn.style.boxShadow = !show ? 'inset 0 0 0 2px #4f8ff0' : 'none';
   if(show) await renderDataChartPreview();
   requestAnimationFrame(fitVisibleTableScrollBoxes);
 }
@@ -1121,7 +1271,6 @@ function setDataShowGaps(show){
   const toggleBtn = document.getElementById('btn-toggle-gaps');
   toggleBtn.classList.toggle('icon-btn-blue', show);
   toggleBtn.classList.toggle('icon-btn-filled', !show);
-  toggleBtn.style.boxShadow = !show ? 'inset 0 0 0 2px #4f8ff0' : 'none';
   renderDataView();
   requestAnimationFrame(fitVisibleTableScrollBoxes);
 }
@@ -1227,6 +1376,10 @@ document.getElementById('data-range-first').addEventListener('click', ()=>{
   const id = document.getElementById('data-source-select').value;
   const range = getDateRange(id);
   if(range) document.getElementById('data-range-from').value = keyToIsoDate(range.first);
+  updateRangeButtonStates();
+});
+document.getElementById('data-range-today').addEventListener('click', ()=>{
+  document.getElementById('data-range-to').value = todayIso();
   updateRangeButtonStates();
 });
 document.getElementById('data-range-last').addEventListener('click', ()=>{
@@ -1892,7 +2045,7 @@ function openChartStatsModal(){
   const xBar = '<span style="position:relative;display:inline-block;vertical-align:baseline;">x<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>';
   const rBarSym = '<span style="position:relative;display:inline-block;vertical-align:baseline;">r<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>';
   const rBarBarSym = '<span style="position:relative;display:inline-block;vertical-align:baseline;">r<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i><i style="position:absolute;left:0;right:0;top:-2px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>';
-  const madSym = `MAD (|x−${xBar}|)`;
+  const madSym = `|x−${xBar}|`;
   const statsRows = [
     ['n / N', `${stats.n} / ${stats.totalCount}`, 'var(--text)'],
     [xBar, stats.mean!=null ? fmtVal(stats.mean, stats.dec) : '–', 'var(--accent)'],
@@ -1932,7 +2085,7 @@ function openChartStatsModal(){
   ];
   function renderRows(rows){
     return rows.map(([label,val,color],i)=>
-      `<tr style="background:${i%2? 'rgba(255,255,255,0.06)':'transparent'};"><td style="padding:8px 10px;color:var(--text);">${label}</td><td style="padding:8px 10px;text-align:right;color:${color};">${val}</td></tr>`
+      `<tr style="background:${i%2? 'rgba(255,255,255,0.06)':'transparent'};"><td style="padding:8px 10px;color:var(--text);line-height:24px;">${label}</td><td style="padding:8px 10px;text-align:right;color:${color};line-height:24px;">${val}</td></tr>`
     ).join('');
   }
   bodyStats.innerHTML = renderRows(statsRows);
@@ -1942,8 +2095,10 @@ function openChartStatsModal(){
 }
 function setStatsTab(tab){
   document.getElementById('chart-stats-tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.stattab===tab));
-  document.getElementById('chart-stats-modal-body').style.display = tab==='stats' ? '' : 'none';
-  document.getElementById('chart-stats-modal-body-chart').style.display = tab==='chart' ? '' : 'none';
+  document.getElementById('chart-stats-table-stats').style.visibility = tab==='stats' ? 'visible' : 'hidden';
+  document.getElementById('chart-stats-table-stats').style.pointerEvents = tab==='stats' ? 'auto' : 'none';
+  document.getElementById('chart-stats-table-chart').style.visibility = tab==='chart' ? 'visible' : 'hidden';
+  document.getElementById('chart-stats-table-chart').style.pointerEvents = tab==='chart' ? 'auto' : 'none';
 }
 document.getElementById('chart-stats-tabs').querySelectorAll('button').forEach(btn=>{
   btn.addEventListener('click', ()=>setStatsTab(btn.dataset.stattab));
