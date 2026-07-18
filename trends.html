@@ -634,8 +634,10 @@ function switchToView(view){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('view-'+view).classList.add('active');
-  if(view==='data') renderDataView();
+  let p;
+  if(view==='data') p = renderDataView();
   setTimeout(fitVisibleTableScrollBoxes, 0);
+  return p;
 }
 document.querySelectorAll('nav.tabs button').forEach(btn=>{
   btn.addEventListener('click', ()=>switchToView(btn.dataset.view));
@@ -789,8 +791,8 @@ async function bootDir(){
         document.getElementById('data-source-select').value = lastBronId;
         updateSourcePickerLabel();
       }
-      if(bronnen.length) switchToView('data');
-      if(dataShowChart) setDataShowChart(true);
+      if(bronnen.length) await switchToView('data');
+      if(dataShowChart) await setDataShowChart(true);
     } else {
       setFileLinkUI('dir', 'auth', {name: handle.name});
     }
