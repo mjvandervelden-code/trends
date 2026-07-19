@@ -1581,8 +1581,24 @@ function updatePeriodCustomIcon(){
   allIcon.style.display = isAll ? '' : 'none';
 }
 function syncPeriodButtonsActive(){
-  document.getElementById('data-period-filter').querySelectorAll('button').forEach(b=>{
-    const match = b.dataset.period===dataPeriodFilter || (dataPeriodFilter==='all' && b.dataset.period==='custom');
+  const group = document.getElementById('data-period-filter');
+  let matchedStandardPeriod = null;
+  if(dataPeriodFilter === 'custom'){
+    const fromIso = document.getElementById('data-range-from').value;
+    const toIso = document.getElementById('data-range-to').value;
+    const fromKey = fromIso ? isoToKey(fromIso) : null;
+    const toKey = toIso ? isoToKey(toIso) : null;
+    const todayKey = dateToKey(todayUTCDate());
+    if(fromKey && toKey === todayKey){
+      for(const p of ['1w','1m','3m','6m','9m','1y']){
+        const days = DATA_PERIOD_DAYS[p];
+        const cutoff = new Date(todayUTCDate()); cutoff.setUTCDate(cutoff.getUTCDate()-days);
+        if(fromKey === dateToKey(cutoff)){ matchedStandardPeriod = p; break; }
+      }
+    }
+  }
+  group.querySelectorAll('button').forEach(b=>{
+    const match = b.dataset.period===dataPeriodFilter || (dataPeriodFilter==='all' && b.dataset.period==='custom') || (matchedStandardPeriod && b.dataset.period===matchedStandardPeriod);
     b.classList.toggle('active', match);
   });
   updatePeriodCustomIcon();
@@ -1704,8 +1720,7 @@ document.getElementById('data-range-apply').addEventListener('click', async ()=>
     }
   }
   dataPeriodFilter = 'custom';
-  document.getElementById('data-period-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.period==='custom'));
-  updatePeriodCustomIcon();
+  syncPeriodButtonsActive();
   closeDataRangeModal();
   updateDataAggButtonStates();
   renderDataView();
