@@ -63,6 +63,10 @@
     background:#0f1417;
   }
   .panel h2{margin:0 0 12px;font-size:24px;letter-spacing:.02em;color:var(--text);}
+  @keyframes hint-bounce{
+    0%,100%{transform:translateY(0);opacity:0.5;}
+    50%{transform:translateY(4px);opacity:1;}
+  }
   .accent-title{color:var(--accent);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;font-size:18px;}
   .panel h2.accent-title{color:var(--accent);font-size:18px;}
   .panel h2 .sub{color:var(--muted);font-weight:500;font-size:18px;}
@@ -388,7 +392,7 @@
   <!-- DATA VIEW -->
   <section id="view-data" class="view">
     <div class="data-sticky-toolbar" id="data-sticky-combined" style="padding:0;">
-      <div style="display:grid;grid-template-columns:1fr 46px;gap:10px;align-items:center;margin-bottom:2px;">
+      <div style="margin-bottom:2px;">
         <div class="field" style="flex:1;">
           <button type="button" class="picker-btn" id="data-source-picker-btn" style="margin-bottom:0;height:46px;">
             <span id="data-source-picker-label" style="color:var(--accent);">Kies een bron</span>
@@ -396,9 +400,6 @@
           </button>
           <select id="data-source-select" style="display:none;"></select>
         </div>
-        <button type="button" class="icon-btn-sm icon-btn-blue" id="btn-toggle-chart" title="Grafiek tonen/verbergen" aria-label="Grafiek tonen/verbergen" style="border:none;width:46px;height:46px;">
-          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="4" y2="4"/><line x1="4" y1="20" x2="20" y2="20"/><path d="M6 15.5l4-5 3.5 3 4.5-7"/></svg>
-        </button>
       </div>
 
       <div style="margin-top:10px;margin-bottom:10px;">
@@ -407,7 +408,7 @@
         </div>
       </div>
 
-      <div class="panel" id="data-filters-panel" style="margin-top:0;margin-bottom:8px;display:flex;flex-direction:column;gap:10px;">
+      <div class="panel" id="data-filters-panel" style="margin-top:0;margin-bottom:4px;display:flex;flex-direction:column;gap:10px;">
         <div style="display:flex;align-items:stretch;gap:8px;">
         <div class="segmented" id="data-agg-filter" style="flex:1;margin-bottom:0;">
           <button data-agg="d" class="active">dag</button>
@@ -498,6 +499,10 @@
             <button class="btn compact" id="data-range-apply" style="flex:1;">Toepassen</button>
           </div>
         </div>
+      </div>
+
+      <div id="hidden-chart-hint-chevron" style="display:none;justify-content:center;">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;animation:hint-bounce 1.6s ease-in-out infinite;"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
     </div>
 
@@ -1497,15 +1502,15 @@ let dataShowChart = true;
 async function setDataShowChart(show){
   dataShowChart = show;
   document.getElementById('data-chart-preview').style.display = show ? 'block' : 'none';
-  const toggleBtn = document.getElementById('btn-toggle-chart');
-  toggleBtn.classList.toggle('icon-btn-blue', show);
-  toggleBtn.classList.toggle('icon-btn-filled', !show);
   if(show) await renderDataChartPreview();
-  requestAnimationFrame(fitVisibleTableScrollBoxes);
+  requestAnimationFrame(()=>requestAnimationFrame(fitVisibleTableScrollBoxes));
+  updateHiddenChartHint();
 }
-document.getElementById('btn-toggle-chart').addEventListener('click', ()=>{
-  setDataShowChart(!dataShowChart);
-});
+
+function updateHiddenChartHint(){
+  const show = !dataShowChart;
+  document.getElementById('hidden-chart-hint-chevron').style.display = show ? 'flex' : 'none';
+}
 
 let dataShowGaps = false;
 let chartViewMode = 'standard'; // 'standard' of 'xmr' — swipe op de kaart wisselt (alleen bij dag-groepering)
@@ -1515,7 +1520,7 @@ function setDataShowGaps(show){
   toggleBtn.classList.toggle('icon-btn-blue', show);
   toggleBtn.classList.toggle('icon-btn-filled', !show);
   renderDataView();
-  requestAnimationFrame(fitVisibleTableScrollBoxes);
+  requestAnimationFrame(()=>requestAnimationFrame(fitVisibleTableScrollBoxes));
 }
 document.getElementById('btn-toggle-gaps').addEventListener('click', ()=>{
   setDataShowGaps(!dataShowGaps);
@@ -1714,7 +1719,6 @@ function getShownDataKeys(keys){
 
 function updateDataControlsEnabled(){
   const hasSource = !!document.getElementById('data-source-select').value;
-  document.getElementById('btn-toggle-chart').disabled = !hasSource;
   document.getElementById('btn-toggle-gaps').disabled = !hasSource;
   document.getElementById('data-agg-filter').querySelectorAll('button').forEach(b=>b.disabled = !hasSource);
   document.getElementById('data-period-filter').querySelectorAll('button').forEach(b=>b.disabled = !hasSource);
@@ -1940,7 +1944,7 @@ async function renderDataView(){
     });
   });
   if(dataShowChart) await renderDataChartPreview();
-  requestAnimationFrame(fitVisibleTableScrollBoxes);
+  requestAnimationFrame(()=>requestAnimationFrame(fitVisibleTableScrollBoxes));
 }
 
 document.getElementById('data-table-body').addEventListener('click', (e)=>{
@@ -2898,10 +2902,9 @@ function fitTableScrollHeight(id){
   const el = document.getElementById(id);
   if(!el || el.offsetParent === null) return; // niet zichtbaar, niets te doen
   const navEl = document.querySelector('nav.tabs');
-  const combinedEl = document.getElementById('data-sticky-combined');
   const navH = navEl ? navEl.getBoundingClientRect().height : 0;
-  const aboveTableH = combinedEl ? combinedEl.getBoundingClientRect().height + 10 : 0;
-  const remaining = window.innerHeight - navH - aboveTableH - 26; // marge (incl. 10px margin-top van de tabel zelf)
+  const tableTop = el.getBoundingClientRect().top;
+  const remaining = window.innerHeight - navH - tableTop - 6; // kleine veiligheidsmarge
   el.style.maxHeight = Math.max(160, Math.floor(remaining)) + 'px';
 }
 function fitVisibleTableScrollBoxes(){
