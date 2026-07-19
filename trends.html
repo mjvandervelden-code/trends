@@ -706,8 +706,26 @@ function uniqueId(base){
   return id;
 }
 function keyToDate(k){ return new Date(Date.UTC(+k.slice(0,4), +k.slice(4,6)-1, +k.slice(6,8))); }
-function dateToKey(d){ return d.getFullYear().toString() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0'); }
+function dateToKey(d){ return d.getUTCFullYear().toString() + String(d.getUTCMonth()+1).padStart(2,'0') + String(d.getUTCDate()).padStart(2,'0'); }
 function fmtDateNL(k){ return k.slice(6,8)+'-'+k.slice(4,6)+'-'+k.slice(0,4); }
+function getISOWeek(date){
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return {week: weekNo, year: d.getUTCFullYear()};
+}
+function fmtGroupLabel(date, mode, k){
+  if(mode === 'w'){
+    const {week, year} = getISOWeek(date);
+    return `${year} Wk${week}`;
+  }
+  if(mode === 'm') return `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}`;
+  if(mode === 'q') return `${date.getUTCFullYear()} Q${Math.floor(date.getUTCMonth()/3)+1}`;
+  if(mode === 'y') return `${date.getUTCFullYear()}`;
+  return formatDateCell(k);
+}
 function formatDateCell(k){
   return fmtDateNL(k);
 }
@@ -1787,14 +1805,48 @@ async function renderDataView(){
     });
   } else {
     const pointsAsc = shown.slice().reverse().map(k=>({date: keyToDate(k), value: data[k]}));
-    const aggPoints = aggregatePoints(pointsAsc, dataAggMode);
+    let aggPoints = aggregatePoints(pointsAsc, dataAggMode);
+    if(dataShowGaps){
+      const bounds = getDataPeriodBounds(keys);
+      const groupFn = dataAggMode==='w' ? getWeekStart : dataAggMode==='m' ? getMonthStart : dataAggMode==='q' ? getQuarterStart : getYearStart;
+      function nextGroupStart(d){
+        const nd = new Date(d);
+        if(dataAggMode==='w') nd.setUTCDate(nd.getUTCDate()+7);
+        else if(dataAggMode==='m') nd.setUTCMonth(nd.getUTCMonth()+1);
+        else if(dataAggMode==='q') nd.setUTCMonth(nd.getUTCMonth()+3);
+        else nd.setUTCFullYear(nd.getUTCFullYear()+1);
+        return nd;
+      }
+      const byTime = new Map(aggPoints.map(p=>[p.date.getTime(), p]));
+      const filled = [];
+      let cursor = groupFn(bounds.cutoff);
+      const lastStart = groupFn(bounds.rangeEnd);
+      while(cursor <= lastStart){
+        const endDate = getGroupEnd(cursor, dataAggMode, todayUTCDate());
+        const t = endDate.getTime();
+        filled.push(byTime.has(t) ? byTime.get(t) : {date: endDate, value: null});
+        cursor = nextGroupStart(cursor);
+      }
+      aggPoints = filled;
+    }
     const rows = aggPoints.slice().reverse();
-    const {mean: aggMean, sigma: aggSigma} = computeMeanSigma(aggPoints.map(p=>p.value));
+    const {mean: aggMean, sigma: aggSigma} = computeMeanSigma(aggPoints.filter(p=>p.value!=null).map(p=>p.value));
     function aggValColor(v){
       return classifyValueColor(v, aggMean, aggSigma, null, 'standard');
     }
+    const aggGroupFn = dataAggMode==='w' ? getWeekStart : dataAggMode==='m' ? getMonthStart : dataAggMode==='q' ? getQuarterStart : getYearStart;
+    const todayForRow = new Date();
+    const todayUTCForRow = new Date(Date.UTC(todayForRow.getFullYear(), todayForRow.getMonth(), todayForRow.getDate()));
+    const currentPeriodEnd = getGroupEnd(aggGroupFn(todayUTCForRow), dataAggMode, todayUTCForRow).getTime();
     rowsHtml = rows.map((p,idx)=>{
-      const prev = rows[idx+1];
+      const k = dateToKey(p.date);
+      const dateLabel = fmtGroupLabel(p.date, dataAggMode, k);
+      const isCurrentPeriod = p.date.getTime() === currentPeriodEnd;
+      if(p.value == null){
+        return `<tr data-k="${k}"${isCurrentPeriod ? ' class="today-row"' : ''}${idx%2?' style="background:rgba(255,255,255,0.06);"':''}><td>${dateLabel}</td><td class="val">–</td>
+        <td class="actions-cell">–</td></tr>`;
+      }
+      const prev = rows.slice(idx+1).find(r=>r.value!=null);
       let diffCell = '';
       if(prev){
         const diff = p.value - prev.value;
@@ -1806,11 +1858,11 @@ async function renderDataView(){
           diffCell = '–';
         }
       }
-      const k = dateToKey(p.date);
       const rowClasses = [];
+      if(isCurrentPeriod) rowClasses.push('today-row');
       if(k===selectedDataKey) rowClasses.push('selected');
       const rowClassAttr = rowClasses.length ? ` class="${rowClasses.join(' ')}"` : '';
-      return `<tr data-k="${k}"${rowClassAttr}${idx%2?' style="background:rgba(255,255,255,0.06);"':''}><td>${formatDateCell(k)}</td><td class="val" style="color:${aggValColor(p.value)};">${fmtVal(p.value, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
+      return `<tr data-k="${k}"${rowClassAttr}${idx%2?' style="background:rgba(255,255,255,0.06);"':''}><td>${dateLabel}</td><td class="val" style="color:${aggValColor(p.value)};">${fmtVal(p.value, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
         <td class="actions-cell">${diffCell}</td></tr>`;
     });
   }
@@ -2080,6 +2132,19 @@ function getMonthStart(date){ return new Date(Date.UTC(date.getUTCFullYear(), da
 function getQuarterStart(date){ const q = Math.floor(date.getUTCMonth()/3); return new Date(Date.UTC(date.getUTCFullYear(), q*3, 1)); }
 function getYearStart(date){ return new Date(Date.UTC(date.getUTCFullYear(), 0, 1)); }
 
+function getGroupEnd(startDate, mode, capAt){
+  const d = new Date(startDate);
+  if(mode==='w'){ d.setUTCDate(d.getUTCDate()+6); }
+  else if(mode==='m'){ d.setUTCMonth(d.getUTCMonth()+1); d.setUTCDate(d.getUTCDate()-1); }
+  else if(mode==='q'){ d.setUTCMonth(d.getUTCMonth()+3); d.setUTCDate(d.getUTCDate()-1); }
+  else { d.setUTCFullYear(d.getUTCFullYear()+1); d.setUTCDate(d.getUTCDate()-1); }
+  if(capAt && d > capAt) return new Date(capAt);
+  return d;
+}
+function todayUTCDate(){
+  const t = new Date();
+  return new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()));
+}
 function aggregatePoints(points, mode){
   if(mode==='d' || !points.length) return points;
   const groupFn = mode==='w' ? getWeekStart : mode==='m' ? getMonthStart : mode==='q' ? getQuarterStart : getYearStart;
@@ -2091,7 +2156,7 @@ function aggregatePoints(points, mode){
   });
   return Array.from(groups.entries())
     .sort((a,b)=>a[0]-b[0])
-    .map(([t,vals])=>({ date: new Date(t), value: vals.reduce((s,v)=>s+v,0)/vals.length }));
+    .map(([t,vals])=>({ date: getGroupEnd(new Date(t), mode, todayUTCDate()), value: vals.reduce((s,v)=>s+v,0)/vals.length }));
 }
 
 /* Berekent voor de huidige bron+periode de punten en het bereik van de x-as.
@@ -2378,7 +2443,7 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
     ctx.fillText(ch, x, y);
     const w = ctx.measureText(ch).width;
     ctx.strokeStyle = color; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(x, y-9); ctx.lineTo(x+w, y-9); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, y-12); ctx.lineTo(x+w, y-12); ctx.stroke();
     return w;
   }
   const baseFont = '17px ui-monospace, monospace';
@@ -2502,7 +2567,19 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
   if(chartMode === 'range') yMin = Math.max(0, yMin);
 
   const xSpan = Math.max(1, xMax - xMin);
-  function xPix(d){ return pad.left + ((d - xMin)/xSpan)*plotW; }
+  const isAggregatedX = dataAggMode !== 'd' && points.length > 1;
+  const xIndexMap = new Map();
+  if(isAggregatedX) points.forEach((p,i)=>xIndexMap.set(p.date.getTime(), i));
+  function xPix(d){
+    if(isAggregatedX){
+      const t = d.getTime();
+      if(xIndexMap.has(t)) return pad.left + (xIndexMap.get(t)/(points.length-1))*plotW;
+      // interpolatie voor tussenliggende (niet-punt) posities, bijv. het middelste as-label
+      const frac = (t - xMin.getTime())/xSpan;
+      return pad.left + frac*plotW;
+    }
+    return pad.left + ((d - xMin)/xSpan)*plotW;
+  }
   function yPix(v){ return pad.top + (1 - (v-yMin)/(yMax-yMin))*plotH; }
 
   ctx.strokeStyle = '#22292e'; ctx.lineWidth = 1;
@@ -2519,12 +2596,52 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
   ctx.textBaseline='top';
   ctx.font = '11px ui-monospace, monospace';
   ctx.fillStyle = '#e7edf0';
-  ctx.textAlign='left';
-  ctx.fillText(fmtDateNL(dateToKey(new Date(xMin.getTime()))), pad.left, cssH-pad.bottom+8);
-  ctx.textAlign='center';
-  ctx.fillText(fmtDateNL(dateToKey(new Date(xMin.getTime() + xSpan*0.5))), pad.left + plotW*0.5, cssH-pad.bottom+8);
-  ctx.textAlign='right';
-  ctx.fillText(fmtDateNL(dateToKey(new Date(xMin.getTime() + xSpan))), cssW-pad.right, cssH-pad.bottom+8);
+  const xAxisLabel = (d) => fmtGroupLabel(d, dataAggMode, dateToKey(d));
+  function drawDateLabel(d, x, align){
+    ctx.textAlign = align;
+    ctx.fillStyle = '#e7edf0';
+    ctx.fillText(xAxisLabel(d), x, cssH-pad.bottom+8);
+  }
+  let leftLabelX, rightLabelX;
+  if(isAggregatedX){
+    const firstP = points[0], lastP = points[points.length-1];
+    const midP = points[Math.round((points.length-1)/2)];
+    leftLabelX = pad.left; rightLabelX = cssW-pad.right;
+    drawDateLabel(firstP.date, leftLabelX, 'left');
+    drawDateLabel(midP.date, xPix(midP.date), 'center');
+    drawDateLabel(lastP.date, rightLabelX, 'right');
+  } else {
+    leftLabelX = pad.left; rightLabelX = cssW-pad.right;
+    drawDateLabel(new Date(xMin.getTime()), leftLabelX, 'left');
+    drawDateLabel(new Date(xMin.getTime() + xSpan*0.5), pad.left + plotW*0.5, 'center');
+    drawDateLabel(new Date(xMin.getTime() + xSpan), rightLabelX, 'right');
+  }
+
+  // Apart, dynamisch streepje+label op de daadwerkelijke positie van vandaag/de huidige periode —
+  // vooral zinvol bij een eigen (aangepast) bereik, waar vandaag niet per se aan de rand valt.
+  const todayForChart = new Date();
+  const todayUTCForChart = new Date(Date.UTC(todayForChart.getFullYear(), todayForChart.getMonth(), todayForChart.getDate()));
+  let todayX = null, todayLabelText = null;
+  if(dataAggMode === 'd'){
+    if(todayUTCForChart >= xMin && todayUTCForChart <= xMax){
+      todayX = xPix(todayUTCForChart);
+      todayLabelText = xAxisLabel(todayUTCForChart);
+    }
+  } else if(isAggregatedX){
+    const groupFnForChart = dataAggMode==='w' ? getWeekStart : dataAggMode==='m' ? getMonthStart : dataAggMode==='q' ? getQuarterStart : getYearStart;
+    const currentEnd = getGroupEnd(groupFnForChart(todayUTCForChart), dataAggMode, todayUTCForChart).getTime();
+    const matchPoint = points.find(p => p.date.getTime() === currentEnd);
+    if(matchPoint){ todayX = xPix(matchPoint.date); todayLabelText = xAxisLabel(matchPoint.date); }
+  }
+  if(todayX != null && todayX > leftLabelX+30 && todayX < rightLabelX-30){
+    ctx.font = '11px ui-monospace, monospace';
+    const w = ctx.measureText(todayLabelText).width;
+    ctx.fillStyle = '#4fd1c5';
+    ctx.fillRect(todayX - w/2 - 8, cssH-pad.bottom+8, 3, 12);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#4fd1c5';
+    ctx.fillText(todayLabelText, todayX, cssH-pad.bottom+8);
+  }
 
   function hLine(v, color, dash){
     const y = yPix(v);
