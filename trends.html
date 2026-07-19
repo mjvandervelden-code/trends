@@ -327,6 +327,19 @@
           <div class="field"><label>Doel-spreiding</label><input type="text" inputmode="decimal" id="f-doelr" placeholder="optioneel"></div>
         </div>
         <div class="field" style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+          <label style="margin:0;">Grafiek tonen</label>
+          <button type="button" class="toggle-switch" id="f-toon-grafiek" title="Grafiek tonen (standaard aan)" aria-label="Grafiek tonen">
+            <span class="toggle-switch-knob"></span>
+          </button>
+        </div>
+        <div class="field" style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+          <label style="margin:0;">Groepering</label>
+          <button type="button" class="picker-btn" id="f-standaard-groepering-btn" style="width:auto;min-width:120px;margin-bottom:0;padding:9px 12px;font-size:17px;">
+            <span id="f-standaard-groepering-label">dag</span>
+            <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="field" style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
           <label style="margin:0;">Hiaten tonen</label>
           <button type="button" class="toggle-switch" id="f-toon-hiaten" title="Hiaten tonen (standaard uit)" aria-label="Hiaten tonen">
             <span class="toggle-switch-knob"></span>
@@ -357,6 +370,17 @@
         <div class="actions" style="justify-content:flex-end;flex-wrap:nowrap;margin-top:12px;">
           <button class="btn secondary compact" id="standaard-bereik-cancel" style="flex:1;">Annuleren</button>
           <button class="btn compact" id="standaard-bereik-ok" style="flex:1;">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="standaard-groepering-modal-overlay" style="display:none;">
+      <div class="modal-box" style="max-width:320px;">
+        <h2 class="accent-title" style="margin:0 0 16px;">Groepering</h2>
+        <div class="source-list" id="standaard-groepering-list"></div>
+        <div class="actions" style="justify-content:flex-end;flex-wrap:nowrap;margin-top:12px;">
+          <button class="btn secondary compact" id="standaard-groepering-cancel" style="flex:1;">Annuleren</button>
+          <button class="btn compact" id="standaard-groepering-ok" style="flex:1;">OK</button>
         </div>
       </div>
     </div>
@@ -773,7 +797,9 @@ async function loadMetaFromDir(){
       doel_x: item.doel_x ?? null,
       doel_r: item.doel_r ?? null,
       toon_hiaten: item.toon_hiaten === true,
-      standaard_bereik: item.standaard_bereik || '1m'
+      standaard_bereik: item.standaard_bereik || '1m',
+      toon_grafiek: item.toon_grafiek !== false,
+      standaard_groepering: item.standaard_groepering || 'd'
     };
   });
   renderSourceList();
@@ -888,9 +914,12 @@ document.getElementById('btn-authorize-dir').addEventListener('click', async ()=
         setDataShowGaps(getSource(lastBronId)?.toon_hiaten === true);
         dataPeriodFilter = getSource(lastBronId)?.standaard_bereik || '1m';
         syncPeriodButtonsActive();
+        dataAggMode = getSource(lastBronId)?.standaard_groepering || 'd';
+        document.getElementById('data-agg-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.agg===dataAggMode));
       }
       if(bronnen.length) await switchToView('data');
-      if(dataShowChart) await setDataShowChart(true);
+      const restoredSrc = lastBronId ? getSource(lastBronId) : null;
+      await setDataShowChart(restoredSrc ? restoredSrc.toon_grafiek !== false : dataShowChart);
     } else {
       setFileLinkUI('dir', 'auth', {name: dirHandle.name});
     }
@@ -934,9 +963,12 @@ async function bootDir(){
         setDataShowGaps(getSource(lastBronId)?.toon_hiaten === true);
         dataPeriodFilter = getSource(lastBronId)?.standaard_bereik || '1m';
         syncPeriodButtonsActive();
+        dataAggMode = getSource(lastBronId)?.standaard_groepering || 'd';
+        document.getElementById('data-agg-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.agg===dataAggMode));
       }
       if(bronnen.length) await switchToView('data');
-      if(dataShowChart) await setDataShowChart(true);
+      const restoredSrc = lastBronId ? getSource(lastBronId) : null;
+      await setDataShowChart(restoredSrc ? restoredSrc.toon_grafiek !== false : dataShowChart);
     } else {
       setFileLinkUI('dir', 'auth', {name: handle.name});
     }
@@ -1081,11 +1113,22 @@ function editSource(id){
   document.getElementById('f-max').value = b.max ?? '';
   document.getElementById('f-doelx').value = b.doel_x ?? '';
   document.getElementById('f-doelr').value = b.doel_r ?? '';
+  setFormToonGrafiek(b.toon_grafiek !== false);
   setFormToonHiaten(b.toon_hiaten === true);
+  setFormStandaardGroepering(b.standaard_groepering || 'd');
   setFormStandaardBereik(b.standaard_bereik || '1m');
   document.getElementById('btn-delete-source').style.display = 'flex';
   openSourceModal();
 }
+let formToonGrafiek = true;
+function setFormToonGrafiek(show){
+  formToonGrafiek = show;
+  document.getElementById('f-toon-grafiek').classList.toggle('active', show);
+}
+document.getElementById('f-toon-grafiek').addEventListener('click', ()=>{
+  setFormToonGrafiek(!formToonGrafiek);
+});
+
 let formToonHiaten = false;
 function setFormToonHiaten(show){
   formToonHiaten = show;
@@ -1129,11 +1172,47 @@ document.getElementById('standaard-bereik-ok').addEventListener('click', ()=>{
   document.getElementById('standaard-bereik-modal-overlay').style.display = 'none';
 });
 
+const STANDAARD_GROEPERING_OPTIONS = [['d','dag'],['w','week'],['m','1 mnd'],['q','3 mnd'],['y','jaar']];
+let formStandaardGroepering = 'd';
+let pickedStandaardGroepering = 'd';
+function setFormStandaardGroepering(val){
+  formStandaardGroepering = val;
+  const opt = STANDAARD_GROEPERING_OPTIONS.find(o=>o[0]===val);
+  document.getElementById('f-standaard-groepering-label').textContent = opt ? opt[1] : 'dag';
+}
+document.getElementById('f-standaard-groepering-btn').addEventListener('click', ()=>{
+  pickedStandaardGroepering = formStandaardGroepering;
+  const list = document.getElementById('standaard-groepering-list');
+  list.innerHTML = '';
+  STANDAARD_GROEPERING_OPTIONS.forEach(([val,label])=>{
+    const row = document.createElement('div');
+    row.className = 'source-row';
+    if(val === pickedStandaardGroepering) row.classList.add('selected');
+    row.innerHTML = `<div class="title">${escapeHtml(label)}</div>`;
+    row.addEventListener('click', ()=>{
+      pickedStandaardGroepering = val;
+      list.querySelectorAll('.source-row.selected').forEach(r=>r.classList.remove('selected'));
+      row.classList.add('selected');
+    });
+    list.appendChild(row);
+  });
+  document.getElementById('standaard-groepering-modal-overlay').style.display = 'flex';
+});
+document.getElementById('standaard-groepering-cancel').addEventListener('click', ()=>{
+  document.getElementById('standaard-groepering-modal-overlay').style.display = 'none';
+});
+document.getElementById('standaard-groepering-ok').addEventListener('click', ()=>{
+  setFormStandaardGroepering(pickedStandaardGroepering);
+  document.getElementById('standaard-groepering-modal-overlay').style.display = 'none';
+});
+
 function resetSourceForm(){
   editingId = null;
   document.getElementById('meta-form-title').textContent = 'Nieuwe bron';
   ['f-titel','f-bestand','f-eenheid','f-min','f-max','f-doelx','f-doelr','f-decimalen'].forEach(id=>document.getElementById(id).value='');
+  setFormToonGrafiek(true);
   setFormToonHiaten(false);
+  setFormStandaardGroepering('d');
   setFormStandaardBereik('1m');
   document.getElementById('btn-delete-source').style.display = 'none';
 }
@@ -1159,7 +1238,9 @@ document.getElementById('btn-save-source').addEventListener('click', async ()=>{
     doel_x: numOrNull(document.getElementById('f-doelx').value),
     doel_r: numOrNull(document.getElementById('f-doelr').value),
     toon_hiaten: formToonHiaten,
-    standaard_bereik: formStandaardBereik
+    standaard_bereik: formStandaardBereik,
+    toon_grafiek: formToonGrafiek,
+    standaard_groepering: formStandaardGroepering
   };
   const idx = bronnen.findIndex(b=>b.id===id);
   if(idx>=0) bronnen[idx] = src; else bronnen.push(src);
@@ -1329,16 +1410,15 @@ document.getElementById('data-source-select').addEventListener('change', async (
   const newSrc = getSource(newId);
   dataPeriodFilter = newSrc?.standaard_bereik || '1m';
   syncPeriodButtonsActive();
-  dataAggMode = 'd';
-  document.getElementById('data-agg-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.agg==='d'));
+  dataAggMode = newSrc?.standaard_groepering || 'd';
+  document.getElementById('data-agg-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.agg===dataAggMode));
   updateDataAggButtonStates();
   chartViewMode = 'standard';
-  setDataShowChart(true);
+  setDataShowChart(newSrc?.toon_grafiek !== false);
   dataShowGaps = newSrc?.toon_hiaten === true;
   const gapsBtn = document.getElementById('btn-toggle-gaps');
   gapsBtn.classList.toggle('icon-btn-blue', dataShowGaps);
   gapsBtn.classList.toggle('icon-btn-filled', !dataShowGaps);
-  await ensureDataLoaded(document.getElementById('data-source-select').value);
   renderDataView();
 });
 
@@ -1641,17 +1721,13 @@ async function renderDataView(){
       });
     }
     const rangeDeltaMap = new Map();
-    let rBarBar = null;
     if(isRangeMode){
-      const allDeltas = [];
       rangeKeysAsc.forEach((k,i)=>{
         if(i>0){
           const delta = rangeValMap.get(k) - rangeValMap.get(rangeKeysAsc[i-1]);
           rangeDeltaMap.set(k, delta);
-          allDeltas.push(Math.abs(delta));
         }
       });
-      if(allDeltas.length) rBarBar = allDeltas.reduce((s,v)=>s+v,0)/allDeltas.length;
     }
     let allKeysDesc = [];
     if(dataShowGaps){
@@ -2092,25 +2168,16 @@ async function renderDataChartPreview(){
   const shownCount = Math.max(0, Math.round((periodBounds.rangeEnd - periodBounds.cutoff)/oneDayMsForCount) + 1);
   const dec = src?.decimalen ?? 1;
   if(n===0){
-    window.lastChartStats = {n:0, totalCount, shownCount, mean:null, sigma:null, rBar:null, rBarBar:null, madVal:null, minVal:null, maxVal:null, sumVal:null, ucl:null, uwl:null, lwl:null, lcl:null, doelWaarde:null, doelBereik:null, doelBoven:null, doelOnder:null, dec, chartMode:'standard'};
+    window.lastChartStats = {n:0, totalCount, shownCount, mean:null, sigma:null, rBar:null, madVal:null, minVal:null, maxVal:null, sumVal:null, ucl:null, uwl:null, lwl:null, lcl:null, doelWaarde:null, doelBereik:null, doelBoven:null, doelOnder:null, dec, chartMode:'standard'};
     return;
   }
   let rBar = null;
-  let rBarBar = null;
   if(n>=2){
     let sum = 0;
-    const rangeSeries = [];
     for(let i=1;i<points.length;i++){
-      const rv = Math.abs(points[i].value - points[i-1].value);
-      sum += rv;
-      rangeSeries.push(rv);
+      sum += Math.abs(points[i].value - points[i-1].value);
     }
     rBar = sum / (n-1);
-    if(rangeSeries.length>=2){
-      let sum2 = 0;
-      for(let i=1;i<rangeSeries.length;i++) sum2 += Math.abs(rangeSeries[i]-rangeSeries[i-1]);
-      rBarBar = sum2 / (rangeSeries.length-1);
-    }
   }
   let madVal = null;
   if(n>=1 && mean!=null){
@@ -2144,12 +2211,12 @@ async function renderDataChartPreview(){
   const doelBoven = (!useRange && src?.doel_x != null && src?.doel_r != null) ? src.doel_x + src.doel_r/2 : null;
   const doelOnder = (!useRange && src?.doel_x != null && src?.doel_r != null) ? src.doel_x - src.doel_r/2 : null;
   window.lastChartStats = {
-    n: dispN, totalCount, shownCount, mean: dispMean, sigma: dispSigma, rBar, rBarBar, madVal: dispMadVal,
+    n: dispN, totalCount, shownCount, mean: dispMean, sigma: dispSigma, rBar, madVal: dispMadVal,
     minVal: dispMinVal, maxVal: dispMaxVal, sumVal: dispSumVal,
     ucl, uwl, lwl, lcl, doelWaarde, doelBereik, doelBoven, doelOnder, dec, chartMode: effectiveChartMode
   };
 
-  drawChart(ctx, canvas, points, mean, sigma, src, chartXMin, chartXMax, AGG_MAX_GAP_DAYS[dataAggMode], rBar, effectiveChartMode, true, selectedDataKey, rBarBar);
+  drawChart(ctx, canvas, points, mean, sigma, src, chartXMin, chartXMax, AGG_MAX_GAP_DAYS[dataAggMode], rBar, effectiveChartMode, true, selectedDataKey);
 }
 
 function openChartStatsModal(){
@@ -2168,24 +2235,23 @@ function openChartStatsModal(){
   const bodyChart = document.getElementById('chart-stats-modal-body-chart');
   const xBar = '<span style="position:relative;display:inline-block;vertical-align:baseline;">x<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>';
   const rBarSym = '<span style="position:relative;display:inline-block;vertical-align:baseline;">r<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>';
-  const rBarBarSym = '<span style="position:relative;display:inline-block;vertical-align:baseline;">r<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i><i style="position:absolute;left:0;right:0;top:-2px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>';
   const madSym = `|x−${xBar}|`;
   const isRangeStats = stats.chartMode === 'range';
   const primaryLabel = isRangeStats ? rBarSym : xBar;
-  const secondRowLabel = isRangeStats ? rBarBarSym : `${rBarSym} / ${rBarBarSym}`;
-  const secondRowValue = isRangeStats
-    ? (stats.rBarBar!=null ? fmtVal(stats.rBarBar, stats.dec) : '–')
-    : `${stats.rBar!=null ? fmtVal(stats.rBar, stats.dec) : '–'} / ${stats.rBarBar!=null ? fmtVal(stats.rBarBar, stats.dec) : '–'}`;
   const statsRows = [
     ['n', `${stats.n} / ${stats.shownCount}`, 'var(--text)'],
     [primaryLabel, stats.mean!=null ? `<strong>${fmtVal(stats.mean, stats.dec)}</strong>` : '–', 'var(--accent)'],
     ['σₙ₋₁', (stats.sigma!=null && stats.sigma>0) ? fmtVal(stats.sigma, stats.dec) : '–', 'var(--text)'],
-    [secondRowLabel, secondRowValue, 'var(--text)'],
+  ];
+  if(!isRangeStats){
+    statsRows.push([rBarSym, stats.rBar!=null ? fmtVal(stats.rBar, stats.dec) : '–', 'var(--text)']);
+  }
+  statsRows.push(
     [madSym, stats.madVal!=null ? fmtVal(stats.madVal, stats.dec) : '–', 'var(--text)'],
     ['Σ', stats.sumVal!=null ? fmtVal(stats.sumVal, stats.dec) : '–', 'var(--text)'],
     ['min', stats.minVal!=null ? fmtVal(stats.minVal, stats.dec) : '–', 'var(--text)'],
-    ['max', stats.maxVal!=null ? fmtVal(stats.maxVal, stats.dec) : '–', 'var(--text)'],
-  ];
+    ['max', stats.maxVal!=null ? fmtVal(stats.maxVal, stats.dec) : '–', 'var(--text)']
+  );
   const formulaStyle = 'font-size:11px;color:var(--muted);margin-left:6px;';
   let uclF, uwlF, lwlF, lclF;
   if(stats.chartMode === 'range'){
@@ -2291,7 +2357,7 @@ document.getElementById('chart-stats-modal-overlay').addEventListener('click', (
   if(e.target.id === 'chart-stats-modal-overlay') document.getElementById('chart-stats-modal-overlay').style.display = 'none';
 });
 
-function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays, rBar, chartMode, swipeEnabled, selectedKey, rBarBar){
+function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays, rBar, chartMode, swipeEnabled, selectedKey){
   maxGapDays = maxGapDays ?? 1;
   const dpr = window.devicePixelRatio || 1;
   const cssW = canvas.clientWidth || 880, cssH = 220;
@@ -2315,17 +2381,6 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
     ctx.beginPath(); ctx.moveTo(x, y-9); ctx.lineTo(x+w, y-9); ctx.stroke();
     return w;
   }
-  function drawDoubleOverlineChar(x, y, ch, color){
-    ctx.fillStyle = color;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillText(ch, x, y);
-    const w = ctx.measureText(ch).width;
-    ctx.strokeStyle = color; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(x, y-9); ctx.lineTo(x+w, y-9); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x, y-12); ctx.lineTo(x+w, y-12); ctx.stroke();
-    return w;
-  }
   const baseFont = '17px ui-monospace, monospace';
   const valueFont = '700 19px ui-monospace, monospace';
   ctx.font = baseFont;
@@ -2339,16 +2394,13 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
   const gap = 18;
   if(isRange){
     // geen x̄ bij de Range-kaart, r̄ is hier de eigenlijke middellijn
-    const rBarBarValTxt = rBarBar!=null?fmtVal(rBarBar,dec):'–';
-    const rBarBarTxt = `=${rBarBarValTxt}`;
     ctx.font = baseFont;
     const wN = ctx.measureText(nTxt).width;
     const wRChar = ctx.measureText('r').width;
     const wEq = ctx.measureText('=').width;
-    const wRBarBarTxt = ctx.measureText(rBarBarTxt).width;
     ctx.font = valueFont;
     const wRVal = ctx.measureText(rBarValTxt).width;
-    const totalW = wN + gap + wRChar + wEq + wRVal + gap + wRChar + wRBarBarTxt;
+    const totalW = wN + gap + wRChar + wEq + wRVal;
     sx = (cssW - totalW)/2;
     ctx.textAlign='left'; ctx.textBaseline='alphabetic';
     ctx.font = baseFont;
@@ -2362,11 +2414,6 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
     ctx.font = valueFont;
     ctx.fillStyle = '#4fd1c5';
     ctx.fillText(rBarValTxt, sx, statY);
-    sx += wRVal + gap;
-    ctx.font = baseFont;
-    sx += drawDoubleOverlineChar(sx, statY, 'r', '#e7edf0');
-    ctx.fillStyle = '#e7edf0';
-    ctx.fillText(rBarBarTxt, sx, statY);
   } else {
     const xBarValTxt = mean!=null?fmtVal(mean,dec):'–';
     const xBarTxt = `=${xBarValTxt}`;
