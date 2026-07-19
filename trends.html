@@ -2450,22 +2450,22 @@ function openChartStatsModal(){
     ['min', stats.minVal!=null ? fmtVal(stats.minVal, stats.dec) : '–', 'var(--text)'],
     ['max', stats.maxVal!=null ? fmtVal(stats.maxVal, stats.dec) : '–', 'var(--text)']
   );
-  const formulaStyle = 'font-size:11px;color:var(--muted);margin-left:6px;';
+  const formulaStyle = 'color:var(--text);margin-left:6px;';
   let uclF, uwlF, lwlF, lclF;
   if(stats.chartMode === 'range'){
-    uclF = `<span style="${formulaStyle}">3,267×${rBarSym}</span>`;
+    uclF = `<span style="${formulaStyle}">(3,267×${rBarSym})</span>`;
     uwlF = ''; lwlF = '';
-    lclF = `<span style="${formulaStyle}">0</span>`;
+    lclF = `<span style="${formulaStyle}">(0)</span>`;
   } else if(stats.chartMode === 'xmr'){
-    uclF = `<span style="${formulaStyle}">${xBar}+2,66×${rBarSym}</span>`;
-    uwlF = `<span style="${formulaStyle}">${xBar}+1,77×${rBarSym}</span>`;
-    lwlF = `<span style="${formulaStyle}">${xBar}−1,77×${rBarSym}</span>`;
-    lclF = `<span style="${formulaStyle}">${xBar}−2,66×${rBarSym}</span>`;
+    uclF = `<span style="${formulaStyle}">(${xBar}+2,66×${rBarSym})</span>`;
+    uwlF = `<span style="${formulaStyle}">(${xBar}+1,77×${rBarSym})</span>`;
+    lwlF = `<span style="${formulaStyle}">(${xBar}−1,77×${rBarSym})</span>`;
+    lclF = `<span style="${formulaStyle}">(${xBar}−2,66×${rBarSym})</span>`;
   } else {
-    uclF = `<span style="${formulaStyle}">${xBar}+3σₙ₋₁</span>`;
-    uwlF = `<span style="${formulaStyle}">${xBar}+2σₙ₋₁</span>`;
-    lwlF = `<span style="${formulaStyle}">${xBar}−2σₙ₋₁</span>`;
-    lclF = `<span style="${formulaStyle}">${xBar}−3σₙ₋₁</span>`;
+    uclF = `<span style="${formulaStyle}">(${xBar}+3σₙ₋₁)</span>`;
+    uwlF = `<span style="${formulaStyle}">(${xBar}+2σₙ₋₁)</span>`;
+    lwlF = `<span style="${formulaStyle}">(${xBar}−2σₙ₋₁)</span>`;
+    lclF = `<span style="${formulaStyle}">(${xBar}−3σₙ₋₁)</span>`;
   }
   const chartRows = [
     ['UCL'+uclF, stats.ucl!=null ? fmtVal(stats.ucl, stats.dec) : '–', '#ef5b5b'],
@@ -2600,7 +2600,7 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
     ctx.fillText(ch, x, y);
     const w = ctx.measureText(ch).width;
     ctx.strokeStyle = color; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(x, y-12); ctx.lineTo(x+w, y-12); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, y-14); ctx.lineTo(x+w, y-14); ctx.stroke();
     return w;
   }
   const baseFont = '17px ui-monospace, monospace';
