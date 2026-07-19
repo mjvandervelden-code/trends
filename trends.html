@@ -29,7 +29,6 @@
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);height:100%;overflow:hidden;overscroll-behavior:none;}
   body{
     display:flex;flex-direction:column;overflow:hidden;
-    height:100vh;height:100dvh;
     position:fixed;inset:0;width:100%;
   }
   nav.tabs{
@@ -59,7 +58,7 @@
   }
   .data-sticky-toolbar{
     position:sticky;
-    top:0;
+    top:10px;
     z-index:5;
     background:#0f1417;
   }
@@ -388,7 +387,7 @@
 
   <!-- DATA VIEW -->
   <section id="view-data" class="view">
-    <div class="data-sticky-toolbar" style="padding:0;">
+    <div class="data-sticky-toolbar" id="data-sticky-combined" style="padding:0;">
       <div style="display:grid;grid-template-columns:1fr 46px;gap:10px;align-items:center;margin-bottom:2px;">
         <div class="field" style="flex:1;">
           <button type="button" class="picker-btn" id="data-source-picker-btn" style="margin-bottom:0;height:46px;">
@@ -401,40 +400,15 @@
           <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="4" y2="4"/><line x1="4" y1="20" x2="20" y2="20"/><path d="M6 15.5l4-5 3.5 3 4.5-7"/></svg>
         </button>
       </div>
-    </div>
 
-    <div style="margin-top:10px;margin-bottom:10px;">
-      <div id="data-chart-preview" style="display:none;">
-        <canvas id="data-chart-canvas" width="880" height="220" style="cursor:pointer;"></canvas>
-      </div>
-    </div>
-
-    <div class="modal-overlay" id="chart-stats-modal-overlay" style="display:none;">
-      <div class="modal-box" style="max-width:340px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 16px;">
-          <h2 class="accent-title" style="margin:0;">Analyse <span class="sub" id="chart-stats-shown-count"></span></h2>
-          <span id="chart-stats-badge" style="display:none;background:#4f8ff0;color:#eef4ff;font-family:var(--mono);font-size:12px;font-weight:600;padding:4px 9px;border-radius:5px;"></span>
-        </div>
-        <div class="segmented" id="chart-stats-tabs" style="margin-bottom:12px;">
-          <button data-stattab="stats" class="active">Statistieken</button>
-          <button data-stattab="chart">Kaart</button>
-        </div>
-        <div style="display:grid;">
-          <table id="chart-stats-table-stats" style="grid-area:1/1;width:100%;font-family:var(--mono);font-size:19px;visibility:visible;">
-            <tbody id="chart-stats-modal-body"></tbody>
-          </table>
-          <table id="chart-stats-table-chart" style="grid-area:1/1;width:100%;font-family:var(--mono);font-size:19px;visibility:hidden;pointer-events:none;">
-            <tbody id="chart-stats-modal-body-chart"></tbody>
-          </table>
-        </div>
-        <div class="actions" style="justify-content:flex-end;margin-top:10px;">
-          <button class="btn compact" id="chart-stats-modal-close" style="flex:1;">Sluiten</button>
+      <div style="margin-top:10px;margin-bottom:10px;">
+        <div id="data-chart-preview" style="display:none;">
+          <canvas id="data-chart-canvas" width="880" height="220" style="cursor:pointer;"></canvas>
         </div>
       </div>
-    </div>
 
-    <div class="panel" id="data-filters-panel" style="margin-top:0;margin-bottom:8px;display:flex;flex-direction:column;gap:10px;">
-      <div style="display:flex;align-items:stretch;gap:8px;">
+      <div class="panel" id="data-filters-panel" style="margin-top:0;margin-bottom:8px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:stretch;gap:8px;">
         <div class="segmented" id="data-agg-filter" style="flex:1;margin-bottom:0;">
           <button data-agg="d" class="active">dag</button>
           <button data-agg="w">week</button>
@@ -525,6 +499,32 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="modal-overlay" id="chart-stats-modal-overlay" style="display:none;">
+      <div class="modal-box" style="max-width:340px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 16px;">
+          <h2 class="accent-title" style="margin:0;">Analyse <span class="sub" id="chart-stats-shown-count"></span></h2>
+          <span id="chart-stats-badge" style="display:none;background:#4f8ff0;color:#eef4ff;font-family:var(--mono);font-size:12px;font-weight:600;padding:4px 9px;border-radius:5px;"></span>
+        </div>
+        <div class="segmented" id="chart-stats-tabs" style="margin-bottom:12px;">
+          <button data-stattab="stats" class="active">Statistieken</button>
+          <button data-stattab="chart">Kaart</button>
+        </div>
+        <div style="display:grid;">
+          <table id="chart-stats-table-stats" style="grid-area:1/1;width:100%;font-family:var(--mono);font-size:19px;visibility:visible;">
+            <tbody id="chart-stats-modal-body"></tbody>
+          </table>
+          <table id="chart-stats-table-chart" style="grid-area:1/1;width:100%;font-family:var(--mono);font-size:19px;visibility:hidden;pointer-events:none;">
+            <tbody id="chart-stats-modal-body-chart"></tbody>
+          </table>
+        </div>
+        <div class="actions" style="justify-content:flex-end;margin-top:10px;">
+          <button class="btn compact" id="chart-stats-modal-close" style="flex:1;">Sluiten</button>
+        </div>
+      </div>
+    </div>
+
       <div class="empty" id="data-empty" style="display:none;padding:6px 0 12px;"></div>
       <div id="data-table-scroll" style="overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;margin-top:10px;">
         <table>
@@ -1940,6 +1940,7 @@ async function renderDataView(){
     });
   });
   if(dataShowChart) await renderDataChartPreview();
+  requestAnimationFrame(fitVisibleTableScrollBoxes);
 }
 
 document.getElementById('data-table-body').addEventListener('click', (e)=>{
@@ -2461,7 +2462,7 @@ document.getElementById('chart-stats-tabs').querySelectorAll('button').forEach(b
 document.getElementById('data-chart-canvas').addEventListener('click', openChartStatsModal);
 (function(){
   const canvas = document.getElementById('data-chart-canvas');
-  let startX=null, startY=null, wasSwipe=false, swipeDx=0;
+  let startX=null, startY=null, wasSwipe=false, swipeDx=0, swipeDy=0;
   canvas.addEventListener('touchstart', (e)=>{
     if(e.touches.length !== 1){ startX=null; return; }
     startX = e.touches[0].clientX;
@@ -2472,10 +2473,11 @@ document.getElementById('data-chart-canvas').addEventListener('click', openChart
     if(startX===null || e.touches.length!==1) return;
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - startY;
-    if(Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) * 1.5){ wasSwipe = true; swipeDx = dx; }
+    if(Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) * 1.5){ wasSwipe = true; swipeDx = dx; swipeDy = 0; }
+    else if(Math.abs(dy) > 30 && Math.abs(dy) > Math.abs(dx) * 1.5){ wasSwipe = true; swipeDy = dy; swipeDx = 0; }
   }, {passive:true});
   canvas.addEventListener('touchend', ()=>{
-    if(wasSwipe){
+    if(wasSwipe && swipeDx !== 0){
       const carousel = dataAggMode === 'd' ? ['standard','xmr','range'] : ['standard','range'];
       const curIdx = carousel.indexOf(chartViewMode);
       const startIdx = curIdx === -1 ? 0 : curIdx;
@@ -2485,8 +2487,31 @@ document.getElementById('data-chart-canvas').addEventListener('click', openChart
       renderDataView();
       window.chartSwipeJustHappened = true;
       setTimeout(()=>{ window.chartSwipeJustHappened = false; }, 400);
+    } else if(wasSwipe && swipeDy < 0 && dataShowChart){
+      // omhoog vegen op de grafiek -> verbergen (alternatief voor de knop)
+      setDataShowChart(false);
+      window.chartSwipeJustHappened = true;
+      setTimeout(()=>{ window.chartSwipeJustHappened = false; }, 400);
     }
     startX = null; wasSwipe = false;
+  }, {passive:true});
+})();
+(function(){
+  const panel = document.getElementById('data-filters-panel');
+  let startY=null, startX=null;
+  panel.addEventListener('touchstart', (e)=>{
+    if(e.touches.length !== 1){ startY=null; return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, {passive:true});
+  panel.addEventListener('touchend', (e)=>{
+    if(startY===null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    startY = null;
+    if(Math.abs(dy) < 30 || Math.abs(dy) < Math.abs(dx) * 1.5) return;
+    if(dy < 0 && dataShowChart) setDataShowChart(false); // omhoog vegen -> grafiek verbergen
+    else if(dy > 0 && !dataShowChart) setDataShowChart(true); // omlaag vegen -> grafiek weer tonen
   }, {passive:true});
 })();
 document.getElementById('chart-stats-modal-close').addEventListener('click', ()=>{
@@ -2873,15 +2898,9 @@ function fitTableScrollHeight(id){
   const el = document.getElementById(id);
   if(!el || el.offsetParent === null) return; // niet zichtbaar, niets te doen
   const navEl = document.querySelector('nav.tabs');
-  const toolbarEl = document.querySelector('.data-sticky-toolbar');
-  const filtersEl = document.getElementById('data-filters-panel');
+  const combinedEl = document.getElementById('data-sticky-combined');
   const navH = navEl ? navEl.getBoundingClientRect().height : 0;
-  let aboveTableH = 0;
-  if(toolbarEl && filtersEl){
-    const toolbarTop = toolbarEl.getBoundingClientRect().top;
-    const filtersBottom = filtersEl.getBoundingClientRect().bottom;
-    aboveTableH = Math.max(0, filtersBottom - toolbarTop);
-  }
+  const aboveTableH = combinedEl ? combinedEl.getBoundingClientRect().height + 10 : 0;
   const remaining = window.innerHeight - navH - aboveTableH - 26; // marge (incl. 10px margin-top van de tabel zelf)
   el.style.maxHeight = Math.max(160, Math.floor(remaining)) + 'px';
 }
