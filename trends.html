@@ -77,16 +77,27 @@
   label{display:block;font-size:17px;color:var(--muted);margin-bottom:6px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;}
   input[type=text],input[type=number],input[type=date],select{
     width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
-    padding:13px 14px;border-radius:8px;font-family:var(--mono);font-size:21px;margin-bottom:12px;
+    padding:13px 14px;border-radius:8px;font-family:var(--mono);font-size:19px;margin-bottom:12px;
+    height:46px;box-sizing:border-box;
   }
   input::placeholder{color:var(--muted);opacity:1;}
   .picker-btn{
     width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
-    padding:13px 14px;border-radius:8px;font-family:var(--mono);font-size:21px;margin-bottom:12px;
+    padding:13px 14px;border-radius:8px;font-family:var(--mono);font-size:19px;margin-bottom:12px;
     display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;text-align:left;
   }
   .picker-btn:hover{border-color:var(--accent);}
   .field{margin-bottom:0;}
+  .toggle-switch{
+    position:relative;width:50px;height:28px;border-radius:14px;flex:0 0 auto;
+    background:#28333b;border:1px solid var(--line);padding:0;cursor:pointer;
+  }
+  .toggle-switch.active{background:#4f8ff0;border-color:#4f8ff0;}
+  .toggle-switch-knob{
+    position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;
+    background:#fff;transition:left .15s;
+  }
+  .toggle-switch.active .toggle-switch-knob{left:24px;}
   .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
   button.btn{
     background:var(--accent);color:#08221f;border:none;border-radius:6px;padding:9px 14px;
@@ -105,7 +116,7 @@
     cursor:pointer;
   }
   .source-row.selected{background:rgba(79,209,197,0.30);border-color:var(--accent);}
-  .source-row .title{font-weight:400;font-size:21px;}
+  .source-row .title{font-weight:400;font-size:19px;}
   .source-row button{
     background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;
     width:42px;height:42px;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;
@@ -157,7 +168,7 @@
   .status-dot.linked{background:var(--good);}
   .status-dot.error{background:var(--danger);}
   .file-link-row{display:flex;align-items:center;gap:12px;}
-  .file-link-row .filename{font-family:var(--mono);font-size:21px;color:var(--text);
+  .file-link-row .filename{font-family:var(--mono);font-size:19px;color:var(--text);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .icon-btn-sm{
     flex:0 0 auto;width:42px;height:42px;padding:0;border-radius:8px;
@@ -295,7 +306,7 @@
         </div>
       </div>
       <div class="field" id="source-search-wrap" style="margin:0 0 8px;display:none;">
-        <input type="text" id="source-search" placeholder="Zoek op titel…" autocomplete="off" style="width:100%;box-sizing:border-box;margin-bottom:0;">
+        <input type="text" id="source-search" placeholder="Zoek op titel…" autocomplete="off" style="width:100%;box-sizing:border-box;margin-bottom:0;padding:10px 12px;height:46px;">
       </div>
       <div class="empty" id="source-search-empty" style="display:none;color:var(--muted);padding:6px 0 12px;">Geen bronnen gevonden.</div>
       <div class="source-list" id="source-list" style="max-height:60vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;"></div>
@@ -315,6 +326,19 @@
           <div class="field"><label>Doelwaarde</label><input type="text" inputmode="decimal" id="f-doelx" placeholder="optioneel"></div>
           <div class="field"><label>Doel-spreiding</label><input type="text" inputmode="decimal" id="f-doelr" placeholder="optioneel"></div>
         </div>
+        <div class="field" style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+          <label style="margin:0;">Hiaten tonen</label>
+          <button type="button" class="toggle-switch" id="f-toon-hiaten" title="Hiaten tonen (standaard uit)" aria-label="Hiaten tonen">
+            <span class="toggle-switch-knob"></span>
+          </button>
+        </div>
+        <div class="field" style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+          <label style="margin:0;">Bereik</label>
+          <button type="button" class="picker-btn" id="f-standaard-bereik-btn" style="width:auto;min-width:120px;margin-bottom:0;padding:9px 12px;font-size:17px;">
+            <span id="f-standaard-bereik-label">1 maand</span>
+            <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
         <div class="hint" id="meta-form-hint"></div>
         <div class="actions" style="flex-wrap:nowrap;margin-top:8px;">
           <button class="icon-btn-sm icon-btn-filled" id="btn-delete-source" aria-label="Verwijderen" title="Verwijderen" style="display:none;">
@@ -322,6 +346,17 @@
           </button>
           <button class="btn secondary compact" id="btn-cancel-edit" style="flex:1;">Annuleren</button>
           <button class="btn compact" id="btn-save-source" style="flex:1;">Opslaan</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="standaard-bereik-modal-overlay" style="display:none;">
+      <div class="modal-box" style="max-width:320px;">
+        <h2 class="accent-title" style="margin:0 0 16px;">Bereik</h2>
+        <div class="source-list" id="standaard-bereik-list"></div>
+        <div class="actions" style="justify-content:flex-end;flex-wrap:nowrap;margin-top:12px;">
+          <button class="btn secondary compact" id="standaard-bereik-cancel" style="flex:1;">Annuleren</button>
+          <button class="btn compact" id="standaard-bereik-ok" style="flex:1;">OK</button>
         </div>
       </div>
     </div>
@@ -338,7 +373,7 @@
           </button>
           <select id="data-source-select" style="display:none;"></select>
         </div>
-        <button type="button" class="icon-btn-sm icon-btn-blue" id="btn-toggle-chart" title="Grafiek tonen/verbergen" aria-label="Grafiek tonen/verbergen" style="border:none;">
+        <button type="button" class="icon-btn-sm icon-btn-blue" id="btn-toggle-chart" title="Grafiek tonen/verbergen" aria-label="Grafiek tonen/verbergen" style="border:none;width:46px;height:46px;">
           <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="20" x2="4" y2="4"/><line x1="4" y1="20" x2="20" y2="20"/><path d="M6 15.5l4-5 3.5 3 4.5-7"/></svg>
         </button>
       </div>
@@ -353,7 +388,7 @@
     <div class="modal-overlay" id="chart-stats-modal-overlay" style="display:none;">
       <div class="modal-box" style="max-width:340px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 16px;">
-          <h2 class="accent-title" style="margin:0;">Analyse</h2>
+          <h2 class="accent-title" style="margin:0;">Analyse <span class="sub" id="chart-stats-shown-count"></span></h2>
           <span id="chart-stats-badge" style="display:none;background:#4f8ff0;color:#eef4ff;font-family:var(--mono);font-size:12px;font-weight:600;padding:4px 9px;border-radius:5px;"></span>
         </div>
         <div class="segmented" id="chart-stats-tabs" style="margin-bottom:12px;">
@@ -369,12 +404,12 @@
           </table>
         </div>
         <div class="actions" style="justify-content:flex-end;margin-top:10px;">
-          <button class="btn secondary compact" id="chart-stats-modal-close" style="flex:1;">Sluiten</button>
+          <button class="btn compact" id="chart-stats-modal-close" style="flex:1;">Sluiten</button>
         </div>
       </div>
     </div>
 
-    <div class="panel" id="data-filters-panel" style="margin-top:0;margin-bottom:0;display:flex;flex-direction:column;gap:10px;">
+    <div class="panel" id="data-filters-panel" style="margin-top:0;margin-bottom:8px;display:flex;flex-direction:column;gap:10px;">
       <div style="display:flex;align-items:stretch;gap:8px;">
         <div class="segmented" id="data-agg-filter" style="flex:1;margin-bottom:0;">
           <button data-agg="d" class="active">dag</button>
@@ -383,8 +418,8 @@
           <button data-agg="q">3 mnd</button>
           <button data-agg="y">jaar</button>
         </div>
-        <button type="button" class="icon-btn-sm icon-btn-blue" id="btn-toggle-gaps" title="Gaten tonen/verbergen" aria-label="Gaten tonen/verbergen" style="width:46px;height:34px;border:none;">
-          <svg viewBox="0 0 24 24" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12" stroke-dasharray="4 3.5"/></svg>
+        <button type="button" class="icon-btn-sm icon-btn-blue" id="btn-toggle-gaps" title="Hiaten tonen/verbergen" aria-label="Hiaten tonen/verbergen" style="width:46px;height:34px;border:none;">
+          <svg viewBox="0 0 24 24" stroke-linecap="round"><line x1="4" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="20" y2="12"/></svg>
         </button>
       </div>
       <div style="display:flex;align-items:stretch;gap:8px;">
@@ -415,7 +450,7 @@
           </button>
         </div>
         <div class="field" id="data-source-picker-search-wrap" style="margin:0 0 8px;display:none;">
-          <input type="text" id="data-source-picker-search" placeholder="Zoek op titel…" autocomplete="off" style="width:100%;box-sizing:border-box;margin-bottom:0;">
+          <input type="text" id="data-source-picker-search" placeholder="Zoek op titel…" autocomplete="off" style="width:100%;box-sizing:border-box;margin-bottom:0;padding:10px 12px;height:46px;">
         </div>
         <div class="empty" id="data-source-picker-search-empty" style="display:none;color:var(--muted);padding:6px 0 12px;">Geen bronnen gevonden.</div>
         <div class="source-list" id="data-source-picker-list" style="max-height:50vh;overflow-y:auto;"></div>
@@ -461,13 +496,13 @@
           </div>
         </div>
       </div>
+      <div class="empty" id="data-empty" style="display:none;padding:6px 0 12px;"></div>
       <div id="data-table-scroll" style="overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;margin-top:10px;">
         <table>
 
           <tbody id="data-table-body"></tbody>
         </table>
       </div>
-      <div class="empty" id="data-empty" style="display:none;">Kies eerst een bron.</div>
     </div>
 
     <div id="datapoint-modal-overlay" class="modal-overlay" style="display:none;">
@@ -659,7 +694,13 @@ function escapeHtml(s){ return (s??'').toString().replace(/[&<>"']/g, c=>({'&':'
 function keyToIsoDate(k){ return k.slice(0,4)+'-'+k.slice(4,6)+'-'+k.slice(6,8); }
 function isoToKey(iso){ return iso.replace(/-/g,''); }
 function metaFileObj(){ return { bronnen: bronnen.map(({id, ...rest})=>rest) }; }
-function dataFileObj(data){ const o={}; Object.keys(data).sort().forEach(k=>o[k]=data[k]); return o; }
+function dataFileObj(data){
+  const o={};
+  Object.keys(data).sort().forEach(k=>{
+    if(typeof data[k] === 'number' && !isNaN(data[k])) o[k]=data[k];
+  });
+  return o;
+}
 
 /* ================= tabs ================= */
 const VIEW_ORDER = ['meta','data'];
@@ -730,7 +771,9 @@ async function loadMetaFromDir(){
       min: item.min ?? null,
       max: item.max ?? null,
       doel_x: item.doel_x ?? null,
-      doel_r: item.doel_r ?? null
+      doel_r: item.doel_r ?? null,
+      toon_hiaten: item.toon_hiaten === true,
+      standaard_bereik: item.standaard_bereik || '1m'
     };
   });
   renderSourceList();
@@ -842,6 +885,9 @@ document.getElementById('btn-authorize-dir').addEventListener('click', async ()=
       if(lastBronId && bronnen.some(b=>b.id===lastBronId)){
         document.getElementById('data-source-select').value = lastBronId;
         updateSourcePickerLabel();
+        setDataShowGaps(getSource(lastBronId)?.toon_hiaten === true);
+        dataPeriodFilter = getSource(lastBronId)?.standaard_bereik || '1m';
+        syncPeriodButtonsActive();
       }
       if(bronnen.length) await switchToView('data');
       if(dataShowChart) await setDataShowChart(true);
@@ -885,6 +931,9 @@ async function bootDir(){
       if(lastBronId && bronnen.some(b=>b.id===lastBronId)){
         document.getElementById('data-source-select').value = lastBronId;
         updateSourcePickerLabel();
+        setDataShowGaps(getSource(lastBronId)?.toon_hiaten === true);
+        dataPeriodFilter = getSource(lastBronId)?.standaard_bereik || '1m';
+        syncPeriodButtonsActive();
       }
       if(bronnen.length) await switchToView('data');
       if(dataShowChart) await setDataShowChart(true);
@@ -1032,14 +1081,60 @@ function editSource(id){
   document.getElementById('f-max').value = b.max ?? '';
   document.getElementById('f-doelx').value = b.doel_x ?? '';
   document.getElementById('f-doelr').value = b.doel_r ?? '';
+  setFormToonHiaten(b.toon_hiaten === true);
+  setFormStandaardBereik(b.standaard_bereik || '1m');
   document.getElementById('btn-delete-source').style.display = 'flex';
   openSourceModal();
 }
+let formToonHiaten = false;
+function setFormToonHiaten(show){
+  formToonHiaten = show;
+  document.getElementById('f-toon-hiaten').classList.toggle('active', show);
+}
+document.getElementById('f-toon-hiaten').addEventListener('click', ()=>{
+  setFormToonHiaten(!formToonHiaten);
+});
+
+const STANDAARD_BEREIK_OPTIONS = [['1w','1 week'],['1m','1 maand'],['3m','3 maanden'],['6m','6 maanden'],['9m','9 maanden'],['1y','1 jaar'],['all','Alles']];
+let formStandaardBereik = '1m';
+let pickedStandaardBereik = '1m';
+function setFormStandaardBereik(val){
+  formStandaardBereik = val;
+  const opt = STANDAARD_BEREIK_OPTIONS.find(o=>o[0]===val);
+  document.getElementById('f-standaard-bereik-label').textContent = opt ? opt[1] : '1 maand';
+}
+document.getElementById('f-standaard-bereik-btn').addEventListener('click', ()=>{
+  pickedStandaardBereik = formStandaardBereik;
+  const list = document.getElementById('standaard-bereik-list');
+  list.innerHTML = '';
+  STANDAARD_BEREIK_OPTIONS.forEach(([val,label])=>{
+    const row = document.createElement('div');
+    row.className = 'source-row';
+    if(val === pickedStandaardBereik) row.classList.add('selected');
+    row.innerHTML = `<div class="title">${escapeHtml(label)}</div>`;
+    row.addEventListener('click', ()=>{
+      pickedStandaardBereik = val;
+      list.querySelectorAll('.source-row.selected').forEach(r=>r.classList.remove('selected'));
+      row.classList.add('selected');
+    });
+    list.appendChild(row);
+  });
+  document.getElementById('standaard-bereik-modal-overlay').style.display = 'flex';
+});
+document.getElementById('standaard-bereik-cancel').addEventListener('click', ()=>{
+  document.getElementById('standaard-bereik-modal-overlay').style.display = 'none';
+});
+document.getElementById('standaard-bereik-ok').addEventListener('click', ()=>{
+  setFormStandaardBereik(pickedStandaardBereik);
+  document.getElementById('standaard-bereik-modal-overlay').style.display = 'none';
+});
 
 function resetSourceForm(){
   editingId = null;
   document.getElementById('meta-form-title').textContent = 'Nieuwe bron';
   ['f-titel','f-bestand','f-eenheid','f-min','f-max','f-doelx','f-doelr','f-decimalen'].forEach(id=>document.getElementById(id).value='');
+  setFormToonHiaten(false);
+  setFormStandaardBereik('1m');
   document.getElementById('btn-delete-source').style.display = 'none';
 }
 document.getElementById('btn-cancel-edit').addEventListener('click', closeSourceModal);
@@ -1062,7 +1157,9 @@ document.getElementById('btn-save-source').addEventListener('click', async ()=>{
     min: numOrNull(document.getElementById('f-min').value),
     max: numOrNull(document.getElementById('f-max').value),
     doel_x: numOrNull(document.getElementById('f-doelx').value),
-    doel_r: numOrNull(document.getElementById('f-doelr').value)
+    doel_r: numOrNull(document.getElementById('f-doelr').value),
+    toon_hiaten: formToonHiaten,
+    standaard_bereik: formStandaardBereik
   };
   const idx = bronnen.findIndex(b=>b.id===id);
   if(idx>=0) bronnen[idx] = src; else bronnen.push(src);
@@ -1229,13 +1326,18 @@ async function ensureDataLoaded(id){
 document.getElementById('data-source-select').addEventListener('change', async ()=>{
   const newId = document.getElementById('data-source-select').value;
   idbSet('lastBron', newId).catch(()=>{});
-  dataPeriodFilter = '1m';
-  document.getElementById('data-period-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.period==='1m'));
+  const newSrc = getSource(newId);
+  dataPeriodFilter = newSrc?.standaard_bereik || '1m';
+  syncPeriodButtonsActive();
   dataAggMode = 'd';
   document.getElementById('data-agg-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.agg==='d'));
   updateDataAggButtonStates();
   chartViewMode = 'standard';
   setDataShowChart(true);
+  dataShowGaps = newSrc?.toon_hiaten === true;
+  const gapsBtn = document.getElementById('btn-toggle-gaps');
+  gapsBtn.classList.toggle('icon-btn-blue', dataShowGaps);
+  gapsBtn.classList.toggle('icon-btn-filled', !dataShowGaps);
   await ensureDataLoaded(document.getElementById('data-source-select').value);
   renderDataView();
 });
@@ -1264,7 +1366,7 @@ document.getElementById('btn-toggle-chart').addEventListener('click', ()=>{
   setDataShowChart(!dataShowChart);
 });
 
-let dataShowGaps = true;
+let dataShowGaps = false;
 let chartViewMode = 'standard'; // 'standard' of 'xmr' — swipe op de kaart wisselt (alleen bij dag-groepering)
 function setDataShowGaps(show){
   dataShowGaps = show;
@@ -1277,9 +1379,9 @@ function setDataShowGaps(show){
 document.getElementById('btn-toggle-gaps').addEventListener('click', ()=>{
   setDataShowGaps(!dataShowGaps);
 });
-setDataShowGaps(true);
+setDataShowGaps(false);
 
-const DATA_PERIOD_DAYS = {'1w':7,'1m':30,'3m':91,'6m':182,'9m':273,'1y':365};
+const DATA_PERIOD_DAYS = {'1w':7,'1m':30,'3m':91,'6m':182,'9m':273,'1y':365,'5y':1826,'all':null};
 function setDataPeriod(period){
   const group = document.getElementById('data-period-filter');
   if(period === 'custom'){
@@ -1295,6 +1397,12 @@ document.getElementById('data-period-filter').querySelectorAll('button').forEach
   btn.addEventListener('click', ()=>setDataPeriod(btn.dataset.period));
 });
 
+function syncPeriodButtonsActive(){
+  document.getElementById('data-period-filter').querySelectorAll('button').forEach(b=>{
+    const match = b.dataset.period===dataPeriodFilter || (dataPeriodFilter==='all' && b.dataset.period==='custom');
+    b.classList.toggle('active', match);
+  });
+}
 const AGG_DAYS = {d:1, w:7, m:30, q:91, y:365};
 function getDataPeriodDaysForFilter(){
   if(dataPeriodFilter==='custom'){
@@ -1494,7 +1602,7 @@ async function renderDataView(){
   }
   await ensureDataLoaded(id);
   if(firstLoad){
-    emptyEl.textContent = 'Geen meetwaarden voor deze bron.';
+    emptyEl.textContent = 'Geen metingen gevonden.';
   }
   const src = getSource(id);
 
@@ -1502,12 +1610,6 @@ async function renderDataView(){
   let keys = Object.keys(data).sort().reverse();
   const keysAsc = keys.slice().reverse();
   let shown = getShownDataKeys(keys);
-  if(shown.length === 0 && keys.length > 0 && dataPeriodFilter !== '1m'){
-    dataPeriodFilter = '1m';
-    document.getElementById('data-period-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.period==='1m'));
-    updateDataAggButtonStates();
-    shown = getShownDataKeys(keys);
-  }
   selectedDataKey = null;
   updateEditSelectedButton();
 
@@ -1636,6 +1738,7 @@ async function renderDataView(){
         <td class="actions-cell">${diffCell}</td></tr>`;
     });
   }
+  if(!rowsHtml.length) emptyEl.textContent = 'Geen metingen gevonden.';
   emptyEl.style.display = rowsHtml.length ? 'none' : 'block';
   setupVirtualTable('data-table-scroll', 'data-table-body', rowsHtml, (tbody)=>{
     tbody.querySelectorAll('tr[data-k]').forEach(tr=>{
@@ -1887,7 +1990,7 @@ document.getElementById('btn-add-datapoint').addEventListener('click', async ()=
   renderDataView();
 });
 
-const PERIOD_DAYS = {'1w':7,'1m':30,'3m':91,'6m':182,'9m':273,'1y':365,'all':null};
+const PERIOD_DAYS = {'1w':7,'1m':30,'3m':91,'6m':182,'9m':273,'1y':365,'5y':1826,'all':null};
 
 const AGG_MAX_GAP_DAYS = {d:1, w:10, m:40, q:100, y:400};
 function getWeekStart(date){
@@ -1961,13 +2064,6 @@ async function renderDataChartPreview(){
 
   const sel = await getChartPointsForSelection(dataPeriodFilter, 'data-range-from', 'data-range-to');
   if(!sel || sel.noDir) return;
-  const hasAnyData = Object.keys(dataCache[id] || {}).length > 0;
-  if(sel.points.length === 0 && hasAnyData && dataPeriodFilter !== '1m'){
-    dataPeriodFilter = '1m';
-    document.getElementById('data-period-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.period==='1m'));
-    updateDataAggButtonStates();
-    return renderDataView(); // periode + tabel + grafiek in één keer opnieuw synchroniseren
-  }
   const {src, rangeEnd} = sel;
   const points = aggregatePoints(sel.points, dataAggMode);
   const chartXMin = points.length
@@ -1976,6 +2072,8 @@ async function renderDataChartPreview(){
   const chartXMax = points.length
     ? new Date(Math.max(rangeEnd.getTime(), points[points.length-1].date.getTime()))
     : rangeEnd;
+
+  const effectiveChartMode = (chartViewMode === 'xmr' && dataAggMode !== 'd') ? 'standard' : chartViewMode;
 
   const n = points.length;
   let mean=null, sigma=null, minVal=null, maxVal=null, sumVal=null;
@@ -1986,10 +2084,15 @@ async function renderDataChartPreview(){
   }
   ({mean, sigma} = computeMeanSigma(points.map(p=>p.value)));
 
-  const totalCount = Object.keys(dataCache[id] || {}).length;
+  const rawTotalCount = Object.keys(dataCache[id] || {}).length;
+  const totalCount = (effectiveChartMode === 'range' && rawTotalCount>0) ? rawTotalCount-1 : rawTotalCount;
+  const allKeysForBounds = Object.keys(dataCache[id] || {}).sort().reverse();
+  const periodBounds = getDataPeriodBounds(allKeysForBounds);
+  const oneDayMsForCount = 24*60*60*1000;
+  const shownCount = Math.max(0, Math.round((periodBounds.rangeEnd - periodBounds.cutoff)/oneDayMsForCount) + 1);
   const dec = src?.decimalen ?? 1;
   if(n===0){
-    window.lastChartStats = {n:0, totalCount, mean:null, sigma:null, rBar:null, rBarBar:null, madVal:null, minVal:null, maxVal:null, sumVal:null, ucl:null, uwl:null, lwl:null, lcl:null, doelWaarde:null, doelBereik:null, doelBoven:null, doelOnder:null, dec, chartMode:'standard'};
+    window.lastChartStats = {n:0, totalCount, shownCount, mean:null, sigma:null, rBar:null, rBarBar:null, madVal:null, minVal:null, maxVal:null, sumVal:null, ucl:null, uwl:null, lwl:null, lcl:null, doelWaarde:null, doelBereik:null, doelBoven:null, doelOnder:null, dec, chartMode:'standard'};
     return;
   }
   let rBar = null;
@@ -2013,7 +2116,23 @@ async function renderDataChartPreview(){
   if(n>=1 && mean!=null){
     madVal = points.reduce((s,p)=>s+Math.abs(p.value-mean),0) / n;
   }
-  const effectiveChartMode = (chartViewMode === 'xmr' && dataAggMode !== 'd') ? 'standard' : chartViewMode;
+  // Statistieken-tab: berekend op de daadwerkelijk getoonde data (bij Range dus de range-reeks zelf, niet de ruwe metingen)
+  let dispPoints = points;
+  if(effectiveChartMode === 'range'){
+    dispPoints = [];
+    for(let i=1;i<points.length;i++) dispPoints.push({value: Math.abs(points[i].value-points[i-1].value)});
+  }
+  const dispN = dispPoints.length;
+  let dispMean=null, dispSigma=null, dispMinVal=null, dispMaxVal=null, dispSumVal=null, dispMadVal=null;
+  if(dispN>=1){
+    dispMinVal = Math.min(...dispPoints.map(p=>p.value));
+    dispMaxVal = Math.max(...dispPoints.map(p=>p.value));
+    dispSumVal = dispPoints.reduce((s,p)=>s+p.value,0);
+  }
+  ({mean: dispMean, sigma: dispSigma} = computeMeanSigma(dispPoints.map(p=>p.value)));
+  if(dispN>=1 && dispMean!=null){
+    dispMadVal = dispPoints.reduce((s,p)=>s+Math.abs(p.value-dispMean),0) / dispN;
+  }
   const useXmr = effectiveChartMode === 'xmr' && rBar!=null && rBar>0;
   const useRange = effectiveChartMode === 'range' && rBar!=null;
   const ucl = useRange ? rBar*3.267 : (useXmr ? mean + 2.66*rBar : ((mean!=null && sigma!=null) ? mean + 3*sigma : null));
@@ -2024,7 +2143,11 @@ async function renderDataChartPreview(){
   const doelBereik = useRange ? null : (src?.doel_r ?? null);
   const doelBoven = (!useRange && src?.doel_x != null && src?.doel_r != null) ? src.doel_x + src.doel_r/2 : null;
   const doelOnder = (!useRange && src?.doel_x != null && src?.doel_r != null) ? src.doel_x - src.doel_r/2 : null;
-  window.lastChartStats = {n, totalCount, mean, sigma, rBar, rBarBar, madVal, minVal, maxVal, sumVal, ucl, uwl, lwl, lcl, doelWaarde, doelBereik, doelBoven, doelOnder, dec, chartMode: effectiveChartMode};
+  window.lastChartStats = {
+    n: dispN, totalCount, shownCount, mean: dispMean, sigma: dispSigma, rBar, rBarBar, madVal: dispMadVal,
+    minVal: dispMinVal, maxVal: dispMaxVal, sumVal: dispSumVal,
+    ucl, uwl, lwl, lcl, doelWaarde, doelBereik, doelBoven, doelOnder, dec, chartMode: effectiveChartMode
+  };
 
   drawChart(ctx, canvas, points, mean, sigma, src, chartXMin, chartXMax, AGG_MAX_GAP_DAYS[dataAggMode], rBar, effectiveChartMode, true, selectedDataKey, rBarBar);
 }
@@ -2033,6 +2156,7 @@ function openChartStatsModal(){
   if(window.chartSwipeJustHappened) return;
   const stats = window.lastChartStats;
   if(!stats) return;
+  document.getElementById('chart-stats-shown-count').textContent = stats.totalCount ? '('+stats.totalCount+')' : '';
   const badgeEl = document.getElementById('chart-stats-badge');
   if(stats.chartMode === 'xmr' || stats.chartMode === 'range'){
     badgeEl.textContent = stats.chartMode === 'xmr' ? 'XmR' : 'Range';
@@ -2046,11 +2170,17 @@ function openChartStatsModal(){
   const rBarSym = '<span style="position:relative;display:inline-block;vertical-align:baseline;">r<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>';
   const rBarBarSym = '<span style="position:relative;display:inline-block;vertical-align:baseline;">r<i style="position:absolute;left:0;right:0;top:1px;border-top:1.5px solid currentColor;font-style:normal;"></i><i style="position:absolute;left:0;right:0;top:-2px;border-top:1.5px solid currentColor;font-style:normal;"></i></span>';
   const madSym = `|x−${xBar}|`;
+  const isRangeStats = stats.chartMode === 'range';
+  const primaryLabel = isRangeStats ? rBarSym : xBar;
+  const secondRowLabel = isRangeStats ? rBarBarSym : `${rBarSym} / ${rBarBarSym}`;
+  const secondRowValue = isRangeStats
+    ? (stats.rBarBar!=null ? fmtVal(stats.rBarBar, stats.dec) : '–')
+    : `${stats.rBar!=null ? fmtVal(stats.rBar, stats.dec) : '–'} / ${stats.rBarBar!=null ? fmtVal(stats.rBarBar, stats.dec) : '–'}`;
   const statsRows = [
-    ['n / N', `${stats.n} / ${stats.totalCount}`, 'var(--text)'],
-    [xBar, stats.mean!=null ? fmtVal(stats.mean, stats.dec) : '–', 'var(--accent)'],
+    ['n', `${stats.n} / ${stats.shownCount}`, 'var(--text)'],
+    [primaryLabel, stats.mean!=null ? `<strong>${fmtVal(stats.mean, stats.dec)}</strong>` : '–', 'var(--accent)'],
     ['σₙ₋₁', (stats.sigma!=null && stats.sigma>0) ? fmtVal(stats.sigma, stats.dec) : '–', 'var(--text)'],
-    [`${rBarSym} / ${rBarBarSym}`, `${stats.rBar!=null ? fmtVal(stats.rBar, stats.dec) : '–'} / ${stats.rBarBar!=null ? fmtVal(stats.rBarBar, stats.dec) : '–'}`, 'var(--text)'],
+    [secondRowLabel, secondRowValue, 'var(--text)'],
     [madSym, stats.madVal!=null ? fmtVal(stats.madVal, stats.dec) : '–', 'var(--text)'],
     ['Σ', stats.sumVal!=null ? fmtVal(stats.sumVal, stats.dec) : '–', 'var(--text)'],
     ['min', stats.minVal!=null ? fmtVal(stats.minVal, stats.dec) : '–', 'var(--text)'],
@@ -2196,8 +2326,10 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
     ctx.beginPath(); ctx.moveTo(x, y-12); ctx.lineTo(x+w, y-12); ctx.stroke();
     return w;
   }
-  ctx.font = '13px ui-monospace, monospace';
-  const statY = 20;
+  const baseFont = '17px ui-monospace, monospace';
+  const valueFont = '700 19px ui-monospace, monospace';
+  ctx.font = baseFont;
+  const statY = 21;
   let sx = cssW/2;
   const isRange = chartMode === 'range';
   const nForHeader = isRange ? Math.max(0, n-1) : n;
@@ -2209,36 +2341,59 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
     // geen x̄ bij de Range-kaart, r̄ is hier de eigenlijke middellijn
     const rBarBarValTxt = rBarBar!=null?fmtVal(rBarBar,dec):'–';
     const rBarBarTxt = `=${rBarBarValTxt}`;
-    const totalW = ctx.measureText(nTxt).width + gap + ctx.measureText('r').width + ctx.measureText(rBarTxt).width + gap + ctx.measureText('r').width + ctx.measureText(rBarBarTxt).width;
+    ctx.font = baseFont;
+    const wN = ctx.measureText(nTxt).width;
+    const wRChar = ctx.measureText('r').width;
+    const wEq = ctx.measureText('=').width;
+    const wRBarBarTxt = ctx.measureText(rBarBarTxt).width;
+    ctx.font = valueFont;
+    const wRVal = ctx.measureText(rBarValTxt).width;
+    const totalW = wN + gap + wRChar + wEq + wRVal + gap + wRChar + wRBarBarTxt;
     sx = (cssW - totalW)/2;
-    ctx.textAlign='left'; ctx.textBaseline='alphabetic'; ctx.fillStyle = '#e7edf0';
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    ctx.font = baseFont;
+    ctx.fillStyle = '#e7edf0';
     ctx.fillText(nTxt, sx, statY);
-    sx += ctx.measureText(nTxt).width + gap;
+    sx += wN + gap;
     sx += drawOverlineChar(sx, statY, 'r', '#e7edf0');
     ctx.fillStyle = '#e7edf0';
     ctx.fillText('=', sx, statY);
-    sx += ctx.measureText('=').width;
+    sx += wEq;
+    ctx.font = valueFont;
     ctx.fillStyle = '#4fd1c5';
     ctx.fillText(rBarValTxt, sx, statY);
-    sx += ctx.measureText(rBarValTxt).width + gap;
+    sx += wRVal + gap;
+    ctx.font = baseFont;
     sx += drawDoubleOverlineChar(sx, statY, 'r', '#e7edf0');
     ctx.fillStyle = '#e7edf0';
     ctx.fillText(rBarBarTxt, sx, statY);
   } else {
     const xBarValTxt = mean!=null?fmtVal(mean,dec):'–';
     const xBarTxt = `=${xBarValTxt}`;
-    const totalW = ctx.measureText(nTxt).width + gap + ctx.measureText('x').width + ctx.measureText(xBarTxt).width + gap + ctx.measureText('r').width + ctx.measureText(rBarTxt).width;
+    ctx.font = baseFont;
+    const wN = ctx.measureText(nTxt).width;
+    const wXChar = ctx.measureText('x').width;
+    const wEq = ctx.measureText('=').width;
+    const wRChar = ctx.measureText('r').width;
+    const wRTxt = ctx.measureText(rBarTxt).width;
+    ctx.font = valueFont;
+    const wXVal = ctx.measureText(xBarValTxt).width;
+    const totalW = wN + gap + wXChar + wEq + wXVal + gap + wRChar + wRTxt;
     sx = (cssW - totalW)/2;
-    ctx.textAlign='left'; ctx.textBaseline='alphabetic'; ctx.fillStyle = '#e7edf0';
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    ctx.font = baseFont;
+    ctx.fillStyle = '#e7edf0';
     ctx.fillText(nTxt, sx, statY);
-    sx += ctx.measureText(nTxt).width + gap;
+    sx += wN + gap;
     sx += drawOverlineChar(sx, statY, 'x', '#e7edf0');
     ctx.fillStyle = '#e7edf0';
     ctx.fillText('=', sx, statY);
-    sx += ctx.measureText('=').width;
+    sx += wEq;
+    ctx.font = valueFont;
     ctx.fillStyle = '#4fd1c5';
     ctx.fillText(xBarValTxt, sx, statY);
-    sx += ctx.measureText(xBarValTxt).width + gap;
+    sx += wXVal + gap;
+    ctx.font = baseFont;
     sx += drawOverlineChar(sx, statY, 'r', '#e7edf0');
     ctx.fillStyle = '#e7edf0';
     ctx.fillText(rBarTxt, sx, statY);
@@ -2388,12 +2543,12 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
       else if(dist > 2*sigma) color = '#f0a84f';
     }
     const isSelected = selectedKey && dateToKey(p.date) === selectedKey;
-    if(isSelected){ selectedPoint = {x,y}; return; } // apart, als laatste, tekenen
+    if(isSelected){ selectedPoint = {x,y,color}; return; } // apart, als laatste, tekenen
     ctx.beginPath(); ctx.arc(x,y,3.4,0,Math.PI*2); ctx.fillStyle = color; ctx.fill();
   });
   if(selectedPoint){
-    const {x,y} = selectedPoint;
-    ctx.beginPath(); ctx.arc(x,y,4.6,0,Math.PI*2); ctx.fillStyle = '#4f8ff0'; ctx.fill();
+    const {x,y,color} = selectedPoint;
+    ctx.beginPath(); ctx.arc(x,y,4.6,0,Math.PI*2); ctx.fillStyle = color; ctx.fill();
     ctx.beginPath();
     ctx.moveTo(x-8, y-17);
     ctx.lineTo(x+8, y-17);
