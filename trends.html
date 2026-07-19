@@ -49,7 +49,7 @@
     outline:2px solid var(--accent);outline-offset:2px;
   }
 
-  main{flex:1 1 auto;min-height:0;overflow-y:auto;max-width:920px;margin:0 auto;padding:0 14px 24px;width:100%;}
+  main{flex:1 1 auto;min-height:0;overflow-y:auto;max-width:920px;margin:0 auto;padding:0 14px 8px;width:100%;}
   .view{display:none;padding-top:10px;}
   .view.active{display:block;}
 
@@ -391,7 +391,7 @@
 
   <!-- DATA VIEW -->
   <section id="view-data" class="view">
-    <div class="data-sticky-toolbar" id="data-sticky-combined" style="padding:0;">
+    <div class="data-sticky-toolbar" style="padding:0;">
       <div style="margin-bottom:2px;">
         <div class="field" style="flex:1;">
           <button type="button" class="picker-btn" id="data-source-picker-btn" style="margin-bottom:0;height:46px;">
@@ -401,15 +401,16 @@
           <select id="data-source-select" style="display:none;"></select>
         </div>
       </div>
+    </div>
 
-      <div style="margin-top:10px;margin-bottom:10px;">
-        <div id="data-chart-preview" style="display:none;">
-          <canvas id="data-chart-canvas" width="880" height="220" style="cursor:pointer;"></canvas>
-        </div>
+    <div style="margin-top:10px;margin-bottom:10px;">
+      <div id="data-chart-preview" style="display:none;">
+        <canvas id="data-chart-canvas" width="880" height="220" style="cursor:pointer;"></canvas>
       </div>
+    </div>
 
-      <div class="panel" id="data-filters-panel" style="margin-top:0;margin-bottom:4px;display:flex;flex-direction:column;gap:10px;">
-        <div style="display:flex;align-items:stretch;gap:8px;">
+    <div class="panel" id="data-filters-panel" style="margin-top:0;margin-bottom:4px;display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;align-items:stretch;gap:8px;">
         <div class="segmented" id="data-agg-filter" style="flex:1;margin-bottom:0;">
           <button data-agg="d" class="active">dag</button>
           <button data-agg="w">week</button>
@@ -429,7 +430,10 @@
           <button data-period="6m">6 m</button>
           <button data-period="9m">9 m</button>
           <button data-period="1y">1 j</button>
-          <button data-period="custom">⋯</button>
+          <button data-period="custom" id="btn-period-custom"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;vertical-align:-3px;">
+            <g id="period-custom-icon-range"><line x1="7" y1="4" x2="7" y2="20"/><line x1="17" y1="4" x2="17" y2="20"/></g>
+            <g id="period-custom-icon-all" style="display:none;"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="17" x2="21" y2="17"/></g>
+          </svg></button>
         </div>
         <button class="icon-btn-sm icon-btn-prominent" id="btn-edit-selected-datapoint" title="Wijzig geselecteerd meetpunt" aria-label="Wijzig geselecteerd meetpunt" style="width:46px;height:34px;display:none;">
           <svg viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
@@ -437,6 +441,9 @@
         <button class="icon-btn-sm icon-btn-prominent" id="btn-open-new-datapoint" title="Meetpunt toevoegen" aria-label="Meetpunt toevoegen" style="width:46px;height:34px;">
           <svg viewBox="0 0 24 24" style="width:20px;height:20px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
+      </div>
+      <div id="hidden-chart-hint-chevron" style="display:none;justify-content:center;">
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;animation:hint-bounce 1.6s ease-in-out infinite;"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
     </div>
 
@@ -460,10 +467,9 @@
       </div>
     </div>
 
-    <div class="panel">
-      <div class="modal-overlay" id="data-range-modal-overlay" style="display:none;">
-        <div class="modal-box" style="max-width:360px;">
-          <h2 class="accent-title" style="margin:0 0 16px;">Periode</h2>
+    <div class="modal-overlay" id="data-range-modal-overlay" style="display:none;">
+      <div class="modal-box" style="max-width:360px;">
+        <h2 class="accent-title" style="margin:0 0 16px;">Periode</h2>
           <div class="grid2">
             <div class="field">
               <label style="display:flex;align-items:center;justify-content:space-between;">
@@ -501,11 +507,6 @@
         </div>
       </div>
 
-      <div id="hidden-chart-hint-chevron" style="display:none;justify-content:center;">
-        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;animation:hint-bounce 1.6s ease-in-out infinite;"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-    </div>
-
     <div class="modal-overlay" id="chart-stats-modal-overlay" style="display:none;">
       <div class="modal-box" style="max-width:340px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 16px;">
@@ -537,7 +538,6 @@
           <tbody id="data-table-body"></tbody>
         </table>
       </div>
-    </div>
 
     <div id="datapoint-modal-overlay" class="modal-overlay" style="display:none;">
       <div class="modal-box" style="max-width:400px;">
@@ -744,10 +744,13 @@ function fmtGroupLabel(date, mode, k){
     const {week, year} = getISOWeek(date);
     return `${year} Wk${week}`;
   }
-  if(mode === 'm') return `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}`;
+  if(mode === 'm') return `${String(date.getUTCMonth()+1).padStart(2,'0')}-${date.getUTCFullYear()}`;
   if(mode === 'q') return `${date.getUTCFullYear()} Q${Math.floor(date.getUTCMonth()/3)+1}`;
   if(mode === 'y') return `${date.getUTCFullYear()}`;
   return formatDateCell(k);
+}
+function fmtGroupLabelTable(date, mode, k){
+  return formatDateCell(k); // tabel toont bij groeperen altijd gewoon de datum
 }
 function formatDateCell(k){
   return fmtDateNL(k);
@@ -1289,6 +1292,19 @@ document.getElementById('btn-save-source').addEventListener('click', async ()=>{
   closeSourceModal();
   renderSourceList();
   renderSourceSelects();
+  if(document.getElementById('data-source-select').value === id){
+    dataPeriodFilter = src.standaard_bereik || '1m';
+    syncPeriodButtonsActive();
+    dataAggMode = src.standaard_groepering || 'd';
+    document.getElementById('data-agg-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.agg===dataAggMode));
+    updateDataAggButtonStates();
+    dataShowGaps = src.toon_hiaten === true;
+    const gapsBtn = document.getElementById('btn-toggle-gaps');
+    gapsBtn.classList.toggle('icon-btn-blue', dataShowGaps);
+    gapsBtn.classList.toggle('icon-btn-filled', !dataShowGaps);
+    setDataShowChart(src.toon_grafiek !== false);
+    renderDataView();
+  }
 });
 
 function showConfirm(message, okLabel){
@@ -1536,6 +1552,7 @@ function setDataPeriod(period){
   }
   dataPeriodFilter = period;
   group.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.period===period));
+  updatePeriodCustomIcon();
   updateDataAggButtonStates();
   renderDataView();
 }
@@ -1543,11 +1560,32 @@ document.getElementById('data-period-filter').querySelectorAll('button').forEach
   btn.addEventListener('click', ()=>setDataPeriod(btn.dataset.period));
 });
 
+function updatePeriodCustomIcon(){
+  const rangeIcon = document.getElementById('period-custom-icon-range');
+  const allIcon = document.getElementById('period-custom-icon-all');
+  if(!rangeIcon) return;
+  let isAll = dataPeriodFilter === 'all';
+  if(!isAll && dataPeriodFilter === 'custom'){
+    const id = document.getElementById('data-source-select').value;
+    const range = id ? getDateRange(id) : null;
+    if(range){
+      const fromIso = document.getElementById('data-range-from').value;
+      const toIso = document.getElementById('data-range-to').value;
+      const fromKey = fromIso ? isoToKey(fromIso) : null;
+      const toKey = toIso ? isoToKey(toIso) : null;
+      const isToOk = toKey === range.last || toKey === dateToKey(todayUTCDate());
+      if(fromKey === range.first && isToOk) isAll = true;
+    }
+  }
+  rangeIcon.style.display = isAll ? 'none' : '';
+  allIcon.style.display = isAll ? '' : 'none';
+}
 function syncPeriodButtonsActive(){
   document.getElementById('data-period-filter').querySelectorAll('button').forEach(b=>{
     const match = b.dataset.period===dataPeriodFilter || (dataPeriodFilter==='all' && b.dataset.period==='custom');
     b.classList.toggle('active', match);
   });
+  updatePeriodCustomIcon();
 }
 const AGG_DAYS = {d:1, w:7, m:30, q:91, y:365};
 function getDataPeriodDaysForFilter(){
@@ -1667,6 +1705,7 @@ document.getElementById('data-range-apply').addEventListener('click', async ()=>
   }
   dataPeriodFilter = 'custom';
   document.getElementById('data-period-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.period==='custom'));
+  updatePeriodCustomIcon();
   closeDataRangeModal();
   updateDataAggButtonStates();
   renderDataView();
@@ -1910,7 +1949,7 @@ async function renderDataView(){
     const currentPeriodEnd = getGroupEnd(aggGroupFn(todayUTCForRow), dataAggMode, todayUTCForRow).getTime();
     rowsHtml = rows.map((p,idx)=>{
       const k = dateToKey(p.date);
-      const dateLabel = fmtGroupLabel(p.date, dataAggMode, k);
+      const dateLabel = fmtGroupLabelTable(p.date, dataAggMode, k);
       const isCurrentPeriod = p.date.getTime() === currentPeriodEnd;
       if(p.value == null){
         return `<tr data-k="${k}"${isCurrentPeriod ? ' class="today-row"' : ''}${idx%2?' style="background:rgba(255,255,255,0.06);"':''}><td>${dateLabel}</td><td class="val">–</td>
@@ -2823,14 +2862,17 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
   });
   if(selectedPoint){
     const {x,y,color} = selectedPoint;
-    ctx.beginPath(); ctx.arc(x,y,4.6,0,Math.PI*2); ctx.fillStyle = color; ctx.fill();
+    ctx.beginPath(); ctx.arc(x,y,3.4,0,Math.PI*2); ctx.fillStyle = color; ctx.fill();
     ctx.beginPath();
     ctx.moveTo(x-8, y-17);
     ctx.lineTo(x+8, y-17);
     ctx.lineTo(x, y-5);
     ctx.closePath();
-    ctx.fillStyle = '#4f8ff0';
+    ctx.fillStyle = '#4fd1c5';
     ctx.fill();
+    ctx.strokeStyle = '#e0b84f';
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
   }
 
   if(swipeEnabled){
@@ -2902,9 +2944,11 @@ function fitTableScrollHeight(id){
   const el = document.getElementById(id);
   if(!el || el.offsetParent === null) return; // niet zichtbaar, niets te doen
   const navEl = document.querySelector('nav.tabs');
+  const mainEl = document.querySelector('main');
   const navH = navEl ? navEl.getBoundingClientRect().height : 0;
+  const mainPadBottom = mainEl ? parseFloat(getComputedStyle(mainEl).paddingBottom) || 0 : 0;
   const tableTop = el.getBoundingClientRect().top;
-  const remaining = window.innerHeight - navH - tableTop - 6; // kleine veiligheidsmarge
+  const remaining = window.innerHeight - navH - tableTop - mainPadBottom - 2; // main's eigen bodem-padding moet ná de tabel nog passen
   el.style.maxHeight = Math.max(160, Math.floor(remaining)) + 'px';
 }
 function fitVisibleTableScrollBoxes(){
