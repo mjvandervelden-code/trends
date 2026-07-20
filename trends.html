@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
@@ -435,11 +435,8 @@
             <g id="period-custom-icon-all" style="display:none;"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="17" x2="21" y2="17"/></g>
           </svg></button>
         </div>
-        <button class="icon-btn-sm icon-btn-prominent" id="btn-edit-selected-datapoint" title="Wijzig geselecteerd meetpunt" aria-label="Wijzig geselecteerd meetpunt" style="width:46px;height:34px;display:none;">
+        <button class="icon-btn-sm icon-btn-prominent" id="btn-edit-selected-datapoint" title="Wijzig geselecteerd meetpunt" aria-label="Wijzig geselecteerd meetpunt" style="width:46px;height:34px;">
           <svg viewBox="0 0 24 24" style="width:20px;height:20px;"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
-        </button>
-        <button class="icon-btn-sm icon-btn-prominent" id="btn-open-new-datapoint" title="Meetpunt toevoegen" aria-label="Meetpunt toevoegen" style="width:46px;height:34px;">
-          <svg viewBox="0 0 24 24" style="width:20px;height:20px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
       </div>
       <div id="hidden-chart-hint-chevron" style="display:none;justify-content:center;">
@@ -473,7 +470,7 @@
           <div class="grid2">
             <div class="field">
               <label style="display:flex;align-items:center;justify-content:space-between;">
-                Van
+                <span>Van <span id="data-range-from-relative" style="display:none;color:var(--accent);text-transform:none;font-weight:600;"></span></span>
                 <span style="display:flex;gap:6px;">
                   <button type="button" class="icon-btn-sm icon-btn-prominent" id="data-range-from-today" title="Vandaag" aria-label="Vandaag" style="width:38px;height:38px;">
                     <svg viewBox="0 0 24 24" style="width:18px;height:18px;"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/><circle cx="12" cy="15" r="1.6" fill="currentColor" stroke="none"/></svg>
@@ -487,7 +484,7 @@
             </div>
             <div class="field">
               <label style="display:flex;align-items:center;justify-content:space-between;">
-                T/M
+                <span>T/M <span id="data-range-to-relative" style="display:none;color:var(--accent);text-transform:none;font-weight:600;"></span></span>
                 <span style="display:flex;gap:6px;">
                   <button type="button" class="icon-btn-sm icon-btn-prominent" id="data-range-today" title="Vandaag" aria-label="Vandaag" style="width:38px;height:38px;">
                     <svg viewBox="0 0 24 24" style="width:18px;height:18px;"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/><circle cx="12" cy="15" r="1.6" fill="currentColor" stroke="none"/></svg>
@@ -543,7 +540,10 @@
       <div class="modal-box" style="max-width:400px;">
         <h2 id="datapoint-modal-title" class="accent-title" style="margin:0 0 16px;">Meetpunt toevoegen</h2>
         <div class="grid2">
-          <div class="field"><label>Datum</label><input type="date" id="f-data-date"></div>
+          <div class="field">
+            <label>Datum <span id="f-data-date-relative" style="display:none;color:var(--accent);text-transform:none;font-weight:600;"></span></label>
+            <div id="f-data-date-display" style="font-family:var(--mono);font-size:21px;color:var(--text);padding:13px 14px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;"></div>
+          </div>
           <div class="field">
             <label style="display:flex;align-items:center;justify-content:space-between;">
               Waarde
@@ -1651,6 +1651,14 @@ function updateRangeButtonStates(){
   const toEl = document.getElementById('data-range-to');
   const firstBtn = document.getElementById('data-range-first');
   const lastBtn = document.getElementById('data-range-last');
+  const fromRelEl = document.getElementById('data-range-from-relative');
+  const toRelEl = document.getElementById('data-range-to-relative');
+  const fromRelLabel = fromEl.value ? getRelativeDateLabel(isoToKey(fromEl.value)) : null;
+  const toRelLabel = toEl.value ? getRelativeDateLabel(isoToKey(toEl.value)) : null;
+  if(fromRelLabel){ fromRelEl.textContent = `(${fromRelLabel})`; fromRelEl.style.display = 'inline'; }
+  else { fromRelEl.style.display = 'none'; }
+  if(toRelLabel){ toRelEl.textContent = `(${toRelLabel})`; toRelEl.style.display = 'inline'; }
+  else { toRelEl.style.display = 'none'; }
   if(!range){ firstBtn.disabled = true; lastBtn.disabled = true; return; }
   firstBtn.disabled = fromEl.value === keyToIsoDate(range.first);
   lastBtn.disabled = toEl.value === keyToIsoDate(range.last);
@@ -1717,6 +1725,7 @@ document.getElementById('data-range-apply').addEventListener('click', async ()=>
     if(warnMsg){
       const proceed = await showWarningConfirm(warnMsg, 'OK');
       if(!proceed) return;
+      if(!dataShowGaps) setDataShowGaps(true);
     }
   }
   dataPeriodFilter = 'custom';
@@ -1777,9 +1786,7 @@ function updateDataControlsEnabled(){
   document.getElementById('data-agg-filter').querySelectorAll('button').forEach(b=>b.disabled = !hasSource);
   document.getElementById('data-period-filter').querySelectorAll('button').forEach(b=>b.disabled = !hasSource);
   if(!hasSource){
-    document.getElementById('btn-edit-selected-datapoint').style.display = 'none';
-    document.getElementById('btn-open-new-datapoint').style.display = 'flex';
-    document.getElementById('btn-open-new-datapoint').disabled = true;
+    document.getElementById('btn-edit-selected-datapoint').disabled = true;
   }
 }
 
@@ -1872,11 +1879,9 @@ async function renderDataView(){
     }
     let allKeysDesc = [];
     if(dataShowGaps){
-      if(keys.length){
-        const bounds = getDataPeriodBounds(keys);
-        for(let d = new Date(bounds.rangeEnd); d >= bounds.cutoff; d.setUTCDate(d.getUTCDate()-1)){
-          allKeysDesc.push(dateToKey(d));
-        }
+      const bounds = getDataPeriodBounds(keys);
+      for(let d = new Date(bounds.rangeEnd); d >= bounds.cutoff; d.setUTCDate(d.getUTCDate()-1)){
+        allKeysDesc.push(dateToKey(d));
       }
     } else {
       allKeysDesc = shown.slice();
@@ -2019,20 +2024,30 @@ document.getElementById('data-table-body').addEventListener('click', (e)=>{
 
 function updateEditSelectedButton(){
   const editBtn = document.getElementById('btn-edit-selected-datapoint');
-  const newBtn = document.getElementById('btn-open-new-datapoint');
-  const showEdit = !!selectedDataKey;
-  editBtn.style.display = showEdit ? 'flex' : 'none';
-  newBtn.style.display = showEdit ? 'none' : 'flex';
-  editBtn.disabled = dataAggMode !== 'd';
-  newBtn.disabled = dataAggMode !== 'd';
+  editBtn.disabled = !selectedDataKey || dataAggMode !== 'd';
 }
 
+let currentDatapointKey = null;
+function getRelativeDateLabel(key){
+  const todayKey = dateToKey(new Date());
+  const yesterdayKey = dateToKey(new Date(Date.now() - 24*60*60*1000));
+  const tomorrowKey = dateToKey(new Date(Date.now() + 24*60*60*1000));
+  if(key === todayKey) return 'Vandaag';
+  if(key === yesterdayKey) return 'Gisteren';
+  if(key === tomorrowKey) return 'Morgen';
+  return null;
+}
 function openEditDatapointModal(id, key){
   const data = dataCache[id] || {};
   const src = getSource(id);
   setExplicitEmpty(false);
   applyValueInputConstraints(src);
-  document.getElementById('f-data-date').value = keyToIsoDate(key);
+  currentDatapointKey = key;
+  document.getElementById('f-data-date-display').textContent = fmtDateNL(key);
+  const relEl = document.getElementById('f-data-date-relative');
+  const relLabel = getRelativeDateLabel(key);
+  if(relLabel){ relEl.textContent = `(${relLabel})`; relEl.style.display = 'inline'; }
+  else { relEl.style.display = 'none'; }
   if(data[key] == null){
     // geselecteerde dag heeft nog geen waarde: open als 'toevoegen' met deze datum al ingevuld
     editingDataKey = null;
@@ -2133,8 +2148,9 @@ function openDatapointModal(){
 function closeDatapointModal(){
   document.getElementById('datapoint-modal-overlay').style.display = 'none';
   editingDataKey = null;
+  currentDatapointKey = null;
   document.getElementById('datapoint-modal-title').textContent = 'Meetpunt toevoegen';
-  document.getElementById('f-data-date').value = '';
+  document.getElementById('f-data-date-relative').style.display = 'none';
   document.getElementById('f-data-value').value = '';
   document.getElementById('btn-delete-datapoint').style.display = 'none';
   setExplicitEmpty(false);
@@ -2151,34 +2167,6 @@ function getDefaultDatapointValue(id, iso){
   return null;
 }
 
-function openNewDatapointModal(){
-  const id = document.getElementById('data-source-select').value;
-  if(!id){ showAlert('Kies eerst een bron.'); return; }
-  if(!dirHandle){ showAlert('Koppel eerst een werkmap (zie tabblad Bronnen).'); return; }
-  editingDataKey = null;
-  setExplicitEmpty(false);
-  document.getElementById('datapoint-modal-title').textContent = 'Meetpunt toevoegen';
-  const iso = keyToIsoDate(dateToKey(new Date()));
-  document.getElementById('f-data-date').value = iso;
-  const src = getSource(id);
-  applyValueInputConstraints(src);
-  const def = getDefaultDatapointValue(id, iso);
-  document.getElementById('f-data-value').value = def!=null ? fmtVal(def, src?.decimalen) : '';
-  document.getElementById('btn-delete-datapoint').style.display = 'none';
-  document.getElementById('btn-no-measurement').style.display = 'flex';
-  openDatapointModal();
-}
-document.getElementById('btn-open-new-datapoint').addEventListener('click', openNewDatapointModal);
-document.getElementById('f-data-date').addEventListener('change', ()=>{
-  if(editingDataKey) return; // alleen standaardwaarde toepassen bij een nieuw meetpunt
-  setExplicitEmpty(false);
-  const id = document.getElementById('data-source-select').value;
-  const iso = document.getElementById('f-data-date').value;
-  if(!id || !iso) return;
-  const def = getDefaultDatapointValue(id, iso);
-  const src = getSource(id);
-  document.getElementById('f-data-value').value = def!=null ? fmtVal(def, src?.decimalen) : '';
-});
 document.getElementById('btn-cancel-datapoint').addEventListener('click', closeDatapointModal);
 document.getElementById('datapoint-modal-overlay').addEventListener('click', (e)=>{
   if(e.target.id === 'datapoint-modal-overlay') closeDatapointModal();
@@ -2198,9 +2186,8 @@ document.getElementById('btn-add-datapoint').addEventListener('click', async ()=
   const id = document.getElementById('data-source-select').value;
   if(!id){ showAlert('Kies eerst een bron.'); return; }
   if(!dirHandle){ showAlert('Koppel eerst een werkmap (zie tabblad Bronnen).'); return; }
-  const iso = document.getElementById('f-data-date').value;
-  if(!iso){ showAlert('Vul een datum in.'); return; }
-  const newKey = isoToKey(iso);
+  const newKey = currentDatapointKey;
+  if(!newKey){ showAlert('Geen datum geselecteerd.'); return; }
   dataCache[id] = dataCache[id] || {};
 
   if(isExplicitEmpty){
