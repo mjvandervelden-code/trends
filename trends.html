@@ -1399,7 +1399,7 @@ function renderSourceSelects(){
 function updateSourcePickerLabel(){
   const sel = document.getElementById('data-source-select');
   const src = getSource(sel.value);
-  document.getElementById('data-source-picker-label').textContent = src ? src.titel : 'Kies een bron';
+  document.getElementById('data-source-picker-label').textContent = src ? `${src.titel}${src.eenheid ? ' ('+src.eenheid+')' : ''}` : 'Kies een bron';
 }
 
 let pickedSourceId = null;
@@ -1814,7 +1814,7 @@ function getDataPeriodBounds(keys){
 }
 
 let __tableWidthCanvas = null;
-function updateTableColumnWidths(rowsHtmlArr, unitText){
+function updateTableColumnWidths(rowsHtmlArr){
   if(!__tableWidthCanvas) __tableWidthCanvas = document.createElement('canvas');
   const ctx = __tableWidthCanvas.getContext('2d');
   const monoFont = 'ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace';
@@ -1835,19 +1835,18 @@ function updateTableColumnWidths(rowsHtmlArr, unitText){
     rowsData.push({dateText, valText, actText, hasIcon});
   });
   const pad = 16;
-  function measureAll(dateFn, valFn){
-    let c1=0, c2=0;
-    rowsData.forEach(r=>{
-      c1 = Math.max(c1, ...dateFn(r.dateText).map(t=>ctx.measureText(t).width));
-      c2 = Math.max(c2, ctx.measureText(valFn(r.valText)).width);
-    });
-    return {c1, c2};
+  function measureDates(dateFn){
+    let c1=0;
+    rowsData.forEach(r=>{ c1 = Math.max(c1, ...dateFn(r.dateText).map(t=>ctx.measureText(t).width)); });
+    return c1;
   }
   const fullDate = t => [t];
-  const yyDate = t => { const m = t.match(/^(\d{2}-\d{2}-)\d{2}(\d{2})$/); return [m ? m[1]+m[2] : t]; };
+  const yyDate = t => { const m = t.match(/^(\d{2}-\d{2}-)\d{2}(\d{2})$/); return [m ? m[1]+"'"+m[2] : t]; };
   const wrapDate = t => { const m = t.match(/^(\d{2}-\d{2})-(\d{4})$/); return m ? [m[1], m[2]] : [t]; };
-  const withUnit = t => t;
-  const withoutUnit = t => unitText ? t.replace(new RegExp(' '+unitText.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$'), '') : t;
+
+  let maxCol2 = 0;
+  rowsData.forEach(r=>{ maxCol2 = Math.max(maxCol2, ctx.measureText(r.valText).width); });
+  maxCol2 = Math.max(maxCol2, ctx.measureText('nvt').width);
 
   let maxCol3 = 0;
   rowsData.forEach(r=>{ maxCol3 = Math.max(maxCol3, ctx.measureText(r.actText).width + (r.hasIcon ? ICON_ALLOWANCE : 0)); });
@@ -1856,42 +1855,30 @@ function updateTableColumnWidths(rowsHtmlArr, unitText){
   const scrollEl = document.getElementById('data-table-scroll');
   const availWidth = Math.max(200, (scrollEl?.clientWidth || 340) - 8);
 
-  let stage = 0; // 0=vol, 1=jaar->'yy, 2=datum wrapt, 3=geen eenheid, 4=geen verschil
-  let m = measureAll(fullDate, withUnit);
-  let maxCol1 = Math.max(m.c1, ctx.measureText('88-88-8888').width);
-  let maxCol2 = Math.max(m.c2, ctx.measureText('nvt').width);
+  let stage = 0; // 0=vol, 1=jaar->'jj, 2=datum wrapt (jjjj), 3=geen verschil
+  let maxCol1 = Math.max(measureDates(fullDate), ctx.measureText('88-88-8888').width);
   function fits(c1,c2,c3){ return (c1+pad)+(c2+pad)+(c3+pad) <= availWidth; }
 
   if(!fits(maxCol1, maxCol2, maxCol3)){
     stage = 1;
-    m = measureAll(yyDate, withUnit);
-    maxCol1 = Math.max(m.c1, ctx.measureText('88-88-88').width);
+    maxCol1 = Math.max(measureDates(yyDate), ctx.measureText("88-88-'88").width);
   }
   if(stage===1 && !fits(maxCol1, maxCol2, maxCol3)){
     stage = 2;
-    m = measureAll(wrapDate, withUnit);
-    maxCol1 = Math.max(m.c1, ctx.measureText('8888').width);
+    maxCol1 = Math.max(measureDates(wrapDate), ctx.measureText('8888').width);
   }
   if(stage===2 && !fits(maxCol1, maxCol2, maxCol3)){
     stage = 3;
-    m = measureAll(wrapDate, withoutUnit);
-    maxCol2 = Math.max(m.c2, ctx.measureText('nvt').width);
-  }
-  if(stage===3 && !fits(maxCol1, maxCol2, maxCol3)){
-    stage = 4;
     maxCol3 = 0;
   }
 
   // de gekozen terugvalstand daadwerkelijk in de rij-HTML doorvoeren
-  if(stage>=1 && stage<2){
-    rowsHtmlArr = rowsHtmlArr.map(h => h.replace(/<td>(\d{2}-\d{2}-)\d{2}(\d{2})<\/td>/, '<td>$1$2</td>'));
+  if(stage===1){
+    rowsHtmlArr = rowsHtmlArr.map(h => h.replace(/<td>(\d{2}-\d{2}-)\d{2}(\d{2})<\/td>/, "<td>$1'$2</td>"));
   } else if(stage>=2){
     rowsHtmlArr = rowsHtmlArr.map(h => h.replace(/<td>(\d{2}-\d{2})-(\d{4})<\/td>/, '<td>$1<br>$2</td>'));
   }
-  if(stage>=3 && unitText){
-    rowsHtmlArr = rowsHtmlArr.map(h => h.split(' '+unitText+'</td>').join('</td>'));
-  }
-  if(stage>=4){
+  if(stage>=3){
     rowsHtmlArr = rowsHtmlArr.map(h => h.replace(/<td class="actions-cell">.*?<\/td>/s, '<td class="actions-cell"></td>'));
   }
 
@@ -2020,7 +2007,7 @@ async function renderDataView(){
       if(isRangeMode){
         const rv = rangeValMap.get(k);
         const rvStyle = (rv!=null && diffMagColor(rv)) ? ` style="color:${diffMagColor(rv)};"` : '';
-        const rvTxt = rv!=null ? `${fmtVal(rv, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}` : (isTrulyFirstRow ? structDash : '–');
+        const rvTxt = rv!=null ? fmtVal(rv, src?.decimalen) : (isTrulyFirstRow ? structDash : '–');
         const delta = rangeDeltaMap.get(k);
         let deltaCell = isTrulyFirstRow ? structDash : '–';
         if(delta!=null){
@@ -2048,10 +2035,10 @@ async function renderDataView(){
           diffCell = '–';
         }
       }
-      return `<tr data-k="${k}"${rowClassAttr}${rowStyle}><td>${formatDateCell(k)}</td><td class="val" style="color:${valColor(data[k])};">${fmtVal(data[k], src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
+      return `<tr data-k="${k}"${rowClassAttr}${rowStyle}><td>${formatDateCell(k)}</td><td class="val" style="color:${valColor(data[k])};">${fmtVal(data[k], src?.decimalen)}</td>
         <td class="actions-cell">${diffCell}</td></tr>`;
     });
-    rowsHtml = updateTableColumnWidths(rowsHtml, src?.eenheid || '');
+    rowsHtml = updateTableColumnWidths(rowsHtml);
     rowsHtml = collapseGapRuns(allKeysDesc, rowsHtml, k => data[k] != null, 'dagen');
   } else {
     const pointsAsc = shown.slice().reverse().map(k=>({date: keyToDate(k), value: data[k]}));
@@ -2114,7 +2101,7 @@ async function renderDataView(){
       if(isRangeModeAgg){
         const rv = aggRangeValMap.get(k);
         const rvStyle = (rv!=null && aggDiffMagColor(rv)) ? ` style="color:${aggDiffMagColor(rv)};"` : '';
-        const rvTxt = rv!=null ? `${fmtVal(rv, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}` : (isTrulyFirstAggRow ? structDashAgg : '–');
+        const rvTxt = rv!=null ? fmtVal(rv, src?.decimalen) : (isTrulyFirstAggRow ? structDashAgg : '–');
         const delta = aggRangeDeltaMap.get(k);
         let deltaCell = isTrulyFirstAggRow ? structDashAgg : '–';
         if(delta!=null){
@@ -2141,12 +2128,12 @@ async function renderDataView(){
           diffCell = '–';
         }
       }
-      return `<tr data-k="${k}"${rowClassAttr}><td>${dateLabel}</td><td class="val" style="color:${aggValColor(p.value)};">${fmtVal(p.value, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
+      return `<tr data-k="${k}"${rowClassAttr}><td>${dateLabel}</td><td class="val" style="color:${aggValColor(p.value)};">${fmtVal(p.value, src?.decimalen)}</td>
         <td class="actions-cell">${diffCell}</td></tr>`;
     });
     const aggUnitLabel = {w:'weken', m:'maanden', q:'kwartalen', y:'jaren'}[dataAggMode] || 'periodes';
     const aggValueByKey = new Map(rows.map(p=>[dateToKey(p.date), p.value]));
-    rowsHtml = updateTableColumnWidths(rowsHtml, src?.eenheid || '');
+    rowsHtml = updateTableColumnWidths(rowsHtml);
     rowsHtml = collapseGapRuns(rows.map(p=>dateToKey(p.date)), rowsHtml, k => aggValueByKey.get(k) != null, aggUnitLabel);
   }
   if(!rowsHtml.length) emptyEl.textContent = 'Geen metingen gevonden.';
