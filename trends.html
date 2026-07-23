@@ -63,6 +63,7 @@
     background:#0f1417;
   }
   .panel h2{margin:0 0 12px;font-size:24px;letter-spacing:.02em;color:var(--text);}
+  tr:nth-child(even) td{background:rgba(255,255,255,0.06);}
   tr.gap-summary-row td{background:rgba(255,255,255,0.03);font-style:italic;}
   tr.gap-summary-row:active td{background:rgba(79,209,197,0.12);}
   tr.gap-collapse-row td{background:rgba(255,255,255,0.03);font-style:italic;}
@@ -136,6 +137,7 @@
   .toolbar .field{flex:1;min-width:160px;}
 
   table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:20px;}
+  #data-table-scroll table{table-layout:fixed;}
   th{text-align:left;color:var(--muted);font-weight:600;font-size:16px;text-transform:uppercase;
      letter-spacing:.04em;padding:6px 8px;border-bottom:1px solid var(--line);}
   td{padding:6px 8px;border-bottom:1px solid #1d2529;}
@@ -144,6 +146,8 @@
   tr.today-row td:first-child{box-shadow:inset 3px 0 0 var(--accent);}
   tr[aria-hidden] td{border:none;pointer-events:none;}
   td.val{text-align:right;}
+  #data-table-scroll td{overflow:hidden;text-overflow:ellipsis;}
+  #data-table-scroll td:nth-child(2), #data-table-scroll td:nth-child(3){white-space:nowrap;}
   td.actions-cell{text-align:right;white-space:nowrap;}
   td.actions-cell button{
     background:none;border:none;color:var(--muted);cursor:pointer;padding:6px 8px;
@@ -535,6 +539,9 @@
       <div class="empty" id="data-empty" style="display:none;padding:6px 0 12px;"></div>
       <div id="data-table-scroll" style="overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;margin-top:10px;">
         <table>
+          <colgroup>
+            <col id="data-table-col-1"><col id="data-table-col-2"><col id="data-table-col-3">
+          </colgroup>
 
           <tbody id="data-table-body"></tbody>
         </table>
@@ -1805,6 +1812,96 @@ function getDataPeriodBounds(keys){
   return {cutoff, rangeEnd};
 }
 
+let __tableWidthCanvas = null;
+function updateTableColumnWidths(rowsHtmlArr, unitText){
+  if(!__tableWidthCanvas) __tableWidthCanvas = document.createElement('canvas');
+  const ctx = __tableWidthCanvas.getContext('2d');
+  const monoFont = 'ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace';
+  ctx.font = '20px ' + monoFont;
+  const ICON_ALLOWANCE = 22; // ruimte voor het pijltje-icoon vóór de verschil-tekst
+  const rowsData = [];
+  rowsHtmlArr.forEach(html=>{
+    const valMatch = html.match(/<td class="val"[^>]*>(.*?)<\/td>/s);
+    if(!valMatch) return; // samenvouw-rij o.i.d., niet relevant
+    const valText = valMatch[1].replace(/<[^>]+>/g,'').trim();
+    if(valText === '–' || valText === '') return; // 'geen meting', telt niet mee
+    const dateMatch = html.match(/<td>(.*?)<\/td>/s);
+    const dateText = dateMatch ? dateMatch[1].replace(/<[^>]+>/g,'').trim() : '';
+    const actMatch = html.match(/<td class="actions-cell">(.*?)<\/td>/s);
+    const actHtml = actMatch ? actMatch[1] : '';
+    const actText = actHtml.replace(/<[^>]+>/g,'').trim();
+    const hasIcon = /<svg/.test(actHtml);
+    rowsData.push({dateText, valText, actText, hasIcon});
+  });
+  const pad = 16;
+  function measureAll(dateFn, valFn){
+    let c1=0, c2=0;
+    rowsData.forEach(r=>{
+      c1 = Math.max(c1, ...dateFn(r.dateText).map(t=>ctx.measureText(t).width));
+      c2 = Math.max(c2, ctx.measureText(valFn(r.valText)).width);
+    });
+    return {c1, c2};
+  }
+  const fullDate = t => [t];
+  const yyDate = t => { const m = t.match(/^(\d{2}-\d{2}-)\d{2}(\d{2})$/); return [m ? m[1]+m[2] : t]; };
+  const wrapDate = t => { const m = t.match(/^(\d{2}-\d{2})-(\d{4})$/); return m ? [m[1], m[2]] : [t]; };
+  const withUnit = t => t;
+  const withoutUnit = t => unitText ? t.replace(new RegExp(' '+unitText.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$'), '') : t;
+
+  let maxCol3 = 0;
+  rowsData.forEach(r=>{ maxCol3 = Math.max(maxCol3, ctx.measureText(r.actText).width + (r.hasIcon ? ICON_ALLOWANCE : 0)); });
+  maxCol3 = Math.max(maxCol3, ctx.measureText('nvt').width);
+
+  const scrollEl = document.getElementById('data-table-scroll');
+  const availWidth = Math.max(200, (scrollEl?.clientWidth || 340) - 8);
+
+  let stage = 0; // 0=vol, 1=jaar->'yy, 2=datum wrapt, 3=geen eenheid, 4=geen verschil
+  let m = measureAll(fullDate, withUnit);
+  let maxCol1 = Math.max(m.c1, ctx.measureText('88-88-8888').width);
+  let maxCol2 = Math.max(m.c2, ctx.measureText('nvt').width);
+  function fits(c1,c2,c3){ return (c1+pad)+(c2+pad)+(c3+pad) <= availWidth; }
+
+  if(!fits(maxCol1, maxCol2, maxCol3)){
+    stage = 1;
+    m = measureAll(yyDate, withUnit);
+    maxCol1 = Math.max(m.c1, ctx.measureText('88-88-88').width);
+  }
+  if(stage===1 && !fits(maxCol1, maxCol2, maxCol3)){
+    stage = 2;
+    m = measureAll(wrapDate, withUnit);
+    maxCol1 = Math.max(m.c1, ctx.measureText('8888').width);
+  }
+  if(stage===2 && !fits(maxCol1, maxCol2, maxCol3)){
+    stage = 3;
+    m = measureAll(wrapDate, withoutUnit);
+    maxCol2 = Math.max(m.c2, ctx.measureText('nvt').width);
+  }
+  if(stage===3 && !fits(maxCol1, maxCol2, maxCol3)){
+    stage = 4;
+    maxCol3 = 0;
+  }
+
+  // de gekozen terugvalstand daadwerkelijk in de rij-HTML doorvoeren
+  if(stage>=1 && stage<2){
+    rowsHtmlArr = rowsHtmlArr.map(h => h.replace(/<td>(\d{2}-\d{2}-)\d{2}(\d{2})<\/td>/, '<td>$1$2</td>'));
+  } else if(stage>=2){
+    rowsHtmlArr = rowsHtmlArr.map(h => h.replace(/<td>(\d{2}-\d{2})-(\d{4})<\/td>/, '<td>$1<br>$2</td>'));
+  }
+  if(stage>=3 && unitText){
+    rowsHtmlArr = rowsHtmlArr.map(h => h.split(' '+unitText+'</td>').join('</td>'));
+  }
+  if(stage>=4){
+    rowsHtmlArr = rowsHtmlArr.map(h => h.replace(/<td class="actions-cell">.*?<\/td>/s, '<td class="actions-cell"></td>'));
+  }
+
+  const total = maxCol1+pad + maxCol2+pad + maxCol3+pad;
+  const pct1 = (maxCol1+pad)/total*100, pct2 = (maxCol2+pad)/total*100, pct3 = (maxCol3+pad)/total*100;
+  const col1 = document.getElementById('data-table-col-1');
+  const col2 = document.getElementById('data-table-col-2');
+  const col3 = document.getElementById('data-table-col-3');
+  if(col1){ col1.style.width = pct1+'%'; col2.style.width = pct2+'%'; col3.style.width = pct3+'%'; }
+  return rowsHtmlArr;
+}
 function collapseGapRuns(keysDesc, htmlArr, hasValueFn, unitLabel){
   const result = [];
   let i = 0;
@@ -1905,17 +2002,18 @@ async function renderDataView(){
         allKeysDesc.push(dateToKey(d));
       }
     }
-    const structDash = '<span style="opacity:.35;">–</span>';
+    const structDash = '<span style="color:var(--text);">nvt</span>';
     rowsHtml = allKeysDesc.map((k,rowIdx)=>{
       const rowClasses = [];
       if(k===dateToKey(new Date())) rowClasses.push('today-row');
       const hasVal = data[k] != null;
       if(k===selectedDataKey) rowClasses.push('selected');
       const rowClassAttr = rowClasses.length ? ` class="${rowClasses.join(' ')}"` : '';
-      const rowStyle = rowIdx%2 ? ' style="background:rgba(255,255,255,0.06);"' : '';
-      const isTrulyFirstRow = rowIdx === allKeysDesc.length-1; // oudste rij in de hele getoonde tabel, inclusief geen-meting-rijen
+      const rowStyle = '';
+      const isTrulyFirstRow = rowIdx === allKeysDesc.length-1; // allerlaatste (oudste) rij van de hele getoonde tabel
       if(!hasVal){
-        return `<tr data-k="${k}"${rowClassAttr}${rowStyle}><td>${formatDateCell(k)}</td><td class="val">–</td>
+        const valCell = (isTrulyFirstRow && isRangeMode) ? structDash : '–';
+        return `<tr data-k="${k}"${rowClassAttr}${rowStyle}><td>${formatDateCell(k)}</td><td class="val">${valCell}</td>
         <td class="actions-cell">${isTrulyFirstRow ? structDash : '–'}</td></tr>`;
       }
       if(isRangeMode){
@@ -1952,33 +2050,14 @@ async function renderDataView(){
       return `<tr data-k="${k}"${rowClassAttr}${rowStyle}><td>${formatDateCell(k)}</td><td class="val" style="color:${valColor(data[k])};">${fmtVal(data[k], src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
         <td class="actions-cell">${diffCell}</td></tr>`;
     });
+    rowsHtml = updateTableColumnWidths(rowsHtml, src?.eenheid || '');
     rowsHtml = collapseGapRuns(allKeysDesc, rowsHtml, k => data[k] != null, 'dagen');
   } else {
     const pointsAsc = shown.slice().reverse().map(k=>({date: keyToDate(k), value: data[k]}));
     let aggPoints = aggregatePoints(pointsAsc, dataAggMode);
     {
       const bounds = getDataPeriodBounds(keys);
-      const groupFn = dataAggMode==='w' ? getWeekStart : dataAggMode==='m' ? getMonthStart : dataAggMode==='q' ? getQuarterStart : getYearStart;
-      function nextGroupStart(d){
-        const nd = new Date(d);
-        if(dataAggMode==='w') nd.setUTCDate(nd.getUTCDate()+7);
-        else if(dataAggMode==='m') nd.setUTCMonth(nd.getUTCMonth()+1);
-        else if(dataAggMode==='q') nd.setUTCMonth(nd.getUTCMonth()+3);
-        else nd.setUTCFullYear(nd.getUTCFullYear()+1);
-        return nd;
-      }
-      const byTime = new Map(aggPoints.map(p=>[p.date.getTime(), p]));
-      const filled = [];
-      let cursor = groupFn(bounds.cutoff);
-      const todayCap = todayUTCDate();
-      const lastStart = groupFn(bounds.rangeEnd > todayCap ? todayCap : bounds.rangeEnd);
-      while(cursor <= lastStart){
-        const endDate = getGroupEnd(cursor, dataAggMode, todayCap);
-        const t = endDate.getTime();
-        filled.push(byTime.has(t) ? byTime.get(t) : {date: endDate, value: null});
-        cursor = nextGroupStart(cursor);
-      }
-      aggPoints = filled;
+      aggPoints = fillAggregationGaps(aggPoints, dataAggMode, bounds.cutoff, bounds.rangeEnd);
     }
     const rows = aggPoints.slice().reverse();
     const {mean: aggMean, sigma: aggSigma} = computeMeanSigma(aggPoints.filter(p=>p.value!=null).map(p=>p.value));
@@ -1989,15 +2068,65 @@ async function renderDataView(){
     const todayForRow = new Date();
     const todayUTCForRow = new Date(Date.UTC(todayForRow.getFullYear(), todayForRow.getMonth(), todayForRow.getDate()));
     const currentPeriodEnd = getGroupEnd(aggGroupFn(todayUTCForRow), dataAggMode, todayUTCForRow).getTime();
+    // Range-modus (verschil tussen opeenvolgende groepen), consistent met de grafiek — ook bij groeperen beschikbaar.
+    const isRangeModeAgg = chartViewMode === 'range';
+    const aggRealAsc = aggPoints.filter(p=>p.value!=null).slice(); // aggPoints is al chronologisch oplopend
+    const aggRangeValMap = new Map();
+    const aggRangeKeysAsc = [];
+    if(isRangeModeAgg){
+      aggRealAsc.forEach((p,i)=>{
+        if(i>0){
+          const k = dateToKey(p.date);
+          aggRangeValMap.set(k, Math.abs(p.value - aggRealAsc[i-1].value));
+          aggRangeKeysAsc.push(k);
+        }
+      });
+    }
+    const aggRangeDeltaMap = new Map();
+    if(isRangeModeAgg){
+      aggRangeKeysAsc.forEach((k,i)=>{
+        if(i>0){
+          aggRangeDeltaMap.set(k, aggRangeValMap.get(k) - aggRangeValMap.get(aggRangeKeysAsc[i-1]));
+        }
+      });
+    }
+    const aggRBar = computeRBar(aggRealAsc.map(p=>p.value));
+    function aggDiffMagColor(absDiff){
+      if(!isRangeModeAgg || aggRBar==null || aggRBar<=0) return null;
+      return absDiff > 3.267*aggRBar ? 'var(--danger)' : null;
+    }
     rowsHtml = rows.map((p,idx)=>{
       const k = dateToKey(p.date);
       const dateLabel = fmtGroupLabelTable(p.date, dataAggMode, k);
       const isCurrentPeriod = p.date.getTime() === currentPeriodEnd;
-      const isTrulyFirstAggRow = idx === rows.length-1; // oudste rij in de hele getoonde (geaggregeerde) tabel
-      const structDashAgg = '<span style="opacity:.35;">–</span>';
+      const isTrulyFirstAggRow = idx === rows.length-1; // allerlaatste (oudste) rij van de hele getoonde (geaggregeerde) tabel
+      const structDashAgg = '<span style="color:var(--text);">nvt</span>';
       if(p.value == null){
-        return `<tr data-k="${k}"${isCurrentPeriod ? ' class="today-row"' : ''}${idx%2?' style="background:rgba(255,255,255,0.06);"':''}><td>${dateLabel}</td><td class="val">–</td>
+        const valCellAgg = (isTrulyFirstAggRow && isRangeModeAgg) ? structDashAgg : '–';
+        return `<tr data-k="${k}"${isCurrentPeriod ? ' class="today-row"' : ''}><td>${dateLabel}</td><td class="val">${valCellAgg}</td>
         <td class="actions-cell">${isTrulyFirstAggRow ? structDashAgg : '–'}</td></tr>`;
+      }
+      const rowClasses = [];
+      if(isCurrentPeriod) rowClasses.push('today-row');
+      if(k===selectedDataKey) rowClasses.push('selected');
+      const rowClassAttr = rowClasses.length ? ` class="${rowClasses.join(' ')}"` : '';
+      if(isRangeModeAgg){
+        const rv = aggRangeValMap.get(k);
+        const rvStyle = (rv!=null && aggDiffMagColor(rv)) ? ` style="color:${aggDiffMagColor(rv)};"` : '';
+        const rvTxt = rv!=null ? `${fmtVal(rv, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}` : (isTrulyFirstAggRow ? structDashAgg : '–');
+        const delta = aggRangeDeltaMap.get(k);
+        let deltaCell = isTrulyFirstAggRow ? structDashAgg : '–';
+        if(delta!=null){
+          if(delta > 0){
+            deltaCell = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--danger);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:3px;"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>${fmtVal(Math.abs(delta), src?.decimalen)}`;
+          } else if(delta < 0){
+            deltaCell = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--good);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:3px;"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="6 13 12 19 18 13"/></svg>${fmtVal(Math.abs(delta), src?.decimalen)}`;
+          } else {
+            deltaCell = '–';
+          }
+        }
+        return `<tr data-k="${k}"${rowClassAttr}><td>${dateLabel}</td><td class="val"${rvStyle}>${rvTxt}</td>
+        <td class="actions-cell">${deltaCell}</td></tr>`;
       }
       const prev = rows.slice(idx+1).find(r=>r.value!=null);
       let diffCell = isTrulyFirstAggRow ? structDashAgg : '–';
@@ -2011,15 +2140,12 @@ async function renderDataView(){
           diffCell = '–';
         }
       }
-      const rowClasses = [];
-      if(isCurrentPeriod) rowClasses.push('today-row');
-      if(k===selectedDataKey) rowClasses.push('selected');
-      const rowClassAttr = rowClasses.length ? ` class="${rowClasses.join(' ')}"` : '';
-      return `<tr data-k="${k}"${rowClassAttr}${idx%2?' style="background:rgba(255,255,255,0.06);"':''}><td>${dateLabel}</td><td class="val" style="color:${aggValColor(p.value)};">${fmtVal(p.value, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
+      return `<tr data-k="${k}"${rowClassAttr}><td>${dateLabel}</td><td class="val" style="color:${aggValColor(p.value)};">${fmtVal(p.value, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
         <td class="actions-cell">${diffCell}</td></tr>`;
     });
     const aggUnitLabel = {w:'weken', m:'maanden', q:'kwartalen', y:'jaren'}[dataAggMode] || 'periodes';
     const aggValueByKey = new Map(rows.map(p=>[dateToKey(p.date), p.value]));
+    rowsHtml = updateTableColumnWidths(rowsHtml, src?.eenheid || '');
     rowsHtml = collapseGapRuns(rows.map(p=>dateToKey(p.date)), rowsHtml, k => aggValueByKey.get(k) != null, aggUnitLabel);
   }
   if(!rowsHtml.length) emptyEl.textContent = 'Geen metingen gevonden.';
@@ -2069,7 +2195,7 @@ document.getElementById('data-table-body').addEventListener('click', (e)=>{
 
 function updateEditSelectedButton(){
   const editBtn = document.getElementById('btn-edit-selected-datapoint');
-  editBtn.disabled = !selectedDataKey || dataAggMode !== 'd';
+  editBtn.disabled = !selectedDataKey || dataAggMode !== 'd' || chartViewMode === 'range';
 }
 
 let currentDatapointKey = null;
@@ -2299,6 +2425,29 @@ function todayUTCDate(){
   const t = new Date();
   return new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()));
 }
+function fillAggregationGaps(aggPoints, mode, cutoff, rangeEnd){
+  const groupFn = mode==='w' ? getWeekStart : mode==='m' ? getMonthStart : mode==='q' ? getQuarterStart : getYearStart;
+  function nextGroupStart(d){
+    const nd = new Date(d);
+    if(mode==='w') nd.setUTCDate(nd.getUTCDate()+7);
+    else if(mode==='m') nd.setUTCMonth(nd.getUTCMonth()+1);
+    else if(mode==='q') nd.setUTCMonth(nd.getUTCMonth()+3);
+    else nd.setUTCFullYear(nd.getUTCFullYear()+1);
+    return nd;
+  }
+  const byTime = new Map(aggPoints.map(p=>[p.date.getTime(), p]));
+  const filled = [];
+  let cursor = groupFn(cutoff);
+  const todayCap = todayUTCDate();
+  const lastStart = groupFn(rangeEnd > todayCap ? todayCap : rangeEnd);
+  while(cursor <= lastStart){
+    const endDate = getGroupEnd(cursor, mode, todayCap);
+    const t = endDate.getTime();
+    filled.push(byTime.has(t) ? byTime.get(t) : {date: endDate, value: null});
+    cursor = nextGroupStart(cursor);
+  }
+  return filled;
+}
 function aggregatePoints(points, mode){
   if(mode==='d' || !points.length) return points;
   const groupFn = mode==='w' ? getWeekStart : mode==='m' ? getMonthStart : mode==='q' ? getQuarterStart : getYearStart;
@@ -2377,6 +2526,11 @@ async function renderDataChartPreview(){
   const chartXMax = points.length
     ? new Date(Math.max(rangeEnd.getTime(), points[points.length-1].date.getTime()))
     : rangeEnd;
+  // Volledige, met-gaten-gevulde tijdlijn — alleen gebruikt om de x-positie van de échte punten
+  // correct te bepalen (zodat lege periodes ruimte innemen); statistieken blijven op 'points' zelf gebaseerd.
+  const fullGroupSlots = (dataAggMode !== 'd' && points.length)
+    ? fillAggregationGaps(points, dataAggMode, chartXMin, chartXMax)
+    : points;
 
   const effectiveChartMode = (chartViewMode === 'xmr' && dataAggMode !== 'd') ? 'standard' : chartViewMode;
 
@@ -2464,7 +2618,7 @@ async function renderDataChartPreview(){
     ucl, uwl, lwl, lcl, doelWaarde, doelBereik, doelBoven, doelOnder, dec, chartMode: effectiveChartMode
   };
 
-  drawChart(ctx, canvas, points, mean, sigma, src, chartXMin, chartXMax, AGG_MAX_GAP_DAYS[dataAggMode], rBar, effectiveChartMode, true, selectedDataKey);
+  drawChart(ctx, canvas, points, mean, sigma, src, chartXMin, chartXMax, AGG_MAX_GAP_DAYS[dataAggMode], rBar, effectiveChartMode, true, selectedDataKey, fullGroupSlots);
 }
 
 function openChartStatsModal(){
@@ -2652,7 +2806,8 @@ document.getElementById('chart-stats-modal-overlay').addEventListener('click', (
   if(e.target.id === 'chart-stats-modal-overlay') document.getElementById('chart-stats-modal-overlay').style.display = 'none';
 });
 
-function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays, rBar, chartMode, swipeEnabled, selectedKey){
+function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays, rBar, chartMode, swipeEnabled, selectedKey, fullGroupSlots){
+  fullGroupSlots = fullGroupSlots || points;
   maxGapDays = maxGapDays ?? 1;
   const dpr = window.devicePixelRatio || 1;
   const cssW = canvas.clientWidth || 880, cssH = 220;
@@ -2797,13 +2952,13 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
   if(chartMode === 'range') yMin = Math.max(0, yMin);
 
   const xSpan = Math.max(1, xMax - xMin);
-  const isAggregatedX = dataAggMode !== 'd' && points.length > 1;
+  const isAggregatedX = dataAggMode !== 'd' && fullGroupSlots.length > 1;
   const xIndexMap = new Map();
-  if(isAggregatedX) points.forEach((p,i)=>xIndexMap.set(p.date.getTime(), i));
+  if(isAggregatedX) fullGroupSlots.forEach((p,i)=>xIndexMap.set(p.date.getTime(), i));
   function xPix(d){
     if(isAggregatedX){
       const t = d.getTime();
-      if(xIndexMap.has(t)) return pad.left + (xIndexMap.get(t)/(points.length-1))*plotW;
+      if(xIndexMap.has(t)) return pad.left + (xIndexMap.get(t)/(fullGroupSlots.length-1))*plotW;
       // interpolatie voor tussenliggende (niet-punt) posities, bijv. het middelste as-label
       const frac = (t - xMin.getTime())/xSpan;
       return pad.left + frac*plotW;
@@ -2834,7 +2989,7 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
   }
   let leftLabelX, rightLabelX;
   if(isAggregatedX){
-    const firstP = points[0], lastP = points[points.length-1];
+    const firstP = fullGroupSlots[0], lastP = fullGroupSlots[fullGroupSlots.length-1];
     const midDate = new Date(firstP.date.getTime() + (lastP.date.getTime()-firstP.date.getTime())*0.5);
     leftLabelX = pad.left; rightLabelX = cssW-pad.right;
     drawDateLabel(firstP.date, leftLabelX, 'left');
@@ -2861,11 +3016,11 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
   } else if(isAggregatedX){
     const groupFnForChart = dataAggMode==='w' ? getWeekStart : dataAggMode==='m' ? getMonthStart : dataAggMode==='q' ? getQuarterStart : getYearStart;
     const currentEndDate = getGroupEnd(groupFnForChart(todayUTCForChart), dataAggMode, todayUTCForChart);
-    const firstT = points[0].date.getTime(), lastT = points[points.length-1].date.getTime();
+    const firstT = fullGroupSlots[0].date.getTime(), lastT = fullGroupSlots[fullGroupSlots.length-1].date.getTime();
     if(currentEndDate.getTime() >= firstT && currentEndDate.getTime() <= lastT){
       const frac = (currentEndDate.getTime() - firstT) / Math.max(1, lastT - firstT);
       slotCenter = pad.left + frac*plotW;
-      slotWidth = points.length>1 ? plotW/(points.length-1) : plotW;
+      slotWidth = fullGroupSlots.length>1 ? plotW/(fullGroupSlots.length-1) : plotW;
     }
   }
   if(slotCenter != null){
