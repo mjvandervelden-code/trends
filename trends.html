@@ -63,6 +63,10 @@
     background:#0f1417;
   }
   .panel h2{margin:0 0 12px;font-size:24px;letter-spacing:.02em;color:var(--text);}
+  tr.gap-summary-row td{background:rgba(255,255,255,0.03);font-style:italic;}
+  tr.gap-summary-row:active td{background:rgba(79,209,197,0.12);}
+  tr.gap-collapse-row td{background:rgba(255,255,255,0.03);font-style:italic;}
+  tr.gap-collapse-row:active td{background:rgba(79,209,197,0.12);}
   @keyframes hint-bounce{
     0%,100%{transform:translateY(0);opacity:0.5;}
     50%{transform:translateY(4px);opacity:1;}
@@ -182,6 +186,7 @@
     stroke-linecap:round;stroke-linejoin:round;}
   .icon-btn-sm:hover{color:var(--text);border-color:var(--accent);}
   .icon-btn-sm:disabled{opacity:.4;cursor:not-allowed;}
+  .icon-btn-sm.active:disabled{opacity:1;}
   .icon-btn-prominent{
     background:var(--accent);border-color:var(--accent);color:#08221f;
     width:46px;height:46px;
@@ -343,12 +348,6 @@
           </button>
         </div>
         <div class="field" style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
-          <label style="margin:0;">Hiaten tonen</label>
-          <button type="button" class="toggle-switch" id="f-toon-hiaten" title="Hiaten tonen (standaard uit)" aria-label="Hiaten tonen">
-            <span class="toggle-switch-knob"></span>
-          </button>
-        </div>
-        <div class="field" style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
           <label style="margin:0;">Bereik</label>
           <button type="button" class="picker-btn" id="f-standaard-bereik-btn" style="width:auto;min-width:120px;margin-bottom:0;padding:9px 12px;font-size:17px;">
             <span id="f-standaard-bereik-label">1 maand</span>
@@ -409,7 +408,7 @@
       </div>
     </div>
 
-    <div class="panel" id="data-filters-panel" style="margin-top:0;margin-bottom:4px;display:flex;flex-direction:column;gap:8px;">
+    <div class="panel" id="data-filters-panel" style="margin-top:0;margin-bottom:4px;display:flex;flex-direction:column;gap:8px;touch-action:pan-y;">
       <div style="display:flex;align-items:stretch;gap:8px;">
         <div class="segmented" id="data-agg-filter" style="flex:1;margin-bottom:0;">
           <button data-agg="d" class="active">dag</button>
@@ -418,9 +417,6 @@
           <button data-agg="q">3 mnd</button>
           <button data-agg="y">jaar</button>
         </div>
-        <button type="button" class="icon-btn-sm icon-btn-blue" id="btn-toggle-gaps" title="Hiaten tonen/verbergen" aria-label="Hiaten tonen/verbergen" style="width:46px;height:34px;border:none;">
-          <svg viewBox="0 0 24 24" stroke-linecap="round"><line x1="4" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="20" y2="12"/></svg>
-        </button>
       </div>
       <div style="display:flex;align-items:stretch;gap:8px;">
         <div class="segmented" id="data-period-filter" style="flex:1;margin-bottom:0;">
@@ -469,31 +465,39 @@
         <h2 class="accent-title" style="margin:0 0 16px;">Periode</h2>
           <div class="grid2">
             <div class="field">
-              <label style="display:flex;align-items:center;justify-content:space-between;">
-                <span>Van <span id="data-range-from-relative" style="display:none;color:var(--accent);text-transform:none;font-weight:600;"></span></span>
+              <label>Van</label>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                <span style="display:flex;align-items:center;">
+                  <span id="data-range-from-todaybar" style="display:none;width:4px;height:16px;background:var(--accent);border-radius:2px;margin-right:6px;"></span>
+                  <span id="data-range-from-day" style="color:var(--text);font-family:var(--mono);font-size:15px;"></span>
+                </span>
                 <span style="display:flex;gap:6px;">
-                  <button type="button" class="icon-btn-sm icon-btn-prominent" id="data-range-from-today" title="Vandaag" aria-label="Vandaag" style="width:38px;height:38px;">
+                  <button type="button" class="icon-btn-sm icon-btn-filled" id="data-range-from-today" title="Vandaag" aria-label="Vandaag" style="width:38px;height:38px;">
                     <svg viewBox="0 0 24 24" style="width:18px;height:18px;"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/><circle cx="12" cy="15" r="1.6" fill="currentColor" stroke="none"/></svg>
                   </button>
-                  <button type="button" class="icon-btn-sm icon-btn-prominent" id="data-range-first" title="Eerste meting" aria-label="Eerste meting" style="width:38px;height:38px;">
+                  <button type="button" class="icon-btn-sm icon-btn-filled" id="data-range-first" title="Eerste meting" aria-label="Eerste meting" style="width:38px;height:38px;">
                     <svg viewBox="0 0 24 24" style="width:18px;height:18px;"><line x1="4" y1="5" x2="4" y2="19"/><line x1="20" y1="12" x2="9" y2="12"/><polyline points="13 7 8 12 13 17"/></svg>
                   </button>
                 </span>
-              </label>
+              </div>
               <input type="date" id="data-range-from">
             </div>
             <div class="field">
-              <label style="display:flex;align-items:center;justify-content:space-between;">
-                <span>T/M <span id="data-range-to-relative" style="display:none;color:var(--accent);text-transform:none;font-weight:600;"></span></span>
+              <label>T/M</label>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                <span style="display:flex;align-items:center;">
+                  <span id="data-range-to-todaybar" style="display:none;width:4px;height:16px;background:var(--accent);border-radius:2px;margin-right:6px;"></span>
+                  <span id="data-range-to-day" style="color:var(--text);font-family:var(--mono);font-size:15px;"></span>
+                </span>
                 <span style="display:flex;gap:6px;">
-                  <button type="button" class="icon-btn-sm icon-btn-prominent" id="data-range-today" title="Vandaag" aria-label="Vandaag" style="width:38px;height:38px;">
+                  <button type="button" class="icon-btn-sm icon-btn-filled" id="data-range-today" title="Vandaag" aria-label="Vandaag" style="width:38px;height:38px;">
                     <svg viewBox="0 0 24 24" style="width:18px;height:18px;"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/><circle cx="12" cy="15" r="1.6" fill="currentColor" stroke="none"/></svg>
                   </button>
-                  <button type="button" class="icon-btn-sm icon-btn-prominent" id="data-range-last" title="Laatste meting" aria-label="Laatste meting" style="width:38px;height:38px;">
+                  <button type="button" class="icon-btn-sm icon-btn-filled" id="data-range-last" title="Laatste meting" aria-label="Laatste meting" style="width:38px;height:38px;">
                     <svg viewBox="0 0 24 24" style="width:18px;height:18px;"><line x1="20" y1="5" x2="20" y2="19"/><line x1="4" y1="12" x2="15" y2="12"/><polyline points="11 7 16 12 11 17"/></svg>
                   </button>
                 </span>
-              </label>
+              </div>
               <input type="date" id="data-range-to">
             </div>
           </div>
@@ -541,14 +545,17 @@
         <h2 id="datapoint-modal-title" class="accent-title" style="margin:0 0 16px;">Meting toevoegen</h2>
         <div class="grid2">
           <div class="field">
-            <label>Datum <span id="f-data-date-relative" style="display:none;color:var(--accent);text-transform:none;font-weight:600;"></span></label>
+            <div style="display:flex;align-items:center;margin-bottom:4px;">
+              <span id="f-data-date-todaybar" style="display:none;width:4px;height:16px;background:var(--accent);border-radius:2px;margin-right:6px;"></span>
+              <span id="f-data-date-dayname" style="color:var(--text);font-family:var(--mono);font-size:15px;"></span>
+            </div>
             <div id="f-data-date-display" style="font-family:var(--mono);font-size:21px;color:var(--text);padding:13px 14px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;"></div>
           </div>
           <div class="field">
             <label style="display:flex;align-items:center;justify-content:space-between;">
               Waarde
-              <button type="button" class="icon-btn-sm icon-btn-prominent" id="btn-no-measurement" title="Geen meting" aria-label="Geen meting" style="width:38px;height:38px;">
-                <svg viewBox="0 0 24 24" style="width:18px;height:18px;"><line x1="6" y1="12" x2="18" y2="12"/></svg>
+              <button type="button" class="icon-btn-sm icon-btn-filled" id="btn-no-measurement" title="Geen meting" aria-label="Geen meting" style="width:38px;height:38px;">
+                <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;stroke-width:3;stroke-linecap:round;"><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </button>
             </label>
             <input type="text" inputmode="decimal" id="f-data-value">
@@ -796,6 +803,7 @@ document.querySelectorAll('nav.tabs button').forEach(btn=>{
     if(document.querySelector('.modal-overlay[style*="flex"]')){ tracking=false; return; }
     if(e.touches.length !== 1){ tracking=false; return; }
     if(e.target.closest('#data-chart-canvas')){ tracking=false; return; } // canvas heeft eigen swipe (XmR-wissel)
+    if(e.target.closest('#data-filters-panel')){ tracking=false; return; } // paneel heeft eigen swipe (modus-wissel/grafiek tonen-verbergen)
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     tracking = true;
@@ -840,7 +848,6 @@ async function loadMetaFromDir(){
       max: item.max ?? null,
       doel_x: item.doel_x ?? null,
       doel_r: item.doel_r ?? null,
-      toon_hiaten: item.toon_hiaten === true,
       standaard_bereik: item.standaard_bereik || '1m',
       toon_grafiek: item.toon_grafiek !== false,
       standaard_groepering: item.standaard_groepering || 'd'
@@ -955,7 +962,6 @@ document.getElementById('btn-authorize-dir').addEventListener('click', async ()=
       if(lastBronId && bronnen.some(b=>b.id===lastBronId)){
         document.getElementById('data-source-select').value = lastBronId;
         updateSourcePickerLabel();
-        setDataShowGaps(getSource(lastBronId)?.toon_hiaten === true);
         dataPeriodFilter = getSource(lastBronId)?.standaard_bereik || '1m';
         syncPeriodButtonsActive();
         dataAggMode = getSource(lastBronId)?.standaard_groepering || 'd';
@@ -1004,7 +1010,6 @@ async function bootDir(){
       if(lastBronId && bronnen.some(b=>b.id===lastBronId)){
         document.getElementById('data-source-select').value = lastBronId;
         updateSourcePickerLabel();
-        setDataShowGaps(getSource(lastBronId)?.toon_hiaten === true);
         dataPeriodFilter = getSource(lastBronId)?.standaard_bereik || '1m';
         syncPeriodButtonsActive();
         dataAggMode = getSource(lastBronId)?.standaard_groepering || 'd';
@@ -1158,7 +1163,6 @@ function editSource(id){
   document.getElementById('f-doelx').value = b.doel_x ?? '';
   document.getElementById('f-doelr').value = b.doel_r ?? '';
   setFormToonGrafiek(b.toon_grafiek !== false);
-  setFormToonHiaten(b.toon_hiaten === true);
   setFormStandaardGroepering(b.standaard_groepering || 'd');
   setFormStandaardBereik(b.standaard_bereik || '1m');
   document.getElementById('btn-delete-source').style.display = 'flex';
@@ -1171,15 +1175,6 @@ function setFormToonGrafiek(show){
 }
 document.getElementById('f-toon-grafiek').addEventListener('click', ()=>{
   setFormToonGrafiek(!formToonGrafiek);
-});
-
-let formToonHiaten = false;
-function setFormToonHiaten(show){
-  formToonHiaten = show;
-  document.getElementById('f-toon-hiaten').classList.toggle('active', show);
-}
-document.getElementById('f-toon-hiaten').addEventListener('click', ()=>{
-  setFormToonHiaten(!formToonHiaten);
 });
 
 const STANDAARD_BEREIK_OPTIONS = [['1w','1 week'],['1m','1 maand'],['3m','3 maanden'],['6m','6 maanden'],['9m','9 maanden'],['1y','1 jaar'],['all','Alles']];
@@ -1255,7 +1250,6 @@ function resetSourceForm(){
   document.getElementById('meta-form-title').textContent = 'Nieuwe bron';
   ['f-titel','f-bestand','f-eenheid','f-min','f-max','f-doelx','f-doelr','f-decimalen'].forEach(id=>document.getElementById(id).value='');
   setFormToonGrafiek(true);
-  setFormToonHiaten(false);
   setFormStandaardGroepering('d');
   setFormStandaardBereik('1m');
   document.getElementById('btn-delete-source').style.display = 'none';
@@ -1281,7 +1275,6 @@ document.getElementById('btn-save-source').addEventListener('click', async ()=>{
     max: numOrNull(document.getElementById('f-max').value),
     doel_x: numOrNull(document.getElementById('f-doelx').value),
     doel_r: numOrNull(document.getElementById('f-doelr').value),
-    toon_hiaten: formToonHiaten,
     standaard_bereik: formStandaardBereik,
     toon_grafiek: formToonGrafiek,
     standaard_groepering: formStandaardGroepering
@@ -1298,10 +1291,6 @@ document.getElementById('btn-save-source').addEventListener('click', async ()=>{
     dataAggMode = src.standaard_groepering || 'd';
     document.getElementById('data-agg-filter').querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.agg===dataAggMode));
     updateDataAggButtonStates();
-    dataShowGaps = src.toon_hiaten === true;
-    const gapsBtn = document.getElementById('btn-toggle-gaps');
-    gapsBtn.classList.toggle('icon-btn-blue', dataShowGaps);
-    gapsBtn.classList.toggle('icon-btn-filled', !dataShowGaps);
     setDataShowChart(src.toon_grafiek !== false);
     renderDataView();
   }
@@ -1497,10 +1486,6 @@ document.getElementById('data-source-select').addEventListener('change', async (
   updateDataAggButtonStates();
   chartViewMode = 'standard';
   setDataShowChart(newSrc?.toon_grafiek !== false);
-  dataShowGaps = newSrc?.toon_hiaten === true;
-  const gapsBtn = document.getElementById('btn-toggle-gaps');
-  gapsBtn.classList.toggle('icon-btn-blue', dataShowGaps);
-  gapsBtn.classList.toggle('icon-btn-filled', !dataShowGaps);
   renderDataView();
 });
 
@@ -1528,22 +1513,10 @@ function updateHiddenChartHint(){
   document.getElementById('hidden-chart-hint-chevron').style.display = show ? 'flex' : 'none';
 }
 
-let dataShowGaps = false;
 let chartViewMode = 'standard'; // 'standard' of 'xmr' — swipe op de kaart wisselt (alleen bij dag-groepering)
-function setDataShowGaps(show){
-  dataShowGaps = show;
-  const toggleBtn = document.getElementById('btn-toggle-gaps');
-  toggleBtn.classList.toggle('icon-btn-blue', show);
-  toggleBtn.classList.toggle('icon-btn-filled', !show);
-  renderDataView();
-  requestAnimationFrame(()=>requestAnimationFrame(fitVisibleTableScrollBoxes));
-}
-document.getElementById('btn-toggle-gaps').addEventListener('click', ()=>{
-  setDataShowGaps(!dataShowGaps);
-});
-setDataShowGaps(false);
+let expandedGapRuns = new Set(); // welke samengevouwen hiaat-reeksen (op run-id) zijn opengeklapt
 
-const DATA_PERIOD_DAYS = {'1w':7,'1m':30,'3m':91,'6m':182,'9m':273,'1y':365,'5y':1826,'all':null};
+const DATA_PERIOD_DAYS = {'1w':7,'1m':31,'3m':91,'6m':182,'9m':273,'1y':365,'5y':1826,'all':null};
 function setDataPeriod(period){
   const group = document.getElementById('data-period-filter');
   if(period === 'custom'){
@@ -1592,7 +1565,7 @@ function syncPeriodButtonsActive(){
     if(fromKey && toKey === todayKey){
       for(const p of ['1w','1m','3m','6m','9m','1y']){
         const days = DATA_PERIOD_DAYS[p];
-        const cutoff = new Date(todayUTCDate()); cutoff.setUTCDate(cutoff.getUTCDate()-days);
+        const cutoff = new Date(todayUTCDate()); cutoff.setUTCDate(cutoff.getUTCDate()-(days-1));
         if(fromKey === dateToKey(cutoff)){ matchedStandardPeriod = p; break; }
       }
     }
@@ -1651,17 +1624,26 @@ function updateRangeButtonStates(){
   const toEl = document.getElementById('data-range-to');
   const firstBtn = document.getElementById('data-range-first');
   const lastBtn = document.getElementById('data-range-last');
-  const fromRelEl = document.getElementById('data-range-from-relative');
-  const toRelEl = document.getElementById('data-range-to-relative');
-  const fromRelLabel = fromEl.value ? getRelativeDateLabel(isoToKey(fromEl.value)) : null;
-  const toRelLabel = toEl.value ? getRelativeDateLabel(isoToKey(toEl.value)) : null;
-  if(fromRelLabel){ fromRelEl.textContent = `(${fromRelLabel})`; fromRelEl.style.display = 'inline'; }
-  else { fromRelEl.style.display = 'none'; }
-  if(toRelLabel){ toRelEl.textContent = `(${toRelLabel})`; toRelEl.style.display = 'inline'; }
-  else { toRelEl.style.display = 'none'; }
-  if(!range){ firstBtn.disabled = true; lastBtn.disabled = true; return; }
+  document.getElementById('data-range-from-day').textContent = fromEl.value ? getDayAbbrev(isoToKey(fromEl.value)) : '';
+  document.getElementById('data-range-to-day').textContent = toEl.value ? getDayAbbrev(isoToKey(toEl.value)) : '';
+  document.getElementById('data-range-from-todaybar').style.display = (fromEl.value === todayIso()) ? 'inline-block' : 'none';
+  document.getElementById('data-range-to-todaybar').style.display = (toEl.value === todayIso()) ? 'inline-block' : 'none';
+  const fromTodayBtn = document.getElementById('data-range-from-today');
+  const toTodayBtn = document.getElementById('data-range-today');
+  const todayIsoVal = todayIso();
+  fromTodayBtn.disabled = fromEl.value === todayIsoVal;
+  toTodayBtn.disabled = toEl.value === todayIsoVal;
+  fromTodayBtn.classList.toggle('active', fromTodayBtn.disabled);
+  toTodayBtn.classList.toggle('active', toTodayBtn.disabled);
+  if(!range){
+    firstBtn.disabled = true; lastBtn.disabled = true;
+    firstBtn.classList.remove('active'); lastBtn.classList.remove('active');
+    return;
+  }
   firstBtn.disabled = fromEl.value === keyToIsoDate(range.first);
   lastBtn.disabled = toEl.value === keyToIsoDate(range.last);
+  firstBtn.classList.toggle('active', firstBtn.disabled);
+  lastBtn.classList.toggle('active', lastBtn.disabled);
 }
 function openDataRangeModal(){
   const id = document.getElementById('data-source-select').value;
@@ -1725,7 +1707,6 @@ document.getElementById('data-range-apply').addEventListener('click', async ()=>
     if(warnMsg){
       const proceed = await showWarningConfirm(warnMsg, 'OK');
       if(!proceed) return;
-      if(!dataShowGaps) setDataShowGaps(true);
     }
   }
   dataPeriodFilter = 'custom';
@@ -1776,13 +1757,17 @@ function getShownDataKeys(keys){
   if(days === null) return keys;
   const today = new Date();
   const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
-  const cutoff = new Date(todayUTC); cutoff.setUTCDate(cutoff.getUTCDate() - days);
+  let cutoff = new Date(todayUTC); cutoff.setUTCDate(cutoff.getUTCDate() - (days-1));
+  const alignMap = {'1w':'w', '1m':'m', '3m':'q', '1y':'y'};
+  if(alignMap[dataPeriodFilter] === dataAggMode){
+    const groupFn = dataAggMode==='w' ? getWeekStart : dataAggMode==='m' ? getMonthStart : dataAggMode==='q' ? getQuarterStart : getYearStart;
+    cutoff = groupFn(todayUTC);
+  }
   return keys.filter(k => keyToDate(k) >= cutoff && keyToDate(k) <= todayUTC);
 }
 
 function updateDataControlsEnabled(){
   const hasSource = !!document.getElementById('data-source-select').value;
-  document.getElementById('btn-toggle-gaps').disabled = !hasSource;
   document.getElementById('data-agg-filter').querySelectorAll('button').forEach(b=>b.disabled = !hasSource);
   document.getElementById('data-period-filter').querySelectorAll('button').forEach(b=>b.disabled = !hasSource);
   if(!hasSource){
@@ -1802,15 +1787,49 @@ function getDataPeriodBounds(keys){
   } else {
     const days = DATA_PERIOD_DAYS[dataPeriodFilter];
     if(days === null){ cutoff = null; rangeEnd = todayUTC; }
-    else { cutoff = new Date(todayUTC); cutoff.setUTCDate(cutoff.getUTCDate()-days); rangeEnd = todayUTC; }
+    else { cutoff = new Date(todayUTC); cutoff.setUTCDate(cutoff.getUTCDate()-(days-1)); rangeEnd = todayUTC; }
   }
   if(cutoff === null){
     // onbegrensd: val terug op de vroegste meting die er ooit is geweest
     cutoff = keys.length ? keyToDate(keys[keys.length-1]) : rangeEnd;
   }
+  // periode snappen naar het begin van de kalendereenheid als periode en groepering exact overeenkomen
+  // (bijv. 1 week + week-groepering: anders overlapt een voortschrijdend venster van 7 dagen bijna altijd 2 kalenderweken)
+  if(dataPeriodFilter !== 'custom'){
+    const alignMap = {'1w':'w', '1m':'m', '3m':'q', '1y':'y'};
+    if(alignMap[dataPeriodFilter] === dataAggMode){
+      const groupFn = dataAggMode==='w' ? getWeekStart : dataAggMode==='m' ? getMonthStart : dataAggMode==='q' ? getQuarterStart : getYearStart;
+      cutoff = groupFn(todayUTC);
+    }
+  }
   return {cutoff, rangeEnd};
 }
 
+function collapseGapRuns(keysDesc, htmlArr, hasValueFn, unitLabel){
+  const result = [];
+  let i = 0;
+  while(i < keysDesc.length){
+    if(hasValueFn(keysDesc[i])){
+      result.push(htmlArr[i]);
+      i++;
+    } else {
+      let j = i;
+      while(j < keysDesc.length && !hasValueFn(keysDesc[j])) j++;
+      const runKeys = keysDesc.slice(i, j);
+      const runId = runKeys[runKeys.length-1] + '_' + runKeys[0]; // oudste_nieuwste
+      if(runKeys.length === 1){
+        for(let x=i; x<j; x++) result.push(htmlArr[x]);
+      } else if(expandedGapRuns.has(runId)){
+        result.push(`<tr class="gap-collapse-row" data-gap-run="${runId}"><td colspan="3" style="text-align:center;color:var(--muted);padding:10px 0;cursor:pointer;">⋯ samenvouwen ⋯</td></tr>`);
+        for(let x=i; x<j; x++) result.push(htmlArr[x]);
+      } else {
+        result.push(`<tr class="gap-summary-row" data-gap-run="${runId}"><td colspan="3" style="text-align:center;color:var(--muted);padding:10px 0;cursor:pointer;">⋯ ${runKeys.length} ${unitLabel} ⋯</td></tr>`);
+      }
+      i = j;
+    }
+  }
+  return result;
+}
 async function renderDataView(){
   const id = document.getElementById('data-source-select').value;
   updateDataControlsEnabled();
@@ -1858,12 +1877,14 @@ async function renderDataView(){
     }
     // Voor de Range-kaart: per dag de range-waarde (|verschil met vorige meting|),
     // en per range-waarde het verschil met de vórige range-waarde (de 'delta').
+    // Beperkt tot de getoonde periode zelf (consistent met de grafiek: eerste dag heeft geen range-waarde).
+    const shownKeysAsc = shown.slice().reverse();
     const rangeValMap = new Map();
     const rangeKeysAsc = [];
     if(isRangeMode){
-      keysAsc.forEach((k,i)=>{
+      shownKeysAsc.forEach((k,i)=>{
         if(i>0){
-          rangeValMap.set(k, Math.abs(data[k]-data[keysAsc[i-1]]));
+          rangeValMap.set(k, Math.abs(data[k]-data[shownKeysAsc[i-1]]));
           rangeKeysAsc.push(k);
         }
       });
@@ -1878,14 +1899,13 @@ async function renderDataView(){
       });
     }
     let allKeysDesc = [];
-    if(dataShowGaps){
+    {
       const bounds = getDataPeriodBounds(keys);
       for(let d = new Date(bounds.rangeEnd); d >= bounds.cutoff; d.setUTCDate(d.getUTCDate()-1)){
         allKeysDesc.push(dateToKey(d));
       }
-    } else {
-      allKeysDesc = shown.slice();
     }
+    const structDash = '<span style="opacity:.35;">–</span>';
     rowsHtml = allKeysDesc.map((k,rowIdx)=>{
       const rowClasses = [];
       if(k===dateToKey(new Date())) rowClasses.push('today-row');
@@ -1893,16 +1913,17 @@ async function renderDataView(){
       if(k===selectedDataKey) rowClasses.push('selected');
       const rowClassAttr = rowClasses.length ? ` class="${rowClasses.join(' ')}"` : '';
       const rowStyle = rowIdx%2 ? ' style="background:rgba(255,255,255,0.06);"' : '';
+      const isTrulyFirstRow = rowIdx === allKeysDesc.length-1; // oudste rij in de hele getoonde tabel, inclusief geen-meting-rijen
       if(!hasVal){
         return `<tr data-k="${k}"${rowClassAttr}${rowStyle}><td>${formatDateCell(k)}</td><td class="val">–</td>
-        <td class="actions-cell">–</td></tr>`;
+        <td class="actions-cell">${isTrulyFirstRow ? structDash : '–'}</td></tr>`;
       }
       if(isRangeMode){
         const rv = rangeValMap.get(k);
         const rvStyle = (rv!=null && diffMagColor(rv)) ? ` style="color:${diffMagColor(rv)};"` : '';
-        const rvTxt = rv!=null ? `${fmtVal(rv, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}` : '–';
+        const rvTxt = rv!=null ? `${fmtVal(rv, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}` : (isTrulyFirstRow ? structDash : '–');
         const delta = rangeDeltaMap.get(k);
-        let deltaCell = '–';
+        let deltaCell = isTrulyFirstRow ? structDash : '–';
         if(delta!=null){
           if(delta > 0){
             deltaCell = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--danger);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:3px;"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>${fmtVal(Math.abs(delta), src?.decimalen)}`;
@@ -1917,7 +1938,7 @@ async function renderDataView(){
       }
       const idx = ascIndexOf.get(k);
       const prevVal = idx > 0 ? data[keysAsc[idx-1]] : null;
-      let diffCell = '';
+      let diffCell = isTrulyFirstRow ? structDash : '–';
       if(prevVal !== null){
         const diff = data[k] - prevVal;
         if(diff > 0){
@@ -1931,10 +1952,11 @@ async function renderDataView(){
       return `<tr data-k="${k}"${rowClassAttr}${rowStyle}><td>${formatDateCell(k)}</td><td class="val" style="color:${valColor(data[k])};">${fmtVal(data[k], src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
         <td class="actions-cell">${diffCell}</td></tr>`;
     });
+    rowsHtml = collapseGapRuns(allKeysDesc, rowsHtml, k => data[k] != null, 'dagen');
   } else {
     const pointsAsc = shown.slice().reverse().map(k=>({date: keyToDate(k), value: data[k]}));
     let aggPoints = aggregatePoints(pointsAsc, dataAggMode);
-    if(dataShowGaps){
+    {
       const bounds = getDataPeriodBounds(keys);
       const groupFn = dataAggMode==='w' ? getWeekStart : dataAggMode==='m' ? getMonthStart : dataAggMode==='q' ? getQuarterStart : getYearStart;
       function nextGroupStart(d){
@@ -1971,12 +1993,14 @@ async function renderDataView(){
       const k = dateToKey(p.date);
       const dateLabel = fmtGroupLabelTable(p.date, dataAggMode, k);
       const isCurrentPeriod = p.date.getTime() === currentPeriodEnd;
+      const isTrulyFirstAggRow = idx === rows.length-1; // oudste rij in de hele getoonde (geaggregeerde) tabel
+      const structDashAgg = '<span style="opacity:.35;">–</span>';
       if(p.value == null){
         return `<tr data-k="${k}"${isCurrentPeriod ? ' class="today-row"' : ''}${idx%2?' style="background:rgba(255,255,255,0.06);"':''}><td>${dateLabel}</td><td class="val">–</td>
-        <td class="actions-cell">–</td></tr>`;
+        <td class="actions-cell">${isTrulyFirstAggRow ? structDashAgg : '–'}</td></tr>`;
       }
       const prev = rows.slice(idx+1).find(r=>r.value!=null);
-      let diffCell = '';
+      let diffCell = isTrulyFirstAggRow ? structDashAgg : '–';
       if(prev){
         const diff = p.value - prev.value;
         if(diff > 0){
@@ -1994,6 +2018,9 @@ async function renderDataView(){
       return `<tr data-k="${k}"${rowClassAttr}${idx%2?' style="background:rgba(255,255,255,0.06);"':''}><td>${dateLabel}</td><td class="val" style="color:${aggValColor(p.value)};">${fmtVal(p.value, src?.decimalen)} ${escapeHtml(src?.eenheid||'')}</td>
         <td class="actions-cell">${diffCell}</td></tr>`;
     });
+    const aggUnitLabel = {w:'weken', m:'maanden', q:'kwartalen', y:'jaren'}[dataAggMode] || 'periodes';
+    const aggValueByKey = new Map(rows.map(p=>[dateToKey(p.date), p.value]));
+    rowsHtml = collapseGapRuns(rows.map(p=>dateToKey(p.date)), rowsHtml, k => aggValueByKey.get(k) != null, aggUnitLabel);
   }
   if(!rowsHtml.length) emptyEl.textContent = 'Geen metingen gevonden.';
   emptyEl.style.display = rowsHtml.length ? 'none' : 'block';
@@ -2007,6 +2034,24 @@ async function renderDataView(){
 }
 
 document.getElementById('data-table-body').addEventListener('click', (e)=>{
+  const gapRow = e.target.closest('tr.gap-summary-row');
+  if(gapRow){
+    const scrollBox = document.getElementById('data-table-scroll');
+    const prevScrollTop = scrollBox.scrollTop;
+    expandedGapRuns.add(gapRow.dataset.gapRun);
+    renderDataView();
+    requestAnimationFrame(()=>{ scrollBox.scrollTop = prevScrollTop; });
+    return;
+  }
+  const collapseRow = e.target.closest('tr.gap-collapse-row');
+  if(collapseRow){
+    const scrollBox = document.getElementById('data-table-scroll');
+    const prevScrollTop = scrollBox.scrollTop;
+    expandedGapRuns.delete(collapseRow.dataset.gapRun);
+    renderDataView();
+    requestAnimationFrame(()=>{ scrollBox.scrollTop = prevScrollTop; });
+    return;
+  }
   const tr = e.target.closest('tr[data-k]');
   if(!tr) return;
   const k = tr.dataset.k;
@@ -2028,14 +2073,9 @@ function updateEditSelectedButton(){
 }
 
 let currentDatapointKey = null;
-function getRelativeDateLabel(key){
-  const todayKey = dateToKey(new Date());
-  const yesterdayKey = dateToKey(new Date(Date.now() - 24*60*60*1000));
-  const tomorrowKey = dateToKey(new Date(Date.now() + 24*60*60*1000));
-  if(key === todayKey) return 'Vandaag';
-  if(key === yesterdayKey) return 'Gisteren';
-  if(key === tomorrowKey) return 'Morgen';
-  return null;
+const DAG_NAMEN = ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
+function getDayAbbrev(key){
+  return DAG_NAMEN[keyToDate(key).getUTCDay()];
 }
 function openEditDatapointModal(id, key){
   const data = dataCache[id] || {};
@@ -2044,10 +2084,8 @@ function openEditDatapointModal(id, key){
   applyValueInputConstraints(src);
   currentDatapointKey = key;
   document.getElementById('f-data-date-display').textContent = fmtDateNL(key);
-  const relEl = document.getElementById('f-data-date-relative');
-  const relLabel = getRelativeDateLabel(key);
-  if(relLabel){ relEl.textContent = `(${relLabel})`; relEl.style.display = 'inline'; }
-  else { relEl.style.display = 'none'; }
+  document.getElementById('f-data-date-dayname').textContent = getDayAbbrev(key);
+  document.getElementById('f-data-date-todaybar').style.display = (key === dateToKey(new Date())) ? 'inline-block' : 'none';
   if(data[key] == null){
     // geselecteerde dag heeft nog geen waarde: open als 'toevoegen' met deze datum al ingevuld
     editingDataKey = null;
@@ -2150,7 +2188,7 @@ function closeDatapointModal(){
   editingDataKey = null;
   currentDatapointKey = null;
   document.getElementById('datapoint-modal-title').textContent = 'Meting toevoegen';
-  document.getElementById('f-data-date-relative').style.display = 'none';
+  document.getElementById('f-data-date-todaybar').style.display = 'none';
   document.getElementById('f-data-value').value = '';
   document.getElementById('btn-delete-datapoint').style.display = 'none';
   setExplicitEmpty(false);
@@ -2234,7 +2272,7 @@ document.getElementById('btn-add-datapoint').addEventListener('click', async ()=
   renderDataView();
 });
 
-const PERIOD_DAYS = {'1w':7,'1m':30,'3m':91,'6m':182,'9m':273,'1y':365,'5y':1826,'all':null};
+const PERIOD_DAYS = {'1w':7,'1m':31,'3m':91,'6m':182,'9m':273,'1y':365,'5y':1826,'all':null};
 
 const AGG_MAX_GAP_DAYS = {d:1, w:10, m:40, q:100, y:400};
 function getWeekStart(date){
@@ -2301,9 +2339,15 @@ async function getChartPointsForSelection(periodKey, fromElId, toElId){
     isAll = !fromIso;
   } else {
     const days = PERIOD_DAYS[periodKey];
-    cutoff = days===null ? new Date(Date.UTC(1970,0,1)) : (()=>{ const c = new Date(todayUTC); c.setUTCDate(c.getUTCDate()-days); return c; })();
+    cutoff = days===null ? new Date(Date.UTC(1970,0,1)) : (()=>{ const c = new Date(todayUTC); c.setUTCDate(c.getUTCDate()-(days-1)); return c; })();
     rangeEnd = todayUTC;
     isAll = days===null;
+    // periode snappen naar het begin van de kalendereenheid als periode en groepering exact overeenkomen
+    const alignMap = {'1w':'w', '1m':'m', '3m':'q', '1y':'y'};
+    if(alignMap[periodKey] === dataAggMode){
+      const groupFn = dataAggMode==='w' ? getWeekStart : dataAggMode==='m' ? getMonthStart : dataAggMode==='q' ? getQuarterStart : getYearStart;
+      cutoff = groupFn(todayUTC);
+    }
   }
 
   const points = Object.entries(data)
@@ -2350,7 +2394,26 @@ async function renderDataChartPreview(){
   const allKeysForBounds = Object.keys(dataCache[id] || {}).sort().reverse();
   const periodBounds = getDataPeriodBounds(allKeysForBounds);
   const oneDayMsForCount = 24*60*60*1000;
-  const shownCount = Math.max(0, Math.round((periodBounds.rangeEnd - periodBounds.cutoff)/oneDayMsForCount) + 1);
+  let shownCount;
+  if(dataAggMode === 'd'){
+    shownCount = Math.max(0, Math.round((periodBounds.rangeEnd - periodBounds.cutoff)/oneDayMsForCount) + 1);
+  } else {
+    const groupFnForCount = dataAggMode==='w' ? getWeekStart : dataAggMode==='m' ? getMonthStart : dataAggMode==='q' ? getQuarterStart : getYearStart;
+    function nextGroupStartForCount(d){
+      const nd = new Date(d);
+      if(dataAggMode==='w') nd.setUTCDate(nd.getUTCDate()+7);
+      else if(dataAggMode==='m') nd.setUTCMonth(nd.getUTCMonth()+1);
+      else if(dataAggMode==='q') nd.setUTCMonth(nd.getUTCMonth()+3);
+      else nd.setUTCFullYear(nd.getUTCFullYear()+1);
+      return nd;
+    }
+    let cursor = groupFnForCount(periodBounds.cutoff);
+    const lastStart = groupFnForCount(periodBounds.rangeEnd);
+    let groupCount = 0;
+    while(cursor <= lastStart){ groupCount++; cursor = nextGroupStartForCount(cursor); }
+    shownCount = groupCount;
+  }
+  if(effectiveChartMode === 'range') shownCount = Math.max(0, shownCount - 1);
   const dec = src?.decimalen ?? 1;
   if(n===0){
     window.lastChartStats = {n:0, totalCount, shownCount, mean:null, sigma:null, rBar:null, madVal:null, minVal:null, maxVal:null, sumVal:null, ucl:null, uwl:null, lwl:null, lcl:null, doelWaarde:null, doelBereik:null, doelBoven:null, doelOnder:null, dec, chartMode:'standard'};
@@ -2440,14 +2503,14 @@ function openChartStatsModal(){
   const formulaStyle = 'color:var(--text);margin-left:6px;';
   let uclF, uwlF, lwlF, lclF;
   if(stats.chartMode === 'range'){
-    uclF = `<span style="${formulaStyle}">(3,267×${rBarSym})</span>`;
+    uclF = `<span style="${formulaStyle}">(3.267×${rBarSym})</span>`;
     uwlF = ''; lwlF = '';
     lclF = `<span style="${formulaStyle}">(0)</span>`;
   } else if(stats.chartMode === 'xmr'){
-    uclF = `<span style="${formulaStyle}">(${xBar}+2,66×${rBarSym})</span>`;
-    uwlF = `<span style="${formulaStyle}">(${xBar}+1,77×${rBarSym})</span>`;
-    lwlF = `<span style="${formulaStyle}">(${xBar}−1,77×${rBarSym})</span>`;
-    lclF = `<span style="${formulaStyle}">(${xBar}−2,66×${rBarSym})</span>`;
+    uclF = `<span style="${formulaStyle}">(${xBar}+2.66×${rBarSym})</span>`;
+    uwlF = `<span style="${formulaStyle}">(${xBar}+1.77×${rBarSym})</span>`;
+    lwlF = `<span style="${formulaStyle}">(${xBar}−1.77×${rBarSym})</span>`;
+    lclF = `<span style="${formulaStyle}">(${xBar}−2.66×${rBarSym})</span>`;
   } else {
     uclF = `<span style="${formulaStyle}">(${xBar}+3σₙ₋₁)</span>`;
     uwlF = `<span style="${formulaStyle}">(${xBar}+2σₙ₋₁)</span>`;
@@ -2507,21 +2570,24 @@ document.getElementById('chart-stats-tabs').querySelectorAll('button').forEach(b
 document.getElementById('data-chart-canvas').addEventListener('click', openChartStatsModal);
 (function(){
   const canvas = document.getElementById('data-chart-canvas');
-  let startX=null, startY=null, wasSwipe=false, swipeDx=0, swipeDy=0;
+  let startX=null, startY=null, lastDx=0, lastDy=0;
   canvas.addEventListener('touchstart', (e)=>{
     if(e.touches.length !== 1){ startX=null; return; }
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
-    wasSwipe = false;
+    lastDx = 0; lastDy = 0;
   }, {passive:true});
   canvas.addEventListener('touchmove', (e)=>{
     if(startX===null || e.touches.length!==1) return;
-    const dx = e.touches[0].clientX - startX;
-    const dy = e.touches[0].clientY - startY;
-    if(Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy) * 1.5){ wasSwipe = true; swipeDx = dx; swipeDy = 0; }
-    else if(Math.abs(dy) > 30 && Math.abs(dy) > Math.abs(dx) * 1.5){ wasSwipe = true; swipeDy = dy; swipeDx = 0; }
+    lastDx = e.touches[0].clientX - startX;
+    lastDy = e.touches[0].clientY - startY;
   }, {passive:true});
   canvas.addEventListener('touchend', ()=>{
+    if(startX===null) return;
+    const dx = lastDx, dy = lastDy;
+    const wasSwipe = Math.abs(dx) > 30 || Math.abs(dy) > 30;
+    const swipeDx = wasSwipe && Math.abs(dx) > Math.abs(dy) * 1.5 ? dx : 0;
+    const swipeDy = wasSwipe && Math.abs(dy) > Math.abs(dx) * 1.5 ? dy : 0;
     if(wasSwipe && swipeDx !== 0){
       const carousel = dataAggMode === 'd' ? ['standard','xmr','range'] : ['standard','range'];
       const curIdx = carousel.indexOf(chartViewMode);
@@ -2538,25 +2604,45 @@ document.getElementById('data-chart-canvas').addEventListener('click', openChart
       window.chartSwipeJustHappened = true;
       setTimeout(()=>{ window.chartSwipeJustHappened = false; }, 400);
     }
-    startX = null; wasSwipe = false;
+    startX = null;
   }, {passive:true});
 })();
 (function(){
   const panel = document.getElementById('data-filters-panel');
-  let startY=null, startX=null;
+  let startY=null, startX=null, panelLastDx=0, panelLastDy=0;
   panel.addEventListener('touchstart', (e)=>{
     if(e.touches.length !== 1){ startY=null; return; }
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
+    panelLastDx = 0; panelLastDy = 0;
   }, {passive:true});
-  panel.addEventListener('touchend', (e)=>{
-    if(startY===null) return;
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = e.changedTouches[0].clientY - startY;
-    startY = null;
-    if(Math.abs(dy) < 30 || Math.abs(dy) < Math.abs(dx) * 1.5) return;
-    if(dy < 0 && dataShowChart) setDataShowChart(false); // omhoog vegen -> grafiek verbergen
-    else if(dy > 0 && !dataShowChart) setDataShowChart(true); // omlaag vegen -> grafiek weer tonen
+  panel.addEventListener('touchmove', (e)=>{
+    if(startX===null || e.touches.length!==1) return;
+    panelLastDx = e.touches[0].clientX - startX;
+    panelLastDy = e.touches[0].clientY - startY;
+  }, {passive:true});
+  panel.addEventListener('touchend', ()=>{
+    if(startX===null) return;
+    const dx = panelLastDx, dy = panelLastDy;
+    const panelWasSwipe = Math.abs(dx) > 30 || Math.abs(dy) > 30;
+    const isHorizontal = panelWasSwipe && Math.abs(dx) > Math.abs(dy) * 1.5;
+    const isVertical = panelWasSwipe && Math.abs(dy) > Math.abs(dx) * 1.5;
+    const panelSwipeDx = isHorizontal ? dx : 0;
+    const panelSwipeDy = isVertical ? dy : 0;
+    if(panelWasSwipe && panelSwipeDx !== 0 && dataShowChart){
+      const carousel = dataAggMode === 'd' ? ['standard','xmr','range'] : ['standard','range'];
+      const curIdx = carousel.indexOf(chartViewMode);
+      const startIdx = curIdx === -1 ? 0 : curIdx;
+      const dir = panelSwipeDx < 0 ? 1 : -1; // links -> volgende (xmr/range eerst), rechts -> vorige
+      const nextIdx = (startIdx + dir + carousel.length) % carousel.length;
+      chartViewMode = carousel[nextIdx];
+      renderDataView();
+    } else if(panelWasSwipe && panelSwipeDy < 0 && dataShowChart){
+      setDataShowChart(false); // omhoog vegen -> grafiek verbergen
+    } else if(panelWasSwipe && panelSwipeDy > 0 && !dataShowChart){
+      setDataShowChart(true); // omlaag vegen -> grafiek weer tonen
+    }
+    startX = null; startY = null;
   }, {passive:true});
 })();
 document.getElementById('chart-stats-modal-close').addEventListener('click', ()=>{
@@ -2872,9 +2958,25 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
     ctx.closePath();
     ctx.fillStyle = '#4fd1c5';
     ctx.fill();
-    ctx.strokeStyle = '#e0b84f';
+    ctx.strokeStyle = '#4f8ff0';
     ctx.lineWidth = 2.2;
     ctx.stroke();
+  } else if(selectedKey && mean!=null){
+    // geselecteerde rij heeft geen meting: driehoekje op de juiste datum, wijzend naar het gemiddelde
+    const selDate = keyToDate(selectedKey);
+    if(selDate >= xMin && selDate <= xMax){
+      const x = xPix(selDate), y = yPix(mean);
+      ctx.beginPath();
+      ctx.moveTo(x-8, y-17);
+      ctx.lineTo(x+8, y-17);
+      ctx.lineTo(x, y-5);
+      ctx.closePath();
+      ctx.fillStyle = '#4fd1c5';
+      ctx.fill();
+      ctx.strokeStyle = '#4f8ff0';
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+    }
   }
 
   if(swipeEnabled){
