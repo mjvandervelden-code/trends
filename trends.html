@@ -431,6 +431,7 @@
         <div class="source-list" id="bestand-picker-list" style="max-height:50vh;overflow-y:auto;"></div>
         <div class="actions" style="justify-content:flex-end;flex-wrap:nowrap;margin-top:12px;">
           <button class="btn secondary compact" id="bestand-picker-cancel" style="flex:1;">Annuleren</button>
+          <button class="btn compact" id="bestand-picker-ok" style="flex:1;" disabled>OK</button>
         </div>
       </div>
     </div>
@@ -1346,17 +1347,19 @@ document.getElementById('standaard-groepering-ok').addEventListener('click', ()=
   document.getElementById('standaard-groepering-modal-overlay').style.display = 'none';
 });
 
+let pickedBestandName = null;
 function addBestandRow(name, selected){
   const list = document.getElementById('bestand-picker-list');
   const row = document.createElement('div');
   row.className = 'source-row';
   row.dataset.naam = name.toLowerCase();
-  if(selected) row.classList.add('selected');
+  if(selected){ row.classList.add('selected'); pickedBestandName = name; }
   row.innerHTML = `<div class="title">${escapeHtml(name)}</div>`;
   row.addEventListener('click', ()=>{
-    document.getElementById('f-bestand').value = name;
-    autoResizeBestandField();
-    closeBestandPicker();
+    list.querySelectorAll('.source-row.selected').forEach(r=>r.classList.remove('selected'));
+    row.classList.add('selected');
+    pickedBestandName = name;
+    document.getElementById('bestand-picker-ok').disabled = false;
   });
   list.appendChild(row);
   return row;
@@ -1371,7 +1374,9 @@ async function openBestandPicker(){
   document.getElementById('btn-toggle-bestand-search').classList.remove('icon-btn-blue');
   const list = document.getElementById('bestand-picker-list');
   const emptyEl = document.getElementById('bestand-picker-empty');
+  const okBtn = document.getElementById('bestand-picker-ok');
   list.innerHTML = '';
+  pickedBestandName = null;
   let names = [];
   try{
     for await (const [name, handle] of dirHandle.entries()){
@@ -1382,6 +1387,7 @@ async function openBestandPicker(){
   emptyEl.style.display = names.length ? 'none' : 'block';
   const currentVal = document.getElementById('f-bestand').value.trim();
   names.forEach(name=>addBestandRow(name, name === currentVal));
+  okBtn.disabled = !pickedBestandName;
   document.getElementById('bestand-picker-modal-overlay').style.display = 'flex';
 }
 function closeBestandPicker(){
@@ -1420,6 +1426,12 @@ document.getElementById('btn-toggle-bestand-search').addEventListener('click', (
 document.getElementById('btn-pick-bestand').addEventListener('click', openBestandPicker);
 document.getElementById('f-bestand').addEventListener('click', openBestandPicker);
 document.getElementById('bestand-picker-cancel').addEventListener('click', closeBestandPicker);
+document.getElementById('bestand-picker-ok').addEventListener('click', ()=>{
+  if(!pickedBestandName) return;
+  document.getElementById('f-bestand').value = pickedBestandName;
+  autoResizeBestandField();
+  closeBestandPicker();
+});
 
 document.getElementById('btn-new-bestand-name').addEventListener('click', ()=>{
   document.getElementById('bestand-nieuwe-naam-input').value = '';
