@@ -3275,8 +3275,9 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
   }
   if(chartMode !== 'range' && src?.doel_x != null) hLine(src.doel_x, '#8a99a1', [2,3]);
 
+  const showDots = !(src?.puntjes_drempel != null && points.length > src.puntjes_drempel);
   if(points.length>1){
-    ctx.strokeStyle = '#5c6f79'; ctx.lineWidth = 1.8; ctx.beginPath();
+    ctx.strokeStyle = showDots ? '#5c6f79' : '#9fd8e0'; ctx.lineWidth = 1.8; ctx.beginPath();
     const oneDayMs = 24*60*60*1000;
     points.forEach((p,i)=>{
       const x=xPix(p.date), y=yPix(p.value);
@@ -3292,7 +3293,6 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
   }
 
   let selectedPoint = null;
-  const showDots = !(src?.puntjes_drempel != null && points.length > src.puntjes_drempel);
   const dotsByColor = new Map(); // kleur -> array van {x,y}, zodat we per kleur in één keer kunnen tekenen
   points.forEach(p=>{
     const x=xPix(p.date), y=yPix(p.value);
