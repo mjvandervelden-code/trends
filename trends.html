@@ -1967,7 +1967,7 @@ function getDataPeriodBounds(keys){
     rangeEnd = toIso ? keyToDate(isoToKey(toIso)) : todayUTC;
   } else {
     const days = DATA_PERIOD_DAYS[dataPeriodFilter];
-    if(days === null){ cutoff = null; rangeEnd = todayUTC; }
+    if(days === null){ cutoff = null; rangeEnd = keys.length ? keyToDate(keys[0]) : todayUTC; }
     else { cutoff = new Date(todayUTC); cutoff.setUTCDate(cutoff.getUTCDate()-(days-1)); rangeEnd = todayUTC; }
   }
   if(cutoff === null){
@@ -2655,7 +2655,12 @@ async function getChartPointsForSelection(periodKey, fromElId, toElId){
   } else {
     const days = PERIOD_DAYS[periodKey];
     cutoff = days===null ? new Date(Date.UTC(1970,0,1)) : (()=>{ const c = new Date(todayUTC); c.setUTCDate(c.getUTCDate()-(days-1)); return c; })();
-    rangeEnd = todayUTC;
+    if(days===null){
+      const allKeysSorted = Object.keys(data).sort();
+      rangeEnd = allKeysSorted.length ? keyToDate(allKeysSorted[allKeysSorted.length-1]) : todayUTC;
+    } else {
+      rangeEnd = todayUTC;
+    }
     isAll = days===null;
     // periode snappen naar het begin van de kalendereenheid als periode en groepering exact overeenkomen
     const alignMap = {'1w':'w', '1m':'m', '3m':'q', '1y':'y'};
