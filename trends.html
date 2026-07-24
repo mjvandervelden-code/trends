@@ -181,7 +181,7 @@
   .status-dot.error{background:var(--danger);}
   .file-link-row{display:flex;align-items:center;gap:12px;}
   .file-link-row .filename{font-family:var(--mono);font-size:19px;color:var(--text);
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    overflow-wrap:break-word;word-break:break-word;}
   .icon-btn-sm{
     flex:0 0 auto;width:42px;height:42px;padding:0;border-radius:8px;
     background:none;border:1px solid var(--line);color:var(--muted);
@@ -331,7 +331,20 @@
         <h2 id="meta-form-title" class="accent-title" style="margin:0 0 16px;">Nieuwe bron</h2>
         <div class="grid2">
           <div class="field"><label>Titel</label><input type="text" id="f-titel" placeholder="bv. Bloeddruk"></div>
-          <div class="field"><label>Bestandsnaam</label><input type="text" id="f-bestand" placeholder="bv. Bloeddruk.json"></div>
+          <div class="field">
+            <label style="display:flex;align-items:center;justify-content:space-between;">
+              Bestandsnaam
+              <span style="display:flex;gap:8px;">
+                <button type="button" class="icon-btn-sm icon-btn-filled" id="btn-new-bestand-name" title="Nieuw bestand" aria-label="Nieuw bestand" style="width:38px;height:38px;">
+                  <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <button type="button" class="icon-btn-sm icon-btn-filled" id="btn-pick-bestand" title="Bestand kiezen uit werkmap" aria-label="Bestand kiezen uit werkmap" style="width:38px;height:38px;">
+                  <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                </button>
+              </span>
+            </label>
+            <textarea id="f-bestand" placeholder="bv. Bloeddruk.json" rows="1" readonly style="width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--text);padding:13px 14px;border-radius:8px;font-family:var(--mono);font-size:19px;margin-bottom:12px;box-sizing:border-box;resize:none;overflow:hidden;word-break:break-word;cursor:pointer;"></textarea>
+          </div>
           <div class="field"><label>Eenheid</label><input type="text" id="f-eenheid" placeholder="bv. mmHg"></div>
           <div class="field"><label>Decimalen</label><input type="number" id="f-decimalen" placeholder="1" min="0" max="6" step="1"></div>
           <div class="field"><label>Min</label><input type="text" inputmode="decimal" id="f-min" placeholder="0"></div>
@@ -342,6 +355,12 @@
         <div class="field" style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
           <label style="margin:0;">Grafiek tonen</label>
           <button type="button" class="toggle-switch" id="f-toon-grafiek" title="Grafiek tonen (standaard aan)" aria-label="Grafiek tonen">
+            <span class="toggle-switch-knob"></span>
+          </button>
+        </div>
+        <div class="field" style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+          <label style="margin:0;">Duizendtal-scheiding</label>
+          <button type="button" class="toggle-switch" id="f-duizendtal" title="Duizendtal-scheiding (standaard uit)" aria-label="Duizendtal-scheiding">
             <span class="toggle-switch-knob"></span>
           </button>
         </div>
@@ -388,6 +407,40 @@
         <div class="actions" style="justify-content:flex-end;flex-wrap:nowrap;margin-top:12px;">
           <button class="btn secondary compact" id="standaard-groepering-cancel" style="flex:1;">Annuleren</button>
           <button class="btn compact" id="standaard-groepering-ok" style="flex:1;">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="bestand-picker-modal-overlay" style="display:none;">
+      <div class="modal-box" style="max-width:420px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 16px;">
+          <h2 class="accent-title" style="margin:0;">Bestand kiezen</h2>
+          <button type="button" class="icon-btn-sm icon-btn-filled" id="btn-toggle-bestand-search" title="Zoeken" aria-label="Zoeken" style="width:38px;height:38px;">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.2" y2="16.2"/></svg>
+          </button>
+        </div>
+        <div class="field" id="bestand-search-wrap" style="margin:0 0 8px;display:none;">
+          <input type="text" id="bestand-search" placeholder="Zoek op bestandsnaam…" autocomplete="off" style="width:100%;box-sizing:border-box;margin-bottom:0;padding:10px 12px;height:46px;">
+        </div>
+        <div class="empty" id="bestand-search-empty" style="display:none;color:var(--muted);padding:6px 0 12px;">Geen bestanden gevonden.</div>
+        <div class="empty" id="bestand-picker-empty" style="display:none;">Geen .json-bestanden gevonden in de werkmap.</div>
+        <div class="source-list" id="bestand-picker-list" style="max-height:50vh;overflow-y:auto;"></div>
+        <div class="actions" style="justify-content:flex-end;flex-wrap:nowrap;margin-top:12px;">
+          <button class="btn secondary compact" id="bestand-picker-cancel" style="flex:1;">Annuleren</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="bestand-nieuwe-naam-modal-overlay" style="display:none;">
+      <div class="modal-box" style="max-width:360px;">
+        <h2 class="accent-title" style="margin:0 0 16px;">Nieuw bestand</h2>
+        <div class="field">
+          <label>Bestandsnaam</label>
+          <input type="text" id="bestand-nieuwe-naam-input" placeholder="bv. Slaap.json">
+        </div>
+        <div class="actions" style="justify-content:flex-end;flex-wrap:nowrap;margin-top:12px;">
+          <button class="btn secondary compact" id="bestand-nieuwe-naam-cancel" style="flex:1;">Annuleren</button>
+          <button class="btn compact" id="bestand-nieuwe-naam-save" style="flex:1;">Opslaan</button>
         </div>
       </div>
     </div>
@@ -561,7 +614,7 @@
           </div>
           <div class="field">
             <label style="display:flex;align-items:center;justify-content:space-between;">
-              Waarde
+              <span>Waarde<span id="f-data-value-unit" style="color:var(--muted);text-transform:none;font-weight:500;"></span></span>
               <button type="button" class="icon-btn-sm icon-btn-filled" id="btn-no-measurement" title="Geen meting" aria-label="Geen meting" style="width:38px;height:38px;">
                 <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:currentColor;stroke-width:3;stroke-linecap:round;"><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </button>
@@ -770,7 +823,17 @@ function fmtGroupLabelTable(date, mode, k){
 function formatDateCell(k){
   return fmtDateNL(k);
 }
-function fmtVal(v, dec){ return Number(v).toFixed(dec ?? 1); }
+let currentFmtThousands = false;
+function fmtVal(v, dec){
+  const s = Number(v).toFixed(dec ?? 1);
+  if(!currentFmtThousands) return s;
+  const negative = s.startsWith('-');
+  const abs = negative ? s.slice(1) : s;
+  const [intPart, decPart] = abs.split('.');
+  const withSep = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return (negative?'-':'') + withSep + (decPart!==undefined ? '.'+decPart : '');
+}
+function fmtValPlain(v, dec){ return Number(v).toFixed(dec ?? 1); } // voor invoervelden: nooit duizendtal-komma's (breekt anders Number() bij opslaan)
 function getSource(id){ return bronnen.find(b=>b.id===id); }
 function numOrNull(v){ return v===''||v===null||v===undefined ? null : Number(v); }
 function escapeHtml(s){ return (s??'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -858,6 +921,7 @@ async function loadMetaFromDir(){
       doel_r: item.doel_r ?? null,
       standaard_bereik: item.standaard_bereik || '1m',
       toon_grafiek: item.toon_grafiek !== false,
+      duizendtal: item.duizendtal === true,
       standaard_groepering: item.standaard_groepering || 'd'
     };
   });
@@ -1171,16 +1235,26 @@ function editSource(id){
   document.getElementById('f-doelx').value = b.doel_x ?? '';
   document.getElementById('f-doelr').value = b.doel_r ?? '';
   setFormToonGrafiek(b.toon_grafiek !== false);
+  setFormDuizendtal(b.duizendtal === true);
   setFormStandaardGroepering(b.standaard_groepering || 'd');
   setFormStandaardBereik(b.standaard_bereik || '1m');
   document.getElementById('btn-delete-source').style.display = 'flex';
   openSourceModal();
+  requestAnimationFrame(autoResizeBestandField);
 }
 let formToonGrafiek = true;
 function setFormToonGrafiek(show){
   formToonGrafiek = show;
   document.getElementById('f-toon-grafiek').classList.toggle('active', show);
 }
+let formDuizendtal = false;
+function setFormDuizendtal(show){
+  formDuizendtal = show;
+  document.getElementById('f-duizendtal').classList.toggle('active', show);
+}
+document.getElementById('f-duizendtal').addEventListener('click', ()=>{
+  setFormDuizendtal(!formDuizendtal);
+});
 document.getElementById('f-toon-grafiek').addEventListener('click', ()=>{
   setFormToonGrafiek(!formToonGrafiek);
 });
@@ -1253,11 +1327,109 @@ document.getElementById('standaard-groepering-ok').addEventListener('click', ()=
   document.getElementById('standaard-groepering-modal-overlay').style.display = 'none';
 });
 
+function addBestandRow(name, selected){
+  const list = document.getElementById('bestand-picker-list');
+  const row = document.createElement('div');
+  row.className = 'source-row';
+  row.dataset.naam = name.toLowerCase();
+  if(selected) row.classList.add('selected');
+  row.innerHTML = `<div class="title">${escapeHtml(name)}</div>`;
+  row.addEventListener('click', ()=>{
+    document.getElementById('f-bestand').value = name;
+    autoResizeBestandField();
+    closeBestandPicker();
+  });
+  list.appendChild(row);
+  return row;
+}
+async function openBestandPicker(){
+  if(!dirHandle){ showAlert('Koppel eerst een werkmap (zie boven op dit tabblad).'); return; }
+  bestandSearchQuery = '';
+  bestandSearchOpen = false;
+  document.getElementById('bestand-search').value = '';
+  document.getElementById('bestand-search-wrap').style.display = 'none';
+  document.getElementById('bestand-search-empty').style.display = 'none';
+  document.getElementById('btn-toggle-bestand-search').classList.remove('icon-btn-blue');
+  const list = document.getElementById('bestand-picker-list');
+  const emptyEl = document.getElementById('bestand-picker-empty');
+  list.innerHTML = '';
+  let names = [];
+  try{
+    for await (const [name, handle] of dirHandle.entries()){
+      if(handle.kind === 'file' && name.toLowerCase().endsWith('.json')) names.push(name);
+    }
+  }catch(e){ showAlert('Kon de werkmap niet lezen: '+e.message); return; }
+  names.sort((a,b)=>a.localeCompare(b));
+  emptyEl.style.display = names.length ? 'none' : 'block';
+  const currentVal = document.getElementById('f-bestand').value.trim();
+  names.forEach(name=>addBestandRow(name, name === currentVal));
+  document.getElementById('bestand-picker-modal-overlay').style.display = 'flex';
+}
+function closeBestandPicker(){
+  document.getElementById('bestand-picker-modal-overlay').style.display = 'none';
+}
+let bestandSearchQuery = '';
+let bestandSearchOpen = false;
+function applyBestandSearchFilter(){
+  const q = bestandSearchQuery.trim().toLowerCase();
+  let visibleCount = 0;
+  document.querySelectorAll('#bestand-picker-list .source-row').forEach(row=>{
+    const match = !q || row.dataset.naam.includes(q);
+    row.style.display = match ? '' : 'none';
+    if(match) visibleCount++;
+  });
+  document.getElementById('bestand-search-empty').style.display = (q && visibleCount===0) ? 'block' : 'none';
+}
+document.getElementById('bestand-search').addEventListener('input', (e)=>{
+  bestandSearchQuery = e.target.value;
+  applyBestandSearchFilter();
+});
+document.getElementById('btn-toggle-bestand-search').addEventListener('click', ()=>{
+  bestandSearchOpen = !bestandSearchOpen;
+  const btn = document.getElementById('btn-toggle-bestand-search');
+  const wrap = document.getElementById('bestand-search-wrap');
+  btn.classList.toggle('icon-btn-blue', bestandSearchOpen);
+  wrap.style.display = bestandSearchOpen ? 'block' : 'none';
+  if(bestandSearchOpen){
+    document.getElementById('bestand-search').focus();
+  } else {
+    bestandSearchQuery = '';
+    document.getElementById('bestand-search').value = '';
+    applyBestandSearchFilter();
+  }
+});
+document.getElementById('btn-pick-bestand').addEventListener('click', openBestandPicker);
+document.getElementById('f-bestand').addEventListener('click', openBestandPicker);
+document.getElementById('bestand-picker-cancel').addEventListener('click', closeBestandPicker);
+
+document.getElementById('btn-new-bestand-name').addEventListener('click', ()=>{
+  document.getElementById('bestand-nieuwe-naam-input').value = '';
+  document.getElementById('bestand-nieuwe-naam-modal-overlay').style.display = 'flex';
+});
+document.getElementById('bestand-nieuwe-naam-cancel').addEventListener('click', ()=>{
+  document.getElementById('bestand-nieuwe-naam-modal-overlay').style.display = 'none';
+});
+document.getElementById('bestand-nieuwe-naam-save').addEventListener('click', ()=>{
+  let name = document.getElementById('bestand-nieuwe-naam-input').value.trim();
+  if(!name){ showAlert('Vul eerst een bestandsnaam in.'); return; }
+  if(!name.toLowerCase().endsWith('.json')) name += '.json';
+  document.getElementById('f-bestand').value = name;
+  autoResizeBestandField();
+  document.getElementById('bestand-nieuwe-naam-modal-overlay').style.display = 'none';
+});
+function autoResizeBestandField(){
+  const el = document.getElementById('f-bestand');
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+document.getElementById('f-bestand').addEventListener('input', autoResizeBestandField);
 function resetSourceForm(){
   editingId = null;
   document.getElementById('meta-form-title').textContent = 'Nieuwe bron';
   ['f-titel','f-bestand','f-eenheid','f-min','f-max','f-doelx','f-doelr','f-decimalen'].forEach(id=>document.getElementById(id).value='');
+  autoResizeBestandField();
   setFormToonGrafiek(true);
+  setFormDuizendtal(false);
   setFormStandaardGroepering('d');
   setFormStandaardBereik('1m');
   document.getElementById('btn-delete-source').style.display = 'none';
@@ -1285,6 +1457,7 @@ document.getElementById('btn-save-source').addEventListener('click', async ()=>{
     doel_r: numOrNull(document.getElementById('f-doelr').value),
     standaard_bereik: formStandaardBereik,
     toon_grafiek: formToonGrafiek,
+    duizendtal: formDuizendtal,
     standaard_groepering: formStandaardGroepering
   };
   const idx = bronnen.findIndex(b=>b.id===id);
@@ -1937,6 +2110,7 @@ async function renderDataView(){
     emptyEl.textContent = 'Geen metingen gevonden.';
   }
   const src = getSource(id);
+  currentFmtThousands = !!src?.duizendtal;
 
   const data = dataCache[id] || {};
   let keys = Object.keys(data).sort().reverse();
@@ -2194,18 +2368,20 @@ function getDayAbbrev(key){
 function openEditDatapointModal(id, key){
   const data = dataCache[id] || {};
   const src = getSource(id);
+  currentFmtThousands = !!src?.duizendtal;
   setExplicitEmpty(false);
   applyValueInputConstraints(src);
   currentDatapointKey = key;
   document.getElementById('f-data-date-display').textContent = fmtDateNL(key);
   document.getElementById('f-data-date-dayname').textContent = getDayAbbrev(key);
   document.getElementById('f-data-date-todaybar').style.display = (key === dateToKey(new Date())) ? 'inline-block' : 'none';
+  document.getElementById('f-data-value-unit').textContent = src?.eenheid ? ` (${src.eenheid})` : '';
   if(data[key] == null){
     // geselecteerde dag heeft nog geen waarde: open als 'toevoegen' met deze datum al ingevuld
     editingDataKey = null;
     document.getElementById('datapoint-modal-title').textContent = 'Meting toevoegen';
     const def = getDefaultDatapointValue(id, keyToIsoDate(key));
-    document.getElementById('f-data-value').value = def!=null ? fmtVal(def, src?.decimalen) : '';
+    document.getElementById('f-data-value').value = def!=null ? fmtValPlain(def, src?.decimalen) : '';
     document.getElementById('btn-delete-datapoint').style.display = 'none';
   } else {
     editingDataKey = key;
@@ -2362,6 +2538,7 @@ document.getElementById('btn-add-datapoint').addEventListener('click', async ()=
   const num = Number(val);
   if(isNaN(num)){ showAlert('Ongeldige waarde.'); return; }
   const src = getSource(id);
+  currentFmtThousands = !!src?.duizendtal;
   if(src?.min != null && num < src.min){ showAlert(`Waarde moet minimaal ${src.min} zijn.`); return; }
   if(src?.max != null && num > src.max){ showAlert(`Waarde moet maximaal ${src.max} zijn.`); return; }
   const dec = src?.decimalen ?? 1;
@@ -2461,6 +2638,7 @@ async function getChartPointsForSelection(periodKey, fromElId, toElId){
   if(!id) return null;
   await ensureDataLoaded(id);
   const src = getSource(id);
+  currentFmtThousands = !!src?.duizendtal;
   const data = dataCache[id] || {};
   if(!dirHandle) return {id, src, points: [], chartXMin: null, rangeEnd: null, noDir: true};
 
