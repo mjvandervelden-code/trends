@@ -364,6 +364,10 @@
             <span class="toggle-switch-knob"></span>
           </button>
         </div>
+        <div class="field" style="margin-top:10px;">
+          <label>Alleen lijn bij n ></label>
+          <input type="text" inputmode="numeric" id="f-puntjes-drempel" placeholder="optioneel">
+        </div>
         <div class="field" style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
           <label style="margin:0;">Groepering</label>
           <button type="button" class="picker-btn" id="f-standaard-groepering-btn" style="width:auto;min-width:120px;margin-bottom:0;padding:9px 12px;font-size:17px;">
@@ -905,7 +909,20 @@ document.querySelectorAll('nav.tabs button').forEach(btn=>{
 
 /* ================= WERKMAP: koppeling ================= */
 async function loadMetaFromDir(){
-  const json = await readJsonFromDir(META_FILENAME);
+  let json;
+  try{
+    json = await readJsonFromDir(META_FILENAME);
+  }catch(e){
+    if(e instanceof SyntaxError){
+      showAlert(`Het metadatabestand (${META_FILENAME}) is beschadigd of onleesbaar en kon niet worden geladen. Er zijn geen bronnen ingelezen. Herstel het bestand (bijv. vanuit een back-up) en koppel de werkmap opnieuw.`);
+    } else {
+      showAlert(`Het metadatabestand (${META_FILENAME}) kon niet worden gelezen: ${e.message}`);
+    }
+    bronnen = [];
+    renderSourceList();
+    renderSourceSelects();
+    return;
+  }
   const list = json ? (Array.isArray(json) ? json : (json.bronnen || [])) : [];
   bronnen = list.map(item=>{
     const id = slugify(item.bestand || item.titel);
@@ -922,6 +939,7 @@ async function loadMetaFromDir(){
       standaard_bereik: item.standaard_bereik || '1m',
       toon_grafiek: item.toon_grafiek !== false,
       duizendtal: item.duizendtal === true,
+      puntjes_drempel: item.puntjes_drempel ?? null,
       standaard_groepering: item.standaard_groepering || 'd'
     };
   });
@@ -1236,6 +1254,7 @@ function editSource(id){
   document.getElementById('f-doelr').value = b.doel_r ?? '';
   setFormToonGrafiek(b.toon_grafiek !== false);
   setFormDuizendtal(b.duizendtal === true);
+  document.getElementById('f-puntjes-drempel').value = b.puntjes_drempel ?? '';
   setFormStandaardGroepering(b.standaard_groepering || 'd');
   setFormStandaardBereik(b.standaard_bereik || '1m');
   document.getElementById('btn-delete-source').style.display = 'flex';
@@ -1426,7 +1445,7 @@ document.getElementById('f-bestand').addEventListener('input', autoResizeBestand
 function resetSourceForm(){
   editingId = null;
   document.getElementById('meta-form-title').textContent = 'Nieuwe bron';
-  ['f-titel','f-bestand','f-eenheid','f-min','f-max','f-doelx','f-doelr','f-decimalen'].forEach(id=>document.getElementById(id).value='');
+  ['f-titel','f-bestand','f-eenheid','f-min','f-max','f-doelx','f-doelr','f-decimalen','f-puntjes-drempel'].forEach(id=>document.getElementById(id).value='');
   autoResizeBestandField();
   setFormToonGrafiek(true);
   setFormDuizendtal(false);
@@ -1458,6 +1477,7 @@ document.getElementById('btn-save-source').addEventListener('click', async ()=>{
     standaard_bereik: formStandaardBereik,
     toon_grafiek: formToonGrafiek,
     duizendtal: formDuizendtal,
+    puntjes_drempel: numOrNull(document.getElementById('f-puntjes-drempel').value.trim()),
     standaard_groepering: formStandaardGroepering
   };
   const idx = bronnen.findIndex(b=>b.id===id);
@@ -2453,6 +2473,10 @@ document.getElementById('f-data-value').addEventListener('input', (e)=>{
     if(cleaned !== e.target.value) e.target.value = cleaned;
   });
 });
+document.getElementById('f-puntjes-drempel').addEventListener('input', (e)=>{
+  const cleaned = e.target.value.replace(/[^0-9]/g, '');
+  if(cleaned !== e.target.value) e.target.value = cleaned;
+});
 
 async function syncDataFile(id){
   if(!dirHandle) return;
@@ -3256,6 +3280,8 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
   }
 
   let selectedPoint = null;
+  const showDots = !(src?.puntjes_drempel != null && points.length > src.puntjes_drempel);
+  const dotsByColor = new Map(); // kleur -> array van {x,y}, zodat we per kleur in één keer kunnen tekenen
   points.forEach(p=>{
     const x=xPix(p.date), y=yPix(p.value);
     let color = '#9fd8e0';
@@ -3272,8 +3298,17 @@ function drawChart(ctx, canvas, points, mean, sigma, src, xMin, xMax, maxGapDays
     }
     const isSelected = selectedKey && dateToKey(p.date) === selectedKey;
     if(isSelected){ selectedPoint = {x,y,color}; return; } // apart, als laatste, tekenen
-    ctx.beginPath(); ctx.arc(x,y,3.4,0,Math.PI*2); ctx.fillStyle = color; ctx.fill();
+    if(!dotsByColor.has(color)) dotsByColor.set(color, []);
+    dotsByColor.get(color).push({x,y});
   });
+  if(showDots){
+    dotsByColor.forEach((pts, color)=>{
+      ctx.beginPath();
+      pts.forEach(({x,y})=>{ ctx.moveTo(x+3.4, y); ctx.arc(x,y,3.4,0,Math.PI*2); });
+      ctx.fillStyle = color;
+      ctx.fill();
+    });
+  }
   if(selectedPoint){
     const {x,y,color} = selectedPoint;
     ctx.beginPath(); ctx.arc(x,y,3.4,0,Math.PI*2); ctx.fillStyle = color; ctx.fill();
